@@ -23,17 +23,27 @@ class SimpleTestCase(unittest.TestCase):
     def _test_functions(self, readscalar, readsymmtensor, readtensor,
                         readvector, readmesh, readarray):
         for timename in timenames:
+            alpha1 = readscalar(sol, timename, 'alpha', (2, size//2))
+            sigma1 = readsymmtensor(sol, timename, 'sigma', (2, size//2))
+            taus1 = readtensor(sol, timename, 'Taus', (2, size//2))
             alpha = readscalar(sol, timename, 'alpha')
             sigma = readsymmtensor(sol, timename, 'sigma')
             taus = readtensor(sol, timename, 'Taus')
-            uu = readarray(sol, timename, 'U')
+            u2 = readvector(sol, timename, 'U', (2, size//2))
+            u1 = readarray(sol, timename, 'U')
             u = readvector(sol, timename, 'U')
             x, y, z = readmesh(sol + timename)
             xx, yy, zz = readmesh(sol + timename, (2, size//2))
 
             self.assertEqual(size, len(alpha))
+            self.assertEqual(size, alpha1.size)
             self.assertEqual(3*size, u.size)
-            self.assertEqual(3*size, uu.size)
+            self.assertEqual(3*size, u1.size)
+            self.assertEqual(3*size, u2.size)
+            self.assertEqual(6*size, sigma.size)
+            self.assertEqual(6*size, sigma1.size)
+            self.assertEqual(9*size, taus.size)
+            self.assertEqual(9*size, taus1.size)
 
             for i, v in alpha_samples.items():
                 self.assertAlmostEqual(v, alpha[i], places=places)
