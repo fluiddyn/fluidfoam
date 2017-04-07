@@ -42,21 +42,33 @@ Committing instructions (in development mode)
 -------
 
 To get the status of the files::
+
   hg st
+
 In case of new file(s)::
+
   hg add new_file
+
 To commit a revision on the local repository::
+
   hg ci -m "comment on the revision"
+
 To push the revision on the central repository::
+
   hg push
+
 
 Update instructions (in development mode)
 -------
 
 Pull the last revision::
+
   hg pull
+
 Deploy::
+
   hg up
+
 
 Example Usage
 -------
