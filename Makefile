@@ -16,6 +16,7 @@ tests:
 tests_coverage:
 	coverage erase
 	coverage run -p -m unittest discover
+	coverage combine
 	coverage report
 	coverage html
 	coverage xml
