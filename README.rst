@@ -15,6 +15,7 @@ fluidfoam
 The fluidfoam package provides Python classes useful to perform some plot with OpenFoam data.
 
 What is this repository for?
+-------
 
 * Openfoam Tools
 * Version : 0.0.1
@@ -24,23 +25,38 @@ What is this repository for?
 Deployment instructions
 -------
 
-* hg clone https://bitbucket.org/sedfoam/fluidfoam
-* python setup.py develop --user
+The simplest way to install fluiddyn is by using pip::
+
+  pip install fluidfoam
+
+You can get the source code from `Bitbucket
+<https://bitbucket.org/sedfoam/fluidfoam>`_ or from `the Python Package Index
+<https://pypi.python.org/pypi/fluidfoam/>`_.
+
+The development mode is often useful. From the root directory, run::
+
+  python setup.py develop --user
 
 
-Committing instructions
+Committing instructions (in development mode)
 -------
 
-* hg st  (status of the files)
-* hg add new_file (in case of new file(s))
-* hg ci -m "comment on the revision"
-* hg push (push the revision on the central repository)
+To get the status of the files::
+  hg st
+In case of new file(s)::
+  hg add new_file
+To commit a revision on the local repository::
+  hg ci -m "comment on the revision"
+To push the revision on the central repository::
+  hg push
 
-Update instructions
+Update instructions (in development mode)
 -------
 
-* hg pull 
-* hg up
+Pull the last revision::
+  hg pull
+Deploy::
+  hg up
 
 Example Usage
 -------
