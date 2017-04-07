@@ -2,4 +2,6 @@
 syntax: glob
 *pyc
 *~
+.tox
+dist
 fluidfoam.egg-info
