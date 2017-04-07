@@ -1,5 +1,18 @@
-# README #
-This package provides Python classes useful to perform some plot with OpenFoam data.
+========
+fluidfoam
+========
+
+|release| |coverage|
+
+.. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
+   :target: https://pypi.python.org/pypi/fluidfoam/
+   :alt: Latest version
+
+.. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
+   :target: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/
+   :alt: Code coverage
+
+The fluidfoam package provides Python classes useful to perform some plot with OpenFoam data.
 
 ### What is this repository for? ###
 
@@ -37,3 +50,12 @@ This package provides Python classes useful to perform some plot with OpenFoam d
 * Pierre.Augier@legi.cnrs.fr
 * Tim.Nagel@legi.cnrs.fr
 * Thibaud.Revil-Baudard@legi.cnrs.fr
+
+License
+-------
+
+fluidfoam is distributed under the CeCILL-B_ License, a BSD compatible
+french license.
+
+.. _CeCILL-B: http://www.cecill.info/index.en.html
+
