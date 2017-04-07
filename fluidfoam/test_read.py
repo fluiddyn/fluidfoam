@@ -28,6 +28,7 @@ class SimpleTestCase(unittest.TestCase):
             taus = readtensor(sol, timename, 'Taus')
             u = readvector(sol, timename, 'U')
             x, y, z = readmesh(sol + timename)
+            xx, yy, zz = readmesh(sol + timename, (2, size//2))
 
             self.assertEqual(size, len(alpha))
             self.assertEqual(3*size, u.size)
