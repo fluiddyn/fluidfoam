@@ -14,7 +14,7 @@ tests:
 	python -m unittest discover
 
 tests_coverage:
-	coverage erase
+	mkdir -p .coverage
 	coverage run -p -m unittest discover
 	coverage combine
 	coverage report
