@@ -12,3 +12,4 @@ pipelines:
           - pip install -U tox
           - pip --version
           - tox --version
+          - tox
