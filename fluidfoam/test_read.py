@@ -12,9 +12,9 @@ places = 5
 
 alpha_samples = {0: 1.01583, 6: 1.01875179}
 
-u_samples = {(0, 0): -9.16739310e-01, (1, 0): 5.48321220e-01,
-             (2, 0): 8.80816212e-01}
-
+u_samples = {(0, 0): -9.16739310e-01, (1, 0): 1.08239e-01,
+             (0, 9): -2.67453e-01, (1, 9): 9.52311e-01,
+             (2, 9): 1.02557, (2, 48): 8.95483e-01}
 size = 64
 
 
@@ -45,6 +45,8 @@ class SimpleTestCase(unittest.TestCase):
             self.assertEqual(9*size, taus.size)
             self.assertEqual(9*size, taus1.size)
 
+            for i, v in u_samples.items():
+                self.assertAlmostEqual(u1[i], v, places=places)
             for i, v in alpha_samples.items():
                 self.assertAlmostEqual(v, alpha[i], places=places)
 
