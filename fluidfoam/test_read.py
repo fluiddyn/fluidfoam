@@ -54,3 +54,6 @@ class SimpleTestCase(unittest.TestCase):
         self._test_functions(fluidfoam.readscalar, fluidfoam.readsymmtensor,
                              fluidfoam.readtensor, fluidfoam.readvector,
                              fluidfoam.readmesh, fluidfoam.readarray)
+        self._test_functions(fluidfoam.readfield, fluidfoam.readfield,
+                             fluidfoam.readfield, fluidfoam.readfield,
+                             fluidfoam.readmesh, fluidfoam.readfield)

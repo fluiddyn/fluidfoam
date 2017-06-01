@@ -2,7 +2,7 @@
 import warnings
 
 from fluidfoam.readof import readscalar, readvector, readtensor
-from fluidfoam.readof import readsymmtensor, readmesh
+from fluidfoam.readof import readsymmtensor, readfield, readmesh
 from fluidfoam._version import __version__
 
 warnings.simplefilter('always', category=DeprecationWarning)
