@@ -149,6 +149,53 @@ class OpenFoamFile(object):
             self.values_z = self.values[2::3]
 
 
+def readfield(path, time_name=None, var_name=None, shape=None):
+    """Read OpenFoam field.
+
+    Parameters
+    ----------
+
+    path : str
+
+    time_name : str
+
+    var_name : str
+
+    shape : None or iterable
+
+    """
+
+    path = _make_path(path, time_name, var_name)
+    print('Reading file ' + path)
+
+    field = OpenFoamFile(path)
+    values = field.values
+
+    if field.type_data == 'scalar':
+        if shape is not None:
+            values = np.reshape(values, shape)
+    elif field.type_data == 'vector':
+        if shape is None:
+            shape = (3, values.size//3)
+        else:
+            shape = (3,) + tuple(shape)
+        values = np.reshape(values, shape, order="F")
+    elif field.type_data == 'symmtensor':
+        if shape is None:
+            shape = (6, values.size//6)
+        else:
+            shape = (6,) + tuple(shape)
+        values = np.reshape(values, shape, order="F")
+    elif field.type_data == 'tensor':
+        if shape is None:
+            shape = (9, values.size//9)
+        else:
+            shape = (9,) + tuple(shape)
+        values = np.reshape(values, shape, order="F")
+
+    return values
+
+
 def readscalar(path, time_name=None, var_name=None, shape=None):
     """Read OpenFoam scalar.
 
