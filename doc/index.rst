@@ -1,16 +1,8 @@
-========
-fluidfoam
-========
+.. FluidFoam documentation master file
 
-|release| |coverage|
+FluidFoam documentation
+========================
 
-.. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
-   :target: https://pypi.python.org/pypi/fluidfoam/
-   :alt: Latest version
-
-.. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
-   :target: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/
-   :alt: Code coverage
 
 The fluidfoam package provides Python classes useful to perform some plot with OpenFoam data.
 
@@ -21,6 +13,7 @@ What is this repository for?
 * Version : 0.0.1
 * Supported OpenFoam Versions : 2.4.0, 4.1
 * Supported Python Versions : 2.7.x, 3.5
+
 
 Deployment instructions
 -------
@@ -92,3 +85,48 @@ french license.
 
 .. _CeCILL-B: http://www.cecill.info/index.en.html
 
+
+User Guide
+----------
+
+.. toctree::
+   :maxdepth: 1
+
+   overview
+   install
+   tutorial
+   examples
+
+
+Modules Reference
+-----------------
+
+Here is presented the general organization of the package (see also
+:doc:`concepts_classes`) and the documentation of the modules, classes and
+functions.
+
+.. autosummary::
+   :toctree: generated/
+
+   fluidfoam.readof
+
+More
+----
+
+.. toctree::
+   :maxdepth: 1
+
+   FluidFoam forge on Bitbucket <https://bitbucket.org/sedfoam/fluidfoam>
+   FluidFoam in PyPI  <https://pypi.python.org/pypi/fluidfoam/>
+   to_do
+   changes
+   authors
+   for_dev
+
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
