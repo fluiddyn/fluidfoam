@@ -149,6 +149,27 @@ class OpenFoamFile(object):
             self.values_z = self.values[2::3]
 
 
+def typefield(path, time_name=None, var_name=None):
+    """Read OpenFoam field.
+
+    Parameters
+    ----------
+
+    path : str
+
+    time_name : str
+
+    var_name : str
+
+    """
+
+    path = _make_path(path, time_name, var_name)
+
+    field = OpenFoamFile(path)
+
+    return field.type_data
+
+
 def readfield(path, time_name=None, var_name=None, shape=None):
     """Read OpenFoam field.
 
@@ -173,7 +194,7 @@ def readfield(path, time_name=None, var_name=None, shape=None):
 
     if field.type_data == 'scalar':
         if shape is not None:
-            values = np.reshape(values, shape)
+            values = np.reshape(values, shape, order="F")
     elif field.type_data == 'vector':
         if shape is None:
             shape = (3, values.size//3)
@@ -222,7 +243,7 @@ def readscalar(path, time_name=None, var_name=None, shape=None):
         raise ValueError('This file does not contain a scalar.')
 
     if shape is not None:
-        values = np.reshape(values, shape)
+        values = np.reshape(values, shape, order="F")
 
     return values
 
@@ -360,9 +381,9 @@ def readmesh(rep, shape=None):
     zs = ccz.values
 
     if shape is not None:
-        xs = np.reshape(xs, shape)
-        ys = np.reshape(ys, shape)
-        zs = np.reshape(zs, shape)
+        xs = np.reshape(xs, shape, order="F")
+        ys = np.reshape(ys, shape, order="F")
+        zs = np.reshape(zs, shape, order="F")
 
     return xs, ys, zs
 
