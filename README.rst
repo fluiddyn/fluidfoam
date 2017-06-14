@@ -18,7 +18,7 @@ What is this repository for?
 -------
 
 * Openfoam Tools
-* Version : 0.0.1
+* Version : 0.0.2
 * Supported OpenFoam Versions : 2.4.0, 4.1
 * Supported Python Versions : 2.7.x, 3.5
 
@@ -91,4 +91,3 @@ fluidfoam is distributed under the CeCILL-B_ License, a BSD compatible
 french license.
 
 .. _CeCILL-B: http://www.cecill.info/index.en.html
-
