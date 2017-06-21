@@ -13,6 +13,9 @@ class SimpleTestCase(unittest.TestCase):
 
     def test_functions(self):
         for timename in timenames:
-#            alpha1 = readscalar(sol, timename, 'alpha', (2, size//2))
             fluidfoam.create1dprofil(sol, sol, timename, ['alpha', 'U'])
+            filename = "output_samples/1d_profil/alpha.xy"
+            fluidfoam.read1dprofil(filename)
+#            fluidfoam.plot1dprofil(sol+"1d_profil/", ['alpha'])
+            fluidfoam.plot1dprofil(sol+"1d_profil/", ['alpha', 'U1'])
 
