@@ -27,16 +27,16 @@ def create1dprofil(pathr, pathw, timename, varlist):
         filename = ''+var
 
         if typevar == 'scalar':
-            filename = pathw+'1d_profil/'+filename+'.xy'
-            f = open(filename, "w")
+            filename1 = pathw+'1d_profil/'+filename+'.xy'
+            f = open(filename1, "w")
             f.write('(\n')
             np.savetxt(f, np.c_[Y, field], fmt="(%s %s)")
             f.write(')\n')
             f.close()
         elif typevar == 'vector':
             for i in range(3):
-                filename = pathw+'1d_profil/'+filename+str(i)+'.xy'
-                f = open(filename, "w")
+                filename1 = pathw+'1d_profil/'+filename+str(i)+'.xy'
+                f = open(filename1, "w")
                 f.write('(\n')
                 np.savetxt(f, np.c_[Y, field[i,:]], fmt="(%s %s)")
                 f.write(')\n')
