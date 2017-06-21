@@ -10,27 +10,24 @@ from fluidfoam.readof import typefield, readmesh, readfield
 # --------------------Module functions description----------------------
 #
 
-def create1dprofil(pathr, pathw, timeName, varList):
-    """ Read 1D profiles at time timeName of pathr and write them in
+def create1dprofil(pathr, pathw, timename, varlist):
+    """ Read 1D profiles at time timename of pathr and write them in
         openfoam format in the 1d_profil folder of pathw.
     """
 #
 #        --------------------Reading part---------------------
 #
     X, Y, Z = readmesh(pathr+'0/')
-    dct = {'y': Y}
-#    for i in range(len(varList)):
-#         axarr[i].plot(fields[i], z)
 
-    fileName = ''
-    for var in varList:
-        field = readfield(pathr, timeName, var)
-        typevar = typefield(pathr, timeName, var)
+    filename = ''
+    for var in varlist:
+        field = readfield(pathr, timename, var)
+        typevar = typefield(pathr, timename, var)
 
-        fileName = ''+var
+        filename = ''+var
 
         if typevar == 'scalar':
-            filename = pathw+'1d_profil/'+fileName+'.xy'
+            filename = pathw+'1d_profil/'+filename+'.xy'
             f = open(filename, "w")
             f.write('(\n')
             np.savetxt(f, np.c_[Y, field], fmt="(%s %s)")
@@ -38,7 +35,7 @@ def create1dprofil(pathr, pathw, timeName, varList):
             f.close()
         elif typevar == 'vector':
             for i in range(3):
-                filename = pathw+'1d_profil/'+fileName+str(i)+'.xy'
+                filename = pathw+'1d_profil/'+filename+str(i)+'.xy'
                 f = open(filename, "w")
                 f.write('(\n')
                 np.savetxt(f, np.c_[Y, field[i,:]], fmt="(%s %s)")
@@ -46,7 +43,7 @@ def create1dprofil(pathr, pathw, timeName, varList):
                 f.close()
             print('Warning for pyof users : Ua=Ua0, Va=Ua2, Wa=Ua1\n')
         else:
-            print('PROBLEM with varList input: Good input is for example :')
+            print('PROBLEM with varlist input: Good input is for example :')
             print('fluidfoam.create1dprofile("/data/1dcompute/", "/data/1dcompute/", "750", [\'omega\',\'p\'])\n')
     status = 'create 1D profiles: done'
     return status
@@ -72,20 +69,20 @@ def read1dprofil(file_name):
         return z, field, size1d
 
 
-def plot1dprofil(pathr, varList):
+def plot1dprofil(pathr, varlist):
     import matplotlib.pyplot as plt
 
-    z, field, size1d = read1dprofil(pathr+"/"+varList[0]+".xy")
-    fields = np.empty([len(varList), size1d])
+    z, field, size1d = read1dprofil(pathr+"/"+varlist[0]+".xy")
+    fields = np.empty([len(varlist), size1d])
     fields[0] = field
-    for i in range(len(varList)-1):
-        z, field, size1d = read1dprofil(pathr+"/"+varList[i+1]+".xy")
+    for i in range(len(varlist)-1):
+        z, field, size1d = read1dprofil(pathr+"/"+varlist[i+1]+".xy")
         fields[i+1] = field
 
-    f, axarr = plt.subplots(1, len(varList), sharey=True)
-    for i in range(len(varList)):
+    f, axarr = plt.subplots(1, len(varlist), sharey=True)
+    for i in range(len(varlist)):
         axarr[i].plot(fields[i], z)
-        axarr[i].set_title(varList[i])
+        axarr[i].set_title(varlist[i])
     plt.show()
     return
 
