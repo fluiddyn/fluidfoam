@@ -5,7 +5,7 @@ import unittest
 import fluidfoam
 
 sol = 'output_samples/'
-timenames = ['0.bin', '0.ascii', '0.bingz', '0.asciigz']
+timenames = ['0.ascii', '0.bin', '0.bingz', '0.asciigz']
 
 # round error (differences bin and ascii)
 places = 5
@@ -49,6 +49,12 @@ class SimpleTestCase(unittest.TestCase):
                 self.assertAlmostEqual(u1[i], v, places=places)
             for i, v in alpha_samples.items():
                 self.assertAlmostEqual(v, alpha[i], places=places)
+        alphashort = readscalar(sol, '0.ascii', 'alpha10', (2, 10//2))
+        alphashort1 = readscalar(sol, '0.ascii', 'alpha10')
+        alphauniform = readscalar(sol, '0.ascii', 'alphauniform')
+        self.assertEqual(10, alphashort.size)
+        self.assertEqual(10, len(alphashort1))
+        self.assertEqual(1, len(alphauniform))
 
     def test_read_functions(self):
         self._test_functions(fluidfoam.readscalar, fluidfoam.readsymmtensor,

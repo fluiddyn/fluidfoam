@@ -18,4 +18,3 @@ class SimpleTestCase(unittest.TestCase):
             fluidfoam.read1dprofil(filename)
 #            fluidfoam.plot1dprofil(sol+"1d_profil/", ['alpha'])
             fluidfoam.plot1dprofil(sol+"1d_profil/", ['alpha', 'U1'])
-
