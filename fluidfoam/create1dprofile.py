@@ -18,6 +18,7 @@ def create1dprofil(pathr, pathw, timename, varlist):
 #        --------------------Reading part---------------------
 #
     X, Y, Z = readmesh(pathr+'0/')
+    size1d = Y.shape[0]
 
     filename = ''
     for var in varlist:
@@ -30,7 +31,9 @@ def create1dprofil(pathr, pathw, timename, varlist):
             filename1 = pathw+'1d_profil/'+filename+'.xy'
             f = open(filename1, "w")
             f.write('(\n')
-            np.savetxt(f, np.c_[Y, field], fmt="(%s %s)")
+            for cell in range(size1d):
+                f.write('('+str(Y[cell])+' '+str(field[cell])+')\n')
+#            np.savetxt(f, np.c_[Y, field], fmt="(%s %s)")
             f.write(')\n')
             f.close()
         elif typevar == 'vector':
@@ -38,7 +41,9 @@ def create1dprofil(pathr, pathw, timename, varlist):
                 filename1 = pathw+'1d_profil/'+filename+str(i)+'.xy'
                 f = open(filename1, "w")
                 f.write('(\n')
-                np.savetxt(f, np.c_[Y, field[i,:]], fmt="(%s %s)")
+                for cell in range(size1d):
+                    f.write('('+str(Y[cell])+' '+str(field[i,cell])+')\n')
+                #np.savetxt(f, np.c_[Y, field[i,:]], fmt="(%s %s)")
                 f.write(')\n')
                 f.close()
             print('Warning for pyof users : Ua=Ua0, Va=Ua2, Wa=Ua1\n')

@@ -12,9 +12,9 @@ import numpy as np
 
 
 def _make_path(path, time_name=None, var_name=None):
-    if time_name is not None and var_name is None: # pragma: no cover
+    if time_name is not None and var_name is None:  # pragma: no cover
         path = os.path.join(path, time_name)
-    elif var_name is not None and time_name is None: # pragma: no cover
+    elif var_name is not None and time_name is None:  # pragma: no cover
         path = os.path.join(path, var_name)
     elif var_name is not None and time_name is not None:
         path = os.path.join(path, time_name, var_name)
@@ -47,7 +47,7 @@ class OpenFoamFile(object):
 
         self.lines_stripped = [line.strip().replace(
             b'"', b'').replace(b';', b'')
-                               for line in self.content.split(b'\n')]
+            for line in self.content.split(b'\n')]
 
         self.header = self._parse_session(b'FoamFile')
 
@@ -100,25 +100,37 @@ class OpenFoamFile(object):
         data = self.content.split(b'internalField')[1]
 
         lines = data.split(b'\n')
+        shortline = (lines[0].split(b'>')[-1])
         words = lines[0].split()
+
         self.nonuniform = words[0] == b'nonuniform'
-        if not self.nonuniform: # pragma: no cover
-            raise NotImplementedError 
+        self.uniform = words[0] == b'uniform'
+        self.short = shortline[-1] == b';'
 
-        self.type_data = words[1]
+        self.type_data = self.header[b'class']
 
-        if self.type_data == b'List<scalar>':
+        if b'ScalarField' in self.type_data:
             self.type_data = 'scalar'
-        elif self.type_data == b'List<vector>':
+        elif b'VectorField' in self.type_data:
             self.type_data = 'vector'
-        elif self.type_data == b'List<symmTensor>':
+        elif b'SymmTensorField' in self.type_data:
             self.type_data = 'symmtensor'
-        elif self.type_data == b'List<tensor>':
+        elif b'TensorField' in self.type_data:
             self.type_data = 'tensor'
 
-        self.nb_pts = int(lines[1])
-
-        data = b'\n('.join(data.split(b'\n(')[1:])
+        if self.uniform:
+            self.nb_pts = 1
+            data = words[1].split(b';')[0]
+            print("Warning : uniform field  of type " + self.type_data + "!\n")
+            print("Only a constant in output\n")
+        elif shortline.count(b';') >= 1:
+            self.nb_pts = int(shortline.split(b'(')[0])
+            data = shortline.split(b'(')[1]
+            data = data.replace(b' ', b'\n')
+            data = data.replace(b');', b'\n);')
+        else:
+            self.nb_pts = int(lines[1])
+            data = b'\n('.join(data.split(b'\n(')[1:])
 
         if not self.is_ascii:
             if self.type_data == 'scalar':
@@ -239,7 +251,7 @@ def readscalar(path, time_name=None, var_name=None, shape=None):
     scalar = OpenFoamFile(path)
     values = scalar.values
 
-    if scalar.type_data != 'scalar': # pragma: no cover
+    if scalar.type_data != 'scalar':  # pragma: no cover
         raise ValueError('This file does not contain a scalar.')
 
     if shape is not None:
@@ -270,7 +282,7 @@ def readvector(path, time_name=None, var_name=None, shape=None):
     scalar = OpenFoamFile(path)
     values = scalar.values
 
-    if scalar.type_data != 'vector': # pragma: no cover
+    if scalar.type_data != 'vector':  # pragma: no cover
         raise ValueError('This file does not contain a vector.')
 
     if shape is None:
@@ -305,7 +317,7 @@ def readsymmtensor(path, time_name=None, var_name=None, shape=None):
     scalar = OpenFoamFile(path)
     values = scalar.values
 
-    if scalar.type_data != 'symmtensor': # pragma: no cover
+    if scalar.type_data != 'symmtensor':  # pragma: no cover
         raise ValueError('This file does not contain a symmtensor.')
 
     if shape is None:
@@ -340,7 +352,7 @@ def readtensor(path, time_name=None, var_name=None, shape=None):
     scalar = OpenFoamFile(path)
     values = scalar.values
 
-    if scalar.type_data != 'tensor': # pragma: no cover
+    if scalar.type_data != 'tensor':  # pragma: no cover
         raise ValueError('This file does not contain a tensor.')
 
     if shape is None:
@@ -366,13 +378,13 @@ def readmesh(rep, shape=None):
     """
 
     if not os.path.exists(os.path.join(rep, 'ccx')) and \
-       not os.path.exists(os.path.join(rep, 'ccx.gz')): # pragma: no cover
+       not os.path.exists(os.path.join(rep, 'ccx.gz')):  # pragma: no cover
         raise ValueError('No ccx files. Run the command writeCellCentres.')
 
     ccx = OpenFoamFile(rep, 'ccx')
     xs = ccx.values
 
-    if ccx.type_data != 'scalar': # pragma: no cover
+    if ccx.type_data != 'scalar':  # pragma: no cover
         raise ValueError('The file does not contain a scalar.')
 
     ccy = OpenFoamFile(rep, 'ccy')
@@ -400,11 +412,11 @@ if __name__ == '__main__':
         values = readscalar(rep, d, 'alpha')
 
         values = readsymmtensor(rep, d, 'sigma')
-        
+
         values = readtensor(rep, d, 'Taus')
 
         values = readvector(rep, d, 'U')
-        
+
         print(values)
 
         path = os.path.join(rep, d)
