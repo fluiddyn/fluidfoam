@@ -501,8 +501,9 @@ def readmesh(rep, shape=None, boundary=None):
         bounfile = OpenFoamFile(rep + '/constant/polyMesh/', 'boundary')
         facefile = OpenFoamFile(rep + '/constant/polyMesh/', 'faces')
         pointfile = OpenFoamFile(rep + '/constant/polyMesh/', 'points')
-        id0 = int(bounfile.boundaryface[boundary]['startFace'])
-        nfaces = int(bounfile.boundaryface[boundary]['nFaces'])
+        id0 = int(bounfile.boundaryface[str.encode(boundary)][b'startFace'])
+        nfaces = int(bounfile.boundaryface[str.encode(boundary)][b'nFaces'])
+
         xs = np.empty(nfaces, dtype=float)
         ys = np.empty(nfaces, dtype=float)
         zs = np.empty(nfaces, dtype=float)
