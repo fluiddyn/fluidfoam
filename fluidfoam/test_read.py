@@ -52,6 +52,8 @@ class SimpleTestCase(unittest.TestCase):
         alphashort = readscalar(sol, '0.ascii', 'alpha10', (2, 10//2))
         alphashort1 = readscalar(sol, '0.ascii', 'alpha10')
         alphauniform = readscalar(sol, '0.ascii', 'alphauniform')
+        alphauniform = readscalar(sol, '0.bin', 'alphauniform')
+        x, y, z = readmesh(sol, boundary = 'bottom')
         self.assertEqual(10, alphashort.size)
         self.assertEqual(10, len(alphashort1))
         self.assertEqual(1, len(alphauniform))
