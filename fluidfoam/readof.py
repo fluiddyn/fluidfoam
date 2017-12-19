@@ -218,10 +218,10 @@ class OpenFoamFile(object):
         #self._parse_data(boundary=None)
         bounfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
                                 name='boundary')
-        facefile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
-                                name='faces')
-        pointfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
-                                 name='points')
+        #facefile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
+        #                        name='faces')
+        #pointfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
+        #                         name='points')
         ownerfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
                                  name='owner')
         id0 = int(bounfile.boundaryface[str.encode(boundary)][b'startFace'])
@@ -403,6 +403,7 @@ class OpenFoamFile(object):
             except ValueError:
                 continue
             break
+        self.nb_pts = int(line)
         data = self.content.split(line)[2]
 
         self.type_data = self.header[b'class']
