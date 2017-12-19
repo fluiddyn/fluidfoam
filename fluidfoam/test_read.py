@@ -4,8 +4,9 @@ import unittest
 # readof functions
 import fluidfoam
 
-sol = 'output_samples/'
-timenames = ['0.ascii', '0.bin', '0.bingz', '0.asciigz']
+sols = ['output_samples/ascii/', 'output_samples/bin/',
+       'output_samples/bingz/', 'output_samples/asciigz/']
+timename = '0'
 
 # round error (differences bin and ascii)
 places = 5
@@ -22,7 +23,7 @@ class SimpleTestCase(unittest.TestCase):
 
     def _test_functions(self, readscalar, readsymmtensor, readtensor,
                         readvector, readmesh, readarray):
-        for timename in timenames:
+        for sol in sols:
             alpha1 = readscalar(sol, timename, 'alpha', (2, size//2))
             sigma1 = readsymmtensor(sol, timename, 'sigma', (2, size//2))
             taus1 = readtensor(sol, timename, 'Taus', (2, size//2))
@@ -50,12 +51,14 @@ class SimpleTestCase(unittest.TestCase):
                 self.assertAlmostEqual(u1[i], v, places=places)
             for i, v in alpha_samples.items():
                 self.assertAlmostEqual(v, alpha[i], places=places)
-        alphashort = readscalar(sol, '0.ascii', 'alpha10', (2, 10//2))
-        alphashort1 = readscalar(sol, '0.ascii', 'alpha10')
-        alphauniform = readscalar(sol, '0.ascii', 'alphauniform')
-        Uuniform = readvector(sol, '0.ascii', 'Uuniform')
-        alphauniform = readscalar(sol, '0.bin', 'alphauniform')
-        x, y, z = readmesh(sol, boundary = 'bottom')
+        alphashort = readscalar('output_samples/ascii/',
+                                '0', 'alpha10', (2, 10//2))
+        alphashort1 = readscalar('output_samples/ascii/', '0', 'alpha10')
+        alphauniform = readscalar('output_samples/ascii/', '0', 'alphauniform')
+        Uuniform = readvector('output_samples/ascii/', '0', 'Uuniform')
+        alphauniform = readscalar('output_samples/bin/', '0', 'alphauniform')
+        x, y, z = readmesh('output_samples/ascii/', boundary = 'bottom')
+        x, y, z = readmesh('output_samples/bin/', boundary = 'bottom')
         self.assertEqual(10, alphashort.size)
         self.assertEqual(10, len(alphashort1))
         self.assertEqual(1, len(alphauniform))
