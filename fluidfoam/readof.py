@@ -17,7 +17,6 @@ def _make_path(path, time_name=None, name=None):
         path = os.path.join(path, name)
     elif name is not None and time_name is not None:
         path = os.path.join(path, time_name, name)
-
     if not os.path.exists(path) and os.path.exists(path + '.gz'):
         path += '.gz'
 
@@ -344,7 +343,7 @@ class OpenFoamFile(object):
             self.pointsbyface = struct.unpack(
                 '{}i'.format(nb_numbers),
                 data[0:nb_numbers*struct.calcsize('i')])
-            data = self.content.split(str(self.pointsbyface[-1]))[1]
+            data = self.content.split(str.encode(str(self.pointsbyface[-1])))[1]
             data = b'\n('.join(data.split(b'\n(')[1:])
 
             for i in range(self.nfaces):
@@ -410,6 +409,7 @@ class OpenFoamFile(object):
 
         if not self.is_ascii:
             nb_numbers = self.nb_pts
+            data = data.split(b'\n(')[1].split(b')')[0]
             self.values = np.array(struct.unpack(
                 '{}i'.format(nb_numbers),
                 data[:nb_numbers*struct.calcsize('i')]))
@@ -654,7 +654,8 @@ def readmesh(rep, shape=None, boundary=None):
     else:
         if not os.path.exists(os.path.join(rep, 'ccx')) and \
            not os.path.exists(os.path.join(rep, 'ccx.gz')):  # pragma: no cover
-            raise ValueError('No ccx files. Run the command writeCellCentres.')
+            raise ValueError('No ccx files in ', rep,
+                             ' Run the command writeCellCentres.')
 
         ccx = OpenFoamFile(rep, 'ccx')
         xs = ccx.values
