@@ -159,9 +159,14 @@ class OpenFoamFile(object):
 
         if self.uniform:
             self.nb_pts = 1
-            data = words[1].split(b';')[0]
+            if not (self.type_data is 'scalar'):
+                data = shortline.split(b'(')[1]
+                data = data.replace(b' ', b'\n')
+                data = data.replace(b');', b'\n);')
+            else:
+                data = words[1].split(b';')[0]
             print("Warning : uniform field  of type " + self.type_data + "!\n")
-            print("Only a constant in output\n")
+            print("Only constant field in output\n")
         elif shortline.count(b';') >= 1:
             self.nb_pts = int(shortline.split(b'(')[0])
             data = shortline.split(b'(')[1]
