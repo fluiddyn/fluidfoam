@@ -10,13 +10,13 @@ import struct
 import numpy as np
 
 
-def _make_path(path, time_name=None, var_name=None):
-    if time_name is not None and var_name is None:  # pragma: no cover
+def _make_path(path, time_name=None, name=None):
+    if time_name is not None and name is None:  # pragma: no cover
         path = os.path.join(path, time_name)
-    elif var_name is not None and time_name is None:  # pragma: no cover
-        path = os.path.join(path, var_name)
-    elif var_name is not None and time_name is not None:
-        path = os.path.join(path, time_name, var_name)
+    elif name is not None and time_name is None:  # pragma: no cover
+        path = os.path.join(path, name)
+    elif name is not None and time_name is not None:
+        path = os.path.join(path, time_name, name)
 
     if not os.path.exists(path) and os.path.exists(path + '.gz'):
         path += '.gz'
@@ -26,11 +26,11 @@ def _make_path(path, time_name=None, var_name=None):
 
 class OpenFoamFile(object):
     """OpenFoam file parser."""
-    def __init__(self, path, name=None, boundary=None):
+    def __init__(self, path, time_name=None, name=None, boundary=None):
 
-        if name is not None:
-            path = os.path.join(path, name)
-        self.path = path
+        self.pathcase = path
+        self.path = _make_path(path, time_name, name)
+        print('Reading file ' + self.path)
 
         if not os.path.exists(self.path) and os.path.exists(self.path + '.gz'):
             self.path += '.gz'
@@ -65,6 +65,8 @@ class OpenFoamFile(object):
             self._parse_face()
         elif name is 'points':
             self._parse_points()
+        elif name is 'owner':
+            self._parse_owner()
         else:
             self._parse_data(boundary=boundary)
 
@@ -133,8 +135,14 @@ class OpenFoamFile(object):
 
         self.nb_pts = None
         if boundary is not None:
-            data = self.content.split(boundary)[1].split(b'value')[1]
-            print(data[1])
+            boun = str.encode(boundary)
+            if b'value' in self.content.split(boun)[1].split(b'}')[0]:
+                data = self.content.split(boun)[1].split(b'value')[1]
+            else:
+                print('Warning : No data on patch')
+                print('Nearest cells values use')
+                self._nearest_data(boundary=boundary)
+                return
         else:
             data = self.content.split(b'internalField')[1]
 
@@ -199,6 +207,116 @@ class OpenFoamFile(object):
                 data = b' '.join(lines).strip()
                 self.values = np.array([float(s) for s in data.split()])
 
+        if self.type_data == 'vector':
+            self.values_x = self.values[::3]
+            self.values_y = self.values[1::3]
+            self.values_z = self.values[2::3]
+
+    def _nearest_data(self, boundary):
+
+        self.nb_pts = None
+        #self._parse_data(boundary=None)
+        bounfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
+                                name='boundary')
+        facefile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
+                                name='faces')
+        pointfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
+                                 name='points')
+        ownerfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
+                                 name='owner')
+        id0 = int(bounfile.boundaryface[str.encode(boundary)][b'startFace'])
+        nfaces = int(bounfile.boundaryface[str.encode(boundary)][b'nFaces'])
+
+        #xs = np.empty(nfaces, dtype=float)
+        #ys = np.empty(nfaces, dtype=float)
+        #zs = np.empty(nfaces, dtype=float)
+        cell = np.empty(nfaces, dtype=int)
+        for i in range(nfaces):
+            #npts = int(facefile.faces[id0+i]['npts'])
+            #id_pts = np.zeros(npts, dtype=int)
+            #id_pts[0:npts] = facefile.faces[id0+i]['id_pts'][0:npts]
+            #xs[i] = np.mean(pointfile.values_x[id_pts[0:npts]])
+            #ys[i] = np.mean(pointfile.values_y[id_pts[0:npts]])
+            #zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
+            cell[i] = ownerfile.values[id0+i]
+        #boun = str.encode(boundary)
+        data = self.content.split(b'internalField')[1]
+
+        lines = data.split(b'\n')
+        shortline = (lines[0].split(b'>')[-1])
+        words = lines[0].split()
+
+        self.nonuniform = words[0] == b'nonuniform'
+        self.uniform = words[0] == b'uniform'
+        self.short = shortline[-1] == b';'
+
+        self.type_data = self.header[b'class']
+
+        if b'ScalarField' in self.type_data:
+            self.type_data = 'scalar'
+        elif b'VectorField' in self.type_data:
+            self.type_data = 'vector'
+        elif b'SymmTensorField' in self.type_data:
+            self.type_data = 'symmtensor'
+        elif b'TensorField' in self.type_data:
+            self.type_data = 'tensor'
+
+        if self.uniform:
+            self.nb_pts = 1
+            if not (self.type_data is 'scalar'):
+                data = shortline.split(b'(')[1]
+                data = data.replace(b' ', b'\n')
+                data = data.replace(b');', b'\n);')
+            else:
+                data = words[1].split(b';')[0]
+            print("Warning : uniform field  of type " + self.type_data + "!\n")
+            print("Only constant field in output\n")
+        elif shortline.count(b';') >= 1:
+            self.nb_pts = int(shortline.split(b'(')[0])
+            data = shortline.split(b'(')[1]
+            data = data.replace(b' ', b'\n')
+            data = data.replace(b');', b'\n);')
+        else:
+            self.nb_pts = int(lines[1])
+            data = b'\n('.join(data.split(b'\n(')[1:])
+
+        if not self.is_ascii and not self.uniform:
+            if self.type_data == 'scalar':
+                nb_numbers = self.nb_pts
+            elif self.type_data == 'vector':
+                nb_numbers = 3*self.nb_pts
+            elif self.type_data == 'symmtensor':
+                nb_numbers = 6*self.nb_pts
+            elif self.type_data == 'tensor':
+                nb_numbers = 9*self.nb_pts
+            values = np.array(struct.unpack(
+                '{}d'.format(nb_numbers),
+                data[:nb_numbers*struct.calcsize('d')]))
+        else:
+            if self.type_data == 'scalar':
+                values = np.array(
+                    [float(s)
+                     for s in data.strip().split(b'\n')[:self.nb_pts]])
+            elif self.type_data in ('vector', 'tensor', 'symmtensor'):
+                lines = data.split(b'\n(')
+                lines = [line.split(b')')[0] for line in lines]
+                data = b' '.join(lines).strip()
+                values = np.array([float(s) for s in data.split()])
+        if self.uniform:
+            self.values = values
+        else:
+            if self.type_data == 'scalar':
+                nv = 1
+            elif self.type_data == 'vector':
+                nv = 3
+            elif self.type_data == 'symmtensor':
+                nv = 6
+            elif self.type_data == 'tensor':
+                nv = 9
+            valuesbou = np.empty(nv*nfaces, dtype=float)
+            for i in range(nfaces):
+                valuesbou[i*nv:(i+1)*nv] = values[nv*cell[i]:nv*(cell[i]+1)]
+            self.values = valuesbou
         if self.type_data == 'vector':
             self.values_x = self.values[::3]
             self.values_y = self.values[1::3]
@@ -276,8 +394,32 @@ class OpenFoamFile(object):
         self.values_y = self.values[1::3]
         self.values_z = self.values[2::3]
 
+    def _parse_owner(self):
 
-def typefield(path, time_name=None, var_name=None):
+        for line in self.lines_stripped:
+            try:
+                int(line)
+                break
+            except ValueError:
+                continue
+            break
+        data = self.content.split(line)[2]
+
+        self.type_data = self.header[b'class']
+
+        if not self.is_ascii:
+            nb_numbers = self.nb_pts
+            self.values = np.array(struct.unpack(
+                '{}i'.format(nb_numbers),
+                data[:nb_numbers*struct.calcsize('i')]))
+        else:
+            lines = data.split(b'\n(')
+            lines = [line.split(b')')[0] for line in lines]
+            data = b' '.join(lines).strip()
+            self.values = np.array([int(s) for s in data.split()])
+
+
+def typefield(path, time_name=None, name=None):
     """Read OpenFoam field.
 
     Parameters
@@ -287,18 +429,18 @@ def typefield(path, time_name=None, var_name=None):
 
     time_name : str
 
-    var_name : str
+    name : str
 
     """
 
-    path = _make_path(path, time_name, var_name)
+    path = _make_path(path, time_name, name)
 
     field = OpenFoamFile(path)
 
     return field.type_data
 
 
-def readfield(path, time_name=None, var_name=None, shape=None):
+def readfield(path, time_name=None, name=None, shape=None, boundary=None):
     """Read OpenFoam field.
 
     Parameters
@@ -308,16 +450,13 @@ def readfield(path, time_name=None, var_name=None, shape=None):
 
     time_name : str
 
-    var_name : str
+    name : str
 
     shape : None or iterable
 
     """
 
-    path = _make_path(path, time_name, var_name)
-    print('Reading file ' + path)
-
-    field = OpenFoamFile(path)
+    field = OpenFoamFile(path, time_name, name, boundary)
     values = field.values
 
     if field.type_data == 'scalar':
@@ -345,7 +484,7 @@ def readfield(path, time_name=None, var_name=None, shape=None):
     return values
 
 
-def readscalar(path, time_name=None, var_name=None, shape=None):
+def readscalar(path, time_name=None, name=None, shape=None, boundary=None):
     """Read OpenFoam scalar.
 
     Parameters
@@ -355,16 +494,15 @@ def readscalar(path, time_name=None, var_name=None, shape=None):
 
     time_name : str
 
-    var_name : str
+    name : str
 
     shape : None or iterable
 
+    boundary : None or patch name
+
     """
 
-    path = _make_path(path, time_name, var_name)
-    print('Reading file ' + path)
-
-    scalar = OpenFoamFile(path)
+    scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
     values = scalar.values
 
     if scalar.type_data != 'scalar':  # pragma: no cover
@@ -376,7 +514,7 @@ def readscalar(path, time_name=None, var_name=None, shape=None):
     return values
 
 
-def readvector(path, time_name=None, var_name=None, shape=None, boundary=None):
+def readvector(path, time_name=None, name=None, shape=None, boundary=None):
     """Read OpenFoam vector.
 
     Parameters
@@ -386,16 +524,15 @@ def readvector(path, time_name=None, var_name=None, shape=None, boundary=None):
 
     time_name : str
 
-    var_name : str
+    name : str
 
     shape : None or iterable
 
+    boundary : None or patch name
+
     """
 
-    path = _make_path(path, time_name, var_name)
-    print('Reading file ' + path)
-
-    scalar = OpenFoamFile(path, boundary=boundary)
+    scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
     values = scalar.values
 
     if scalar.type_data != 'vector':  # pragma: no cover
@@ -411,7 +548,8 @@ def readvector(path, time_name=None, var_name=None, shape=None, boundary=None):
     return values
 
 
-def readsymmtensor(path, time_name=None, var_name=None, shape=None):
+def readsymmtensor(path, time_name=None, name=None, shape=None,
+                   boundary=None):
     """Read OpenFoam symmetrical tensor.
 
     Parameters
@@ -421,16 +559,15 @@ def readsymmtensor(path, time_name=None, var_name=None, shape=None):
 
     time_name : str
 
-    var_name : str
+    name : str
 
     shape : None or iterable
 
+    boundary : None or patch name
+
     """
 
-    path = _make_path(path, time_name, var_name)
-    print('Reading file ' + path)
-
-    scalar = OpenFoamFile(path)
+    scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
     values = scalar.values
 
     if scalar.type_data != 'symmtensor':  # pragma: no cover
@@ -446,7 +583,7 @@ def readsymmtensor(path, time_name=None, var_name=None, shape=None):
     return values
 
 
-def readtensor(path, time_name=None, var_name=None, shape=None, boundary=None):
+def readtensor(path, time_name=None, name=None, shape=None, boundary=None):
     """Read OpenFoam tensor.
 
     Parameters
@@ -456,17 +593,15 @@ def readtensor(path, time_name=None, var_name=None, shape=None, boundary=None):
 
     time_name : str
 
-    var_name : str
+    name : str
 
     shape : None or iterable
 
-        pointfile = OpenFoamFile(rep + '/constant/polyMesh/', 'points')
+    boundary : None or patch name
+
     """
 
-    path = _make_path(path, time_name, var_name)
-    print('Reading file ' + path)
-
-    scalar = OpenFoamFile(path, boundary=boundary)
+    scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
 
     values = scalar.values
 
@@ -498,9 +633,9 @@ def readmesh(rep, shape=None, boundary=None):
     """
 
     if boundary is not None:
-        bounfile = OpenFoamFile(rep + '/constant/polyMesh/', 'boundary')
-        facefile = OpenFoamFile(rep + '/constant/polyMesh/', 'faces')
-        pointfile = OpenFoamFile(rep + '/constant/polyMesh/', 'points')
+        bounfile = OpenFoamFile(rep + '/constant/polyMesh/', name='boundary')
+        facefile = OpenFoamFile(rep + '/constant/polyMesh/', name='faces')
+        pointfile = OpenFoamFile(rep + '/constant/polyMesh/', name='points')
         id0 = int(bounfile.boundaryface[str.encode(boundary)][b'startFace'])
         nfaces = int(bounfile.boundaryface[str.encode(boundary)][b'nFaces'])
 
@@ -555,8 +690,6 @@ if __name__ == '__main__':
         values = readtensor(rep, d, 'Taus')
 
         values = readvector(rep, d, 'U')
-
-        print(values)
 
         path = os.path.join(rep, d)
         xs, ys, zs = readmesh(path)

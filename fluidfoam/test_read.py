@@ -29,6 +29,7 @@ class SimpleTestCase(unittest.TestCase):
             alpha = readscalar(sol, timename, 'alpha')
             sigma = readsymmtensor(sol, timename, 'sigma')
             taus = readtensor(sol, timename, 'Taus')
+            taustop = readtensor(sol, timename, 'Taus', boundary='top')
             u2 = readvector(sol, timename, 'U', (2, size//2))
             u1 = readarray(sol, timename, 'U')
             u = readvector(sol, timename, 'U')
