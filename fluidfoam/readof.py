@@ -381,6 +381,7 @@ class OpenFoamFile(object):
 
         if not self.is_ascii:
             nb_numbers = 3*self.nb_pts
+            data = b'\n('.join(data.split(b'\n(')[1:])
             self.values = np.array(struct.unpack(
                 '{}d'.format(nb_numbers),
                 data[:nb_numbers*struct.calcsize('d')]))
