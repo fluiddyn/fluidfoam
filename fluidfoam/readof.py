@@ -214,31 +214,15 @@ class OpenFoamFile(object):
     def _nearest_data(self, boundary):
 
         self.nb_pts = None
-        #self._parse_data(boundary=None)
         bounfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
                                 name='boundary')
-        #facefile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
-        #                        name='faces')
-        #pointfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
-        #                         name='points')
         ownerfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
                                  name='owner')
         id0 = int(bounfile.boundaryface[str.encode(boundary)][b'startFace'])
         nfaces = int(bounfile.boundaryface[str.encode(boundary)][b'nFaces'])
-
-        #xs = np.empty(nfaces, dtype=float)
-        #ys = np.empty(nfaces, dtype=float)
-        #zs = np.empty(nfaces, dtype=float)
         cell = np.empty(nfaces, dtype=int)
         for i in range(nfaces):
-            #npts = int(facefile.faces[id0+i]['npts'])
-            #id_pts = np.zeros(npts, dtype=int)
-            #id_pts[0:npts] = facefile.faces[id0+i]['id_pts'][0:npts]
-            #xs[i] = np.mean(pointfile.values_x[id_pts[0:npts]])
-            #ys[i] = np.mean(pointfile.values_y[id_pts[0:npts]])
-            #zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
             cell[i] = ownerfile.values[id0+i]
-        #boun = str.encode(boundary)
         data = self.content.split(b'internalField')[1]
 
         lines = data.split(b'\n')
@@ -343,7 +327,8 @@ class OpenFoamFile(object):
             self.pointsbyface = struct.unpack(
                 '{}i'.format(nb_numbers),
                 data[0:nb_numbers*struct.calcsize('i')])
-            data = self.content.split(str.encode(str(self.pointsbyface[-1])))[1]
+            data = self.content.split(
+                    str.encode(str(self.pointsbyface[-1])))[1]
             data = b'\n('.join(data.split(b'\n(')[1:])
 
             for i in range(self.nfaces):
@@ -352,7 +337,8 @@ class OpenFoamFile(object):
                     self.pointsbyface[i+1] - self.pointsbyface[i])
                 self.faces[i]['id_pts'] = np.array(struct.unpack(
                     '{}i'.format(self.faces[i]['npts']),
-                    data[self.pointsbyface[i]*struct.calcsize('i'):self.pointsbyface[i+1]*struct.calcsize('i')]))
+                    data[self.pointsbyface[i]*struct.calcsize('i'):
+                         self.pointsbyface[i+1]*struct.calcsize('i')]))
         else:
             for i, line in enumerate(lines):
                 if i == 0:
