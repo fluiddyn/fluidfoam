@@ -622,15 +622,19 @@ def readmesh(rep, shape=None, boundary=None):
 
     """
 
+# backward compatibility (when ccx/ccy/ccz need)!!
+    if not os.path.exists(os.path.join(rep, 'constant/polyMesh')):
+        rep = rep + '/..'
+
     if not os.path.exists(os.path.join(rep, 'constant/polyMesh')):
         raise ValueError('No constant/polyMesh directory in ', rep,
                          ' Please verify the directory of your case.')
 
-    facefile = OpenFoamFile(rep + 'constant/polyMesh/', name='faces')
-    pointfile = OpenFoamFile(rep + 'constant/polyMesh/', name='points')
+    facefile = OpenFoamFile(rep + '/constant/polyMesh/', name='faces')
+    pointfile = OpenFoamFile(rep + '/constant/polyMesh/', name='points')
 
     if boundary is not None:
-        bounfile = OpenFoamFile(rep + 'constant/polyMesh/', name='boundary')
+        bounfile = OpenFoamFile(rep + '/constant/polyMesh/', name='boundary')
         id0 = int(bounfile.boundaryface[str.encode(boundary)][b'startFace'])
         nfaces = int(bounfile.boundaryface[str.encode(boundary)][b'nFaces'])
 
@@ -646,7 +650,7 @@ def readmesh(rep, shape=None, boundary=None):
             ys[i] = np.mean(pointfile.values_y[id_pts[0:npts]])
             zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
     else:
-        owner = OpenFoamFile(rep + 'constant/polyMesh/', name='owner')
+        owner = OpenFoamFile(rep + '/constant/polyMesh/', name='owner')
         xs = np.empty(owner.nb_cell, dtype=float)
         ys = np.empty(owner.nb_cell, dtype=float)
         zs = np.empty(owner.nb_cell, dtype=float)

@@ -34,6 +34,7 @@ class SimpleTestCase(unittest.TestCase):
             u1 = readarray(sol, timename, 'U')
             u = readvector(sol, timename, 'U')
             x, y, z = readmesh(sol)
+            x, y, z = readmesh(sol + timename)
             xx, yy, zz = readmesh(sol, (2, size//2))
 
             self.assertEqual(size, len(alpha))
