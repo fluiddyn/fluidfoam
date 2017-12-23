@@ -5,10 +5,8 @@
 # ---------------- Module General Import and Declarations ---------------
 #
 import numpy as np
-from fluidfoam.readof import typefield, readmesh, readfield 
-#
-# --------------------Module functions description----------------------
-#
+from fluidfoam.readof import typefield, readmesh, readfield
+
 
 def create1dprofil(pathr, pathw, timename, varlist):
     """ Read 1D profiles at time timename of pathr and write them in
@@ -17,7 +15,7 @@ def create1dprofil(pathr, pathw, timename, varlist):
 #
 #        --------------------Reading part---------------------
 #
-    X, Y, Z = readmesh(pathr+'0/')
+    X, Y, Z = readmesh(pathr)
     size1d = Y.shape[0]
 
     filename = ''
@@ -42,8 +40,7 @@ def create1dprofil(pathr, pathw, timename, varlist):
                 f = open(filename1, "w")
                 f.write('(\n')
                 for cell in range(size1d):
-                    f.write('('+str(Y[cell])+' '+str(field[i,cell])+')\n')
-                #np.savetxt(f, np.c_[Y, field[i,:]], fmt="(%s %s)")
+                    f.write('('+str(Y[cell])+' '+str(field[i, cell])+')\n')
                 f.write(')\n')
                 f.close()
             print('Warning for pyof users : Ua=Ua0, Va=Ua2, Wa=Ua1\n')
@@ -61,13 +58,13 @@ def read1dprofil(file_name):
     with open(file_name) as handle:
 
         size1d = len(handle.readlines())-2
-        z=np.empty(size1d)
-        field=np.empty(size1d)
+        z = np.empty(size1d)
+        field = np.empty(size1d)
         handle.seek(0)
         for line_num, line in enumerate(handle):
-            if ((line_num!=0) & (line_num!=size1d+1)):
-                line = line.replace(')','')
-                line = line.replace('(','')
+            if ((line_num != 0) & (line_num != size1d+1)):
+                line = line.replace(')', '')
+                line = line.replace('(', '')
                 cols = line.split()
                 z[(line_num-1)] = cols[0]
                 field[(line_num-1)] = cols[1]
@@ -90,6 +87,3 @@ def plot1dprofil(pathr, varlist):
         axarr[i].set_title(varlist[i])
     plt.show()
     return
-
-
-

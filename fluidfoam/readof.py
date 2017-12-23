@@ -132,7 +132,6 @@ class OpenFoamFile(object):
 
     def _parse_data(self, boundary):
 
-        self.nb_pts = None
         if boundary is not None:
             boun = str.encode(boundary)
             if b'value' in self.content.split(boun)[1].split(b'}')[0]:
@@ -165,7 +164,7 @@ class OpenFoamFile(object):
             self.type_data = 'tensor'
 
         if self.uniform:
-            self.nb_pts = 1
+            nb_pts = 1
             if not (self.type_data is 'scalar'):
                 data = shortline.split(b'(')[1]
                 data = data.replace(b' ', b'\n')
@@ -175,23 +174,23 @@ class OpenFoamFile(object):
             print("Warning : uniform field  of type " + self.type_data + "!\n")
             print("Only constant field in output\n")
         elif shortline.count(b';') >= 1:
-            self.nb_pts = int(shortline.split(b'(')[0])
+            nb_pts = int(shortline.split(b'(')[0])
             data = shortline.split(b'(')[1]
             data = data.replace(b' ', b'\n')
             data = data.replace(b');', b'\n);')
         else:
-            self.nb_pts = int(lines[1])
+            nb_pts = int(lines[1])
             data = b'\n('.join(data.split(b'\n(')[1:])
 
         if not self.is_ascii and not self.uniform:
             if self.type_data == 'scalar':
-                nb_numbers = self.nb_pts
+                nb_numbers = nb_pts
             elif self.type_data == 'vector':
-                nb_numbers = 3*self.nb_pts
+                nb_numbers = 3*nb_pts
             elif self.type_data == 'symmtensor':
-                nb_numbers = 6*self.nb_pts
+                nb_numbers = 6*nb_pts
             elif self.type_data == 'tensor':
-                nb_numbers = 9*self.nb_pts
+                nb_numbers = 9*nb_pts
             self.values = np.array(struct.unpack(
                 '{}d'.format(nb_numbers),
                 data[:nb_numbers*struct.calcsize('d')]))
@@ -199,7 +198,7 @@ class OpenFoamFile(object):
             if self.type_data == 'scalar':
                 self.values = np.array(
                     [float(s)
-                     for s in data.strip().split(b'\n')[:self.nb_pts]])
+                     for s in data.strip().split(b'\n')[:nb_pts]])
             elif self.type_data in ('vector', 'tensor', 'symmtensor'):
                 lines = data.split(b'\n(')
                 lines = [line.split(b')')[0] for line in lines]
@@ -213,7 +212,6 @@ class OpenFoamFile(object):
 
     def _nearest_data(self, boundary):
 
-        self.nb_pts = None
         bounfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
                                 name='boundary')
         ownerfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
@@ -245,7 +243,7 @@ class OpenFoamFile(object):
             self.type_data = 'tensor'
 
         if self.uniform:
-            self.nb_pts = 1
+            nb_pts = 1
             if not (self.type_data is 'scalar'):
                 data = shortline.split(b'(')[1]
                 data = data.replace(b' ', b'\n')
@@ -255,23 +253,23 @@ class OpenFoamFile(object):
             print("Warning : uniform field  of type " + self.type_data + "!\n")
             print("Only constant field in output\n")
         elif shortline.count(b';') >= 1:
-            self.nb_pts = int(shortline.split(b'(')[0])
+            nb_pts = int(shortline.split(b'(')[0])
             data = shortline.split(b'(')[1]
             data = data.replace(b' ', b'\n')
             data = data.replace(b');', b'\n);')
         else:
-            self.nb_pts = int(lines[1])
+            nb_pts = int(lines[1])
             data = b'\n('.join(data.split(b'\n(')[1:])
 
         if not self.is_ascii and not self.uniform:
             if self.type_data == 'scalar':
-                nb_numbers = self.nb_pts
+                nb_numbers = nb_pts
             elif self.type_data == 'vector':
-                nb_numbers = 3*self.nb_pts
+                nb_numbers = 3*nb_pts
             elif self.type_data == 'symmtensor':
-                nb_numbers = 6*self.nb_pts
+                nb_numbers = 6*nb_pts
             elif self.type_data == 'tensor':
-                nb_numbers = 9*self.nb_pts
+                nb_numbers = 9*nb_pts
             values = np.array(struct.unpack(
                 '{}d'.format(nb_numbers),
                 data[:nb_numbers*struct.calcsize('d')]))
@@ -279,7 +277,7 @@ class OpenFoamFile(object):
             if self.type_data == 'scalar':
                 values = np.array(
                     [float(s)
-                     for s in data.strip().split(b'\n')[:self.nb_pts]])
+                     for s in data.strip().split(b'\n')[:nb_pts]])
             elif self.type_data in ('vector', 'tensor', 'symmtensor'):
                 lines = data.split(b'\n(')
                 lines = [line.split(b')')[0] for line in lines]
@@ -314,7 +312,10 @@ class OpenFoamFile(object):
             except ValueError:
                 continue
             break
-        self.nfaces = int(line)-1
+        if not self.is_ascii:
+            self.nfaces = int(line)-1
+        else:
+            self.nfaces = int(line)
         data = self.content.split(line)[1]
         data = b'\n('.join(data.split(b'\n(')[1:])
 
@@ -348,8 +349,8 @@ class OpenFoamFile(object):
                 else:
                     self.faces[i-1] = {}
                     self.faces[i-1]['npts'] = line.split(b'(')[0]
-                    self.faces[i-1]['id_pts'] = (
-                            line.split(b'(')[1].split(b')')[0]).split()
+                    self.faces[i-1]['id_pts'] = [int(s) for s in ((
+                            line.split(b'(')[1].split(b')')[0]).split())]
 
     def _parse_points(self):
 
@@ -360,7 +361,7 @@ class OpenFoamFile(object):
             except ValueError:
                 continue
             break
-        self.nb_pts = int(line)-1
+        self.nb_pts = int(line)
         data = self.content.split(line)[1]
 
         self.type_data = self.header[b'class']
@@ -389,13 +390,13 @@ class OpenFoamFile(object):
             except ValueError:
                 continue
             break
-        self.nb_pts = int(line)
+        self.nb_faces = int(line)
         data = self.content.split(line)[2]
 
         self.type_data = self.header[b'class']
 
         if not self.is_ascii:
-            nb_numbers = self.nb_pts
+            nb_numbers = self.nb_faces
             data = b'\n('.join(data.split(b'\n(')[1:])
             self.values = np.array(struct.unpack(
                 '{}i'.format(nb_numbers),
@@ -405,6 +406,7 @@ class OpenFoamFile(object):
             lines = [line.split(b')')[0] for line in lines]
             data = b' '.join(lines).strip()
             self.values = np.array([int(s) for s in data.split()])
+        self.nb_cell = np.max(self.values) + 1
 
 
 def typefield(path, time_name=None, name=None):
@@ -620,10 +622,15 @@ def readmesh(rep, shape=None, boundary=None):
 
     """
 
+    if not os.path.exists(os.path.join(rep, 'constant/polyMesh')):
+        raise ValueError('No constant/polyMesh directory in ', rep,
+                         ' Please verify the directory of your case.')
+
+    facefile = OpenFoamFile(rep + 'constant/polyMesh/', name='faces')
+    pointfile = OpenFoamFile(rep + 'constant/polyMesh/', name='points')
+
     if boundary is not None:
-        bounfile = OpenFoamFile(rep + '/constant/polyMesh/', name='boundary')
-        facefile = OpenFoamFile(rep + '/constant/polyMesh/', name='faces')
-        pointfile = OpenFoamFile(rep + '/constant/polyMesh/', name='points')
+        bounfile = OpenFoamFile(rep + 'constant/polyMesh/', name='boundary')
         id0 = int(bounfile.boundaryface[str.encode(boundary)][b'startFace'])
         nfaces = int(bounfile.boundaryface[str.encode(boundary)][b'nFaces'])
 
@@ -639,21 +646,19 @@ def readmesh(rep, shape=None, boundary=None):
             ys[i] = np.mean(pointfile.values_y[id_pts[0:npts]])
             zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
     else:
-        if not os.path.exists(os.path.join(rep, 'ccx')) and \
-           not os.path.exists(os.path.join(rep, 'ccx.gz')):  # pragma: no cover
-            raise ValueError('No ccx files in ', rep,
-                             ' Run the command writeCellCentres.')
-
-        ccx = OpenFoamFile(rep, 'ccx')
-        xs = ccx.values
-
-        if ccx.type_data != 'scalar':  # pragma: no cover
-            raise ValueError('The file does not contain a scalar.')
-
-        ccy = OpenFoamFile(rep, 'ccy')
-        ys = ccy.values
-        ccz = OpenFoamFile(rep, 'ccz')
-        zs = ccz.values
+        owner = OpenFoamFile(rep + 'constant/polyMesh/', name='owner')
+        xs = np.empty(owner.nb_cell, dtype=float)
+        ys = np.empty(owner.nb_cell, dtype=float)
+        zs = np.empty(owner.nb_cell, dtype=float)
+        face = {}
+        for i in range(owner.nb_faces):
+            if not owner.values[i] in face:
+                face[owner.values[i]] = list()
+            face[owner.values[i]].append(facefile.faces[i]['id_pts'][:])
+        for i in range(owner.nb_cell):
+            xs[i] = np.mean(pointfile.values_x[np.concatenate(face[i])[:]])
+            ys[i] = np.mean(pointfile.values_y[np.concatenate(face[i])[:]])
+            zs[i] = np.mean(pointfile.values_z[np.concatenate(face[i])[:]])
 
         if shape is not None:
             xs = np.reshape(xs, shape, order="F")
@@ -682,4 +687,3 @@ if __name__ == '__main__':
 
         path = os.path.join(rep, d)
         xs, ys, zs = readmesh(path)
-        # print(xs, ys, zs)

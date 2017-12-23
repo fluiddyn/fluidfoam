@@ -18,7 +18,6 @@ u_samples = {(0, 0): -9.16739310e-01, (1, 0): 1.08239e-01,
              (2, 9): 1.02557, (2, 48): 8.95483e-01}
 size = 64
 
-
 class SimpleTestCase(unittest.TestCase):
 
     def _test_functions(self, readscalar, readsymmtensor, readtensor,
@@ -34,8 +33,8 @@ class SimpleTestCase(unittest.TestCase):
             u2 = readvector(sol, timename, 'U', (2, size//2))
             u1 = readarray(sol, timename, 'U')
             u = readvector(sol, timename, 'U')
-            x, y, z = readmesh(sol + timename)
-            xx, yy, zz = readmesh(sol + timename, (2, size//2))
+            x, y, z = readmesh(sol)
+            xx, yy, zz = readmesh(sol, (2, size//2))
 
             self.assertEqual(size, len(alpha))
             self.assertEqual(size, alpha1.size)
@@ -59,6 +58,8 @@ class SimpleTestCase(unittest.TestCase):
         alphauniform = readscalar('output_samples/bin/', '0', 'alphauniform')
         x, y, z = readmesh('output_samples/ascii/', boundary = 'bottom')
         x, y, z = readmesh('output_samples/bin/', boundary = 'bottom')
+        x, y, z = readmesh('output_samples/bin/3d/')
+        x, y, z = readmesh('output_samples/bin/3d/', boundary = 'bottom')
         self.assertEqual(10, alphashort.size)
         self.assertEqual(10, len(alphashort1))
         self.assertEqual(1, len(alphauniform))
