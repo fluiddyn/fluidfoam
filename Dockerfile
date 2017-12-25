@@ -13,7 +13,7 @@ RUN apt-get update --fix-missing && \
     	wget mesa-utils libegl1-mesa libegl1-mesa-drivers libgl1-mesa-dri \
         libglapi-mesa libgd-tools imagemagick graphicsmagick mplayer \
         mjpegtools emacs gedit gedit-plugins gnuplot gnuplot-x11 \
-        gnuplot-doc bash-completion bash-builtins libnss-wrapper vim nano tree \
+        gnuplot-doc bash-completion bash-builtins vim nano tree \
         python3 python-dev python-pip python-numpy python-scipy python-matplotlib python-psutil \
         openmpi-bin libopenmpi-dev make flex gcc g++ libz-dev libfl-dev \
         curl bash-completion cmake libxt-dev \
