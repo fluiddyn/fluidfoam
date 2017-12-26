@@ -18,6 +18,7 @@ RUN apt-get update --fix-missing && \
 
 WORKDIR /home/openfoam
 RUN /bin/bash -c "hg clone https://bitbucket.org/sedfoam/fluidfoam"
+WORKDIR /home/openfoam/fluidfoam
 RUN /bin/bash -c "make"
 
 #USER openfoam:openfoam
