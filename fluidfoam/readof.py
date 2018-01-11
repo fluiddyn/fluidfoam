@@ -450,22 +450,22 @@ def readfield(path, time_name=None, name=None, shape=None, boundary=None):
     values = field.values
 
     if field.type_data == 'scalar':
-        if shape is not None:
+        if shape is not None or field.uniform:
             values = np.reshape(values, shape, order="F")
     elif field.type_data == 'vector':
-        if shape is None:
+        if shape is None or field.uniform:
             shape = (3, values.size//3)
         else:
             shape = (3,) + tuple(shape)
         values = np.reshape(values, shape, order="F")
     elif field.type_data == 'symmtensor':
-        if shape is None:
+        if shape is None or field.uniform:
             shape = (6, values.size//6)
         else:
             shape = (6,) + tuple(shape)
         values = np.reshape(values, shape, order="F")
     elif field.type_data == 'tensor':
-        if shape is None:
+        if shape is None or field.uniform:
             shape = (9, values.size//9)
         else:
             shape = (9,) + tuple(shape)
@@ -566,7 +566,11 @@ def readsymmtensor(path, time_name=None, name=None, shape=None,
     if shape is None:
         shape = (6, values.size//6)
     else:
-        shape = (6,) + tuple(shape)
+        if scalar.uniform:
+            print("internalfield is uniform; so no reshape possible...")
+            shape = (6, values.size//6)
+        else:
+            shape = (6,) + tuple(shape)
 
     values = np.reshape(values, shape, order="F")
 
