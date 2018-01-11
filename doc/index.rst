@@ -1,4 +1,7 @@
-.. FluidFoam documentation master file
+.. fluidfoam documentation master file, created by
+   sphinx-quickstart on Thu Jan 11 12:22:00 2018.
+   You can adapt this file completely to your liking, but it should at least
+   contain the root `toctree` directive.
 
 FluidFoam documentation
 ========================
@@ -90,7 +93,8 @@ User Guide
 ----------
 
 .. toctree::
-   :maxdepth: 1
+   :maxdepth: 2
+   :caption: Contents:
 
    overview
    install

@@ -6,3 +6,5 @@ syntax: glob
 dist
 fluidfoam.egg-info
 .coverage
+_build
+generated
