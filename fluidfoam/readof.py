@@ -1,5 +1,20 @@
-"""
-Read OpenFoam files...
+"""Read OpenFoam Files for Python
+===========================================
+This module provides functions to read OpenFoam Files:
+
+.. autofunction:: readmesh
+
+.. autofunction:: readfield
+
+.. autofunction:: readscalar
+
+.. autofunction:: readvector
+
+.. autofunction:: readsymmtensor
+
+.. autofunction:: readtensor
+
+.. autofunction:: typefield
 
 """
 
@@ -410,16 +425,19 @@ class OpenFoamFile(object):
 
 
 def typefield(path, time_name=None, name=None):
-    """Read OpenFoam field.
+    """Read OpenFoam field and returns type of field.
 
-    Parameters
-    ----------
+    **Args**:
+        path: str\n
+        time_name: str\n
+        name: str
 
-    path : str
+    **Returns**:
+        str: type of field
 
-    time_name : str
+    A way you might use me is:
 
-    name : str
+        print public_fn_with_googley_docstring(name='foo', state=None)
 
     """
 

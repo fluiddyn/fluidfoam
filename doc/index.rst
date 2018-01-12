@@ -4,13 +4,13 @@
    contain the root `toctree` directive.
 
 FluidFoam documentation
-========================
+=======================
 
 
 The fluidfoam package provides Python classes useful to perform some plot with OpenFoam data.
 
 What is this repository for?
--------
+----------------------------
 
 * Openfoam Tools
 * Version : 0.1.0
@@ -19,14 +19,14 @@ What is this repository for?
 
 
 Deployment instructions
--------
+-----------------------
 
 The simplest way to install fluidfoam is by using pip::
 
   pip install fluidfoam
 
 You can get the source code from `Bitbucket
-<https://bitbucket.org/sedfoam/fluidfoam>`_ or from `the Python Package Index
+<https://bitbucket.org/fluiddyn/fluidfoam>`_ or from `the Python Package Index
 <https://pypi.python.org/pypi/fluidfoam/>`_.
 
 The development mode is often useful. From the root directory, run::
@@ -35,7 +35,7 @@ The development mode is often useful. From the root directory, run::
 
 
 Committing instructions (in development mode)
--------
+---------------------------------------------
 
 To get the status of the files::
 
@@ -55,7 +55,7 @@ To push the revision on the central repository::
 
 
 Update instructions (in development mode)
--------
+-----------------------------------------
 
 Pull the last revision::
 
@@ -67,12 +67,12 @@ Deploy::
 
 
 Example Usage
--------
+-------------
 
 * http://servforge.legi.grenoble-inp.fr/pub/soft-sedfoam/
 
 Contacts
--------
+--------
 
 * Cyrille.Bonamy@legi.cnrs.fr
 * Julien.Chauchat@grenoble-inp.fr
@@ -105,8 +105,8 @@ User Guide
 Modules Reference
 -----------------
 
-Here is presented the general organization of the package (see also
-:doc:`concepts_classes`) and the documentation of the modules, classes and
+Here is presented the general organization of the package
+and the documentation of the modules, classes and
 functions.
 
 .. autosummary::
@@ -117,16 +117,24 @@ functions.
 More
 ----
 
+.. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
+   :target: https://pypi.org/project/fluidfoam/
+   :alt: Latest version
+
+.. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/graph/badge.svg
+   :target: https://codecov.io/gh/fluiddyn/fluidfoam
+   :alt: Code coverage
+
+
+- `FluidFoam forge on Bitbucket <https://bitbucket.org/fluiddyn/fluidfoam>`_
+- FluidFoam in PyPI |release|
+- Unittest coverage |coverage|
+
 .. toctree::
    :maxdepth: 1
 
-   FluidFoam forge on Bitbucket <https://bitbucket.org/sedfoam/fluidfoam>
-   FluidFoam in PyPI  <https://pypi.python.org/pypi/fluidfoam/>
-   to_do
    changes
-   authors
-   for_dev
-
+   to_do
 
 Indices and tables
 ==================
