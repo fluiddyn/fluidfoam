@@ -1,0 +1,8 @@
+Sphinx>=1.1
+numpy
+numpydoc
+cython
+mako
+psutil
+pandas
+jupyter
