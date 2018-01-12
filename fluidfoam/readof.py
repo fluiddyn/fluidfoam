@@ -427,17 +427,17 @@ class OpenFoamFile(object):
 def typefield(path, time_name=None, name=None):
     """Read OpenFoam field and returns type of field.
 
-    **Args**:
+    Args:
         path: str\n
         time_name: str\n
         name: str
 
-    **Returns**:
+    Returns:
         str: type of field
 
-    A way you might use me is:
-
-        print public_fn_with_googley_docstring(name='foo', state=None)
+    A way you might use me is:\n
+        print("type of alpha field is",
+        fluidfoam.typefield('path_of_OpenFoam_case', '0', 'alpha'))
 
     """
 
@@ -449,19 +449,24 @@ def typefield(path, time_name=None, name=None):
 
 
 def readfield(path, time_name=None, name=None, shape=None, boundary=None):
-    """Read OpenFoam field.
+    """
+    Read OpenFoam field and reshape if necessary and possible (not uniform
+    field).
 
-    Parameters
-    ----------
+    Args:
+        path: str\n
+        time_name: str\n
+        name: str\n
+        shape: None or iterable\n
+        boundary: None or str 
 
-    path : str
+    Returns:
+        array: array of type of the field; size of the array is the size of the
+        interior domain (or of the size of the boundary in case of not None
+        boundary)
 
-    time_name : str
-
-    name : str
-
-    shape : None or iterable
-
+    A way you might use me is:\n
+        field = fluidfoam.readfield('path_of_OpenFoam_case', '0', 'alpha')
     """
 
     field = OpenFoamFile(path, time_name, name, boundary)
@@ -493,21 +498,24 @@ def readfield(path, time_name=None, name=None, shape=None, boundary=None):
 
 
 def readscalar(path, time_name=None, name=None, shape=None, boundary=None):
-    """Read OpenFoam scalar.
+    """
+    Read OpenFoam scalar field and reshape if necessary and possible (not
+    uniform field).
 
-    Parameters
-    ----------
+    Args:
+        path: str\n
+        time_name: str\n
+        name: str\n
+        shape: None or iterable\n
+        boundary: None or str 
 
-    path : str
+    Returns:
+        array: array of scalar field; size of the array is the size of the
+        interior domain (or of the size of the boundary in case of not None
+        boundary)
 
-    time_name : str
-
-    name : str
-
-    shape : None or iterable
-
-    boundary : None or patch name
-
+    A way you might use me is:\n
+        scalar_a = fluidfoam.readscalar('path_of_OpenFoam_case', '0', 'alpha')
     """
 
     scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
@@ -523,27 +531,30 @@ def readscalar(path, time_name=None, name=None, shape=None, boundary=None):
 
 
 def readvector(path, time_name=None, name=None, shape=None, boundary=None):
-    """Read OpenFoam vector.
+    """
+    Read OpenFoam vector field and reshape if necessary and possible (not
+    uniform field).
 
-    Parameters
-    ----------
+    Args:
+        path: str\n
+        time_name: str\n
+        name: str\n
+        shape: None or iterable\n
+        boundary: None or str 
 
-    path : str
+    Returns:
+        array: array of vector field; size of the array is the size of the
+        interior domain (or of the size of the boundary in case of not None
+        boundary)
 
-    time_name : str
-
-    name : str
-
-    shape : None or iterable
-
-    boundary : None or patch name
-
+    A way you might use me is:\n
+        U = fluidfoam.readvector('path_of_OpenFoam_case', '0', 'U')
     """
 
-    scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
-    values = scalar.values
+    vector = OpenFoamFile(path, time_name, name, boundary=boundary)
+    values = vector.values
 
-    if scalar.type_data != 'vector':  # pragma: no cover
+    if vector.type_data != 'vector':  # pragma: no cover
         raise ValueError('This file does not contain a vector.')
 
     if shape is None:
@@ -558,21 +569,24 @@ def readvector(path, time_name=None, name=None, shape=None, boundary=None):
 
 def readsymmtensor(path, time_name=None, name=None, shape=None,
                    boundary=None):
-    """Read OpenFoam symmetrical tensor.
+    """
+    Read OpenFoam symmetrical tensor field and reshape if necessary and possible
+    (not uniform field).
 
-    Parameters
-    ----------
+    Args:
+        path: str\n
+        time_name: str\n
+        name: str\n
+        shape: None or iterable\n
+        boundary: None or str 
 
-    path : str
+    Returns:
+        array: array of symmetrical tensor field; size of the array is the size
+        of the interior domain (or of the size of the boundary in case of not
+        None boundary)
 
-    time_name : str
-
-    name : str
-
-    shape : None or iterable
-
-    boundary : None or patch name
-
+    A way you might use me is:\n
+        sigma = fluidfoam.readsymmtensor('path_of_OpenFoam_case', '0', 'sigma')
     """
 
     scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
@@ -596,21 +610,24 @@ def readsymmtensor(path, time_name=None, name=None, shape=None,
 
 
 def readtensor(path, time_name=None, name=None, shape=None, boundary=None):
-    """Read OpenFoam tensor.
+    """
+    Read OpenFoam tensor field and reshape if necessary and possible
+    (not uniform field).
 
-    Parameters
-    ----------
+    Args:
+        path: str\n
+        time_name: str\n
+        name: str\n
+        shape: None or iterable\n
+        boundary: None or str 
 
-    path : str
+    Returns:
+        array: array of tensor field; size of the array is the size of the
+        interior domain (or of the size of the boundary in case of not None
+        boundary)
 
-    time_name : str
-
-    name : str
-
-    shape : None or iterable
-
-    boundary : None or patch name
-
+    A way you might use me is:\n
+        tens = fluidfoam.readtensor('path_of_OpenFoam_case', '0', 'tens')
     """
 
     scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
@@ -631,17 +648,21 @@ def readtensor(path, time_name=None, name=None, shape=None, boundary=None):
 
 
 def readmesh(rep, shape=None, boundary=None):
-    """Read OpenFoam Mesh.
+    """
+    Read OpenFoam mesh and reshape if necessary (in cartesian structured mesh).
 
-    Parameters
-    ----------
+    Args:
+        rep: str\n
+        shape: None or iterable\n
+        boundary: None or str 
 
-    rep : str
+    Returns:
+        array: array of vector (Mesh X, Y, Z); size of the array is the size of
+        the interior domain (or of the size of the boundary in case of not None
+        boundary)
 
-    shape : None or iterable
-
-    boundary : None or str
-
+    A way you might use me is:\n
+        X, Y, Z = fluidfoam.readmesh('path_of_OpenFoam_case')
     """
 
 # backward compatibility (when ccx/ccy/ccz need)!!

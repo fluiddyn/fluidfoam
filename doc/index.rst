@@ -113,6 +113,7 @@ functions.
    :toctree: generated/
 
    fluidfoam.readof
+   fluidfoam.create1dprofile
 
 More
 ----
