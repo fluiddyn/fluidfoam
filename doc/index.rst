@@ -122,7 +122,7 @@ More
    :alt: Latest version
 
 .. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
-   :target: https://codecov.io/gh/fluiddyn/fluidfoam
+   :target: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/
    :alt: Code coverage
 
 
