@@ -121,7 +121,7 @@ More
    :target: https://pypi.org/project/fluidfoam/
    :alt: Latest version
 
-.. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/graph/badge.svg
+.. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
    :target: https://codecov.io/gh/fluiddyn/fluidfoam
    :alt: Code coverage
 
