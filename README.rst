@@ -8,6 +8,10 @@ fluidfoam
    :target: https://pypi.python.org/pypi/fluidfoam/
    :alt: Latest version
 
+.. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
+   :target: http://fluidfoam.readthedocs.org
+   :alt: Documentation status
+
 .. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
    :target: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/
    :alt: Code coverage
