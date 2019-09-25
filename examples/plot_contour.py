@@ -41,7 +41,7 @@ vel = readvector(sol, timename, 'U', True)
 ###############################################################################
 # Now plots the contour of the first velocity component at a given z position
 # ---------------------------------------------------------------------------
-# 
+#
 # .. note:: Here the position z is the middle (// is used to have an integer)
 
 import matplotlib.pyplot as plt
