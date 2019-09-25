@@ -24,12 +24,12 @@ setup(
     install_requires=['numpy>=1.11', 'scipy>=0.17',
                       'matplotlib>=1.5'],
     # metadata for upload to PyPI
-    author="Cyrille Bonamy",
-    author_email="cyrille.bonamy@legi.cnrs.fr",
-    description="Openfoam PostProcessing Python Tools",
-    license='GPLv2',
-    keywords="Openfoam PostProcessing Tools",
-    url="http://legi.grenoble-inp.fr",   # project home page, if any
+    author = "Cyrille Bonamy",
+    author_email = "cyrille.bonamy@univ-grenoble-alpes.fr",
+    description = "Openfoam PostProcessing Python Tools",
+    license = 'GPLv2',
+    keywords = ["Openfoam", "postprocessing", "CFD"],
+    url = "http://legi.grenoble-inp.fr",   # project home page, if any
     classifiers=[
         # How mature is this project? Common values are
         # 3 - Alpha
@@ -49,5 +49,8 @@ setup(
         'Programming Language :: Python :: 2',
         'Programming Language :: Python :: 2.7',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.4',
         'Programming Language :: Python :: 3.5',
+        'Programming Language :: Python :: 3.6',
+        'Programming Language :: Python :: 3.7'
         ])

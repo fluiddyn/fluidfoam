@@ -13,9 +13,9 @@ What is this repository for?
 ----------------------------
 
 * Openfoam Tools
-* Version : 0.1.0
-* Supported OpenFoam Versions : 2.4.0, 4.1, 5.0
-* Supported Python Versions : 2.7.x, 3.5
+* Version : 0.1.6
+* Supported OpenFoam Versions : 2.4.0, 4.1, 5.0, 6.0, v1712+, v1806+
+* Supported Python Versions : 2.7.x, >= 3.4
 
 
 Deployment instructions
@@ -77,8 +77,9 @@ Contacts
 * Cyrille.Bonamy@legi.cnrs.fr
 * Julien.Chauchat@grenoble-inp.fr
 * Pierre.Augier@legi.cnrs.fr
+* Guillaume.Maurice@univ-grenoble-alpes.fr
 * Tim.Nagel@legi.cnrs.fr
-* Thibaud.Revil-Baudard@legi.cnrs.fr
+* Antoine.Mathieu@univ-grenoble-alpes.fr
 
 License
 -------
@@ -89,17 +90,17 @@ french license.
 .. _CeCILL-B: http://www.cecill.info/index.en.html
 
 
-User Guide
-----------
+.. User Guide
+.. ----------
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-   overview
-   install
-   tutorial
-   examples
+..   overview
+..   install
+..   tutorial
+..   examples
 
 
 Modules Reference
@@ -113,18 +114,36 @@ functions.
    :toctree: generated/
 
    fluidfoam.readof
-   fluidfoam.create1dprofile
+   fluidfoam.processing1d
+   fluidfoam.readpostpro
+   fluidfoam.meshdesign
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Example galleries:
+
+   auto_examples/index
+
 
 More
 ----
 
 .. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
-   :target: https://pypi.org/project/fluidfoam/
+   :target: https://pypi.python.org/pypi/fluidfoam/
    :alt: Latest version
+
+.. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
+   :target: http://fluidfoam.readthedocs.org
+   :alt: Documentation status
+
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/ipwdnr1an8su429q?svg=true
+.. _AppVeyor: https://ci.appveyor.com/project/CyrilleBonamy/fluidfoam/history
 
 .. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
    :target: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/
    :alt: Code coverage
+
+
 
 
 - `FluidFoam forge on Bitbucket <https://bitbucket.org/fluiddyn/fluidfoam>`_
@@ -134,8 +153,8 @@ More
 .. toctree::
    :maxdepth: 1
 
-   changes
-   to_do
+..   changes
+..   to_do
 
 Indices and tables
 ==================

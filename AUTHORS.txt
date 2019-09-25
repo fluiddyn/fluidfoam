@@ -1,5 +1,6 @@
 Cyrille Bonamy
 Julien Chauchat
-Tim Nagel
-Thibaud Revil-Baudard
 Pierre Augier
+Guillaume Maurice
+Tim Nagel
+Antoine Mathieu

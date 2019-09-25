@@ -40,7 +40,8 @@ def _make_path(path, time_name=None, name=None):
 
 class OpenFoamFile(object):
     """OpenFoam file parser."""
-    def __init__(self, path, time_name=None, name=None, boundary=None):
+    def __init__(self, path, time_name=None, name=None, structured=False,
+                 boundary=None, order="F", precision=15):
 
         self.pathcase = path
         self.path = _make_path(path, time_name, name)
@@ -68,7 +69,7 @@ class OpenFoamFile(object):
 
         for line in self.lines_stripped:
             if line.startswith(b'dimensions'):
-                tmp = b'[' + line.split(b'[')[1]
+                tmp = (line.split(b'[')[1]).split(b']')[0]
                 self.dimensions = eval(b', '.join(tmp.split()))
 
         self.boundary = self._parse_session(b'boundaryField')
@@ -78,11 +79,13 @@ class OpenFoamFile(object):
         elif name is 'faces':
             self._parse_face()
         elif name is 'points':
-            self._parse_points()
-        elif name is 'owner':
+            self._parse_points(precision=precision)
+        elif (name is 'owner') or (name is 'neighbour'):
             self._parse_owner()
         else:
-            self._parse_data(boundary=boundary)
+            self._parse_data(boundary=boundary, precision=precision)
+        if structured:
+            self._determine_order(order=order, precision=precision)
 
     def _parse_boundaryfile(self):
 
@@ -145,7 +148,7 @@ class OpenFoamFile(object):
 
         return dict_session
 
-    def _parse_data(self, boundary):
+    def _parse_data(self, boundary, precision=15):
 
         if boundary is not None:
             boun = str.encode(boundary)
@@ -154,7 +157,7 @@ class OpenFoamFile(object):
             else:
                 print('Warning : No data on patch')
                 print('Nearest cells values use')
-                self._nearest_data(boundary=boundary)
+                self._nearest_data(boundary=boundary, precision=precision)
                 return
         else:
             data = self.content.split(b'internalField')[1]
@@ -165,6 +168,7 @@ class OpenFoamFile(object):
 
         self.nonuniform = words[0] == b'nonuniform'
         self.uniform = words[0] == b'uniform'
+        self.codestream = words[0] == b'#codeStream'
         self.short = shortline[-1] == b';'
 
         self.type_data = self.header[b'class']
@@ -193,6 +197,9 @@ class OpenFoamFile(object):
             data = shortline.split(b'(')[1]
             data = data.replace(b' ', b'\n')
             data = data.replace(b');', b'\n);')
+        elif self.codestream:
+            nb_pts = 0
+            print("Warning : codeStream field! I can not read the source code!\n")
         else:
             nb_pts = int(lines[1])
             data = b'\n('.join(data.split(b'\n(')[1:])
@@ -215,17 +222,18 @@ class OpenFoamFile(object):
                     [float(s)
                      for s in data.strip().split(b'\n')[:nb_pts]])
             elif self.type_data in ('vector', 'tensor', 'symmtensor'):
-                lines = data.split(b'\n(')
+                lines = data.split(b';')[0].split(b'\n(')
                 lines = [line.split(b')')[0] for line in lines]
                 data = b' '.join(lines).strip()
                 self.values = np.array([float(s) for s in data.split()])
 
+        self.values = np.around(self.values, decimals=precision)
         if self.type_data == 'vector':
             self.values_x = self.values[::3]
             self.values_y = self.values[1::3]
             self.values_z = self.values[2::3]
 
-    def _nearest_data(self, boundary):
+    def _nearest_data(self, boundary, precision):
 
         bounfile = OpenFoamFile(self.pathcase + '/constant/polyMesh/',
                                 name='boundary')
@@ -244,6 +252,7 @@ class OpenFoamFile(object):
 
         self.nonuniform = words[0] == b'nonuniform'
         self.uniform = words[0] == b'uniform'
+        self.codestream = words[0] == b'#codeStream'
         self.short = shortline[-1] == b';'
 
         self.type_data = self.header[b'class']
@@ -272,6 +281,9 @@ class OpenFoamFile(object):
             data = shortline.split(b'(')[1]
             data = data.replace(b' ', b'\n')
             data = data.replace(b');', b'\n);')
+        elif self.codestream:
+            nb_pts = 0
+            print("Warning : codeStream field! I can not read the source code!\n")
         else:
             nb_pts = int(lines[1])
             data = b'\n('.join(data.split(b'\n(')[1:])
@@ -298,6 +310,7 @@ class OpenFoamFile(object):
                 lines = [line.split(b')')[0] for line in lines]
                 data = b' '.join(lines).strip()
                 values = np.array([float(s) for s in data.split()])
+        values = np.around(values, decimals=precision)
         if self.uniform:
             self.values = values
         else:
@@ -331,7 +344,7 @@ class OpenFoamFile(object):
             self.nfaces = int(line)-1
         else:
             self.nfaces = int(line)
-        data = self.content.split(line)[1]
+        data = self.content.split(line, 1)[1]
         data = b'\n('.join(data.split(b'\n(')[1:])
 
         lines = data.split(b'\n')
@@ -344,7 +357,7 @@ class OpenFoamFile(object):
                 '{}i'.format(nb_numbers),
                 data[0:nb_numbers*struct.calcsize('i')])
             data = self.content.split(
-                    str.encode(str(self.pointsbyface[-1])))[1]
+                str.encode(str(self.pointsbyface[-1])))[1]
             data = b'\n('.join(data.split(b'\n(')[1:])
 
             for i in range(self.nfaces):
@@ -365,9 +378,9 @@ class OpenFoamFile(object):
                     self.faces[i-1] = {}
                     self.faces[i-1]['npts'] = line.split(b'(')[0]
                     self.faces[i-1]['id_pts'] = [int(s) for s in ((
-                            line.split(b'(')[1].split(b')')[0]).split())]
+                        line.split(b'(')[1].split(b')')[0]).split())]
 
-    def _parse_points(self):
+    def _parse_points(self, precision):
 
         for line in self.lines_stripped:
             try:
@@ -377,7 +390,7 @@ class OpenFoamFile(object):
                 continue
             break
         self.nb_pts = int(line)
-        data = self.content.split(line)[1]
+        data = self.content.split(line, 1)[1]
 
         self.type_data = self.header[b'class']
 
@@ -392,6 +405,8 @@ class OpenFoamFile(object):
             lines = [line.split(b')')[0] for line in lines]
             data = b' '.join(lines).strip()
             self.values = np.array([float(s) for s in data.split()])
+
+        self.values = np.around(self.values, decimals=precision)
         self.values_x = self.values[::3]
         self.values_y = self.values[1::3]
         self.values_z = self.values[2::3]
@@ -406,7 +421,7 @@ class OpenFoamFile(object):
                 continue
             break
         self.nb_faces = int(line)
-        data = self.content.split(line)[2]
+        data = self.content.split(line, 2)[2]
 
         self.type_data = self.header[b'class']
 
@@ -422,6 +437,20 @@ class OpenFoamFile(object):
             data = b' '.join(lines).strip()
             self.values = np.array([int(s) for s in data.split()])
         self.nb_cell = np.max(self.values) + 1
+
+    def _determine_order(self, order, precision):
+
+        xs, ys, zs = readmesh(self.pathcase, precision=precision)
+        nb_cell = xs.size
+        nx = np.unique(xs).size
+        ny = np.unique(ys).size
+        nz = np.unique(zs).size
+        if nx*ny*nz != nb_cell:
+            raise ValueError('nx.ny.nz not equal to number of cells.'
+                             'Are you sure that your mesh is cartesian?')
+
+        self.ind = np.lexsort((xs, ys, zs))
+        self.shape = (nx, ny, nz)
 
 
 def typefield(path, time_name=None, name=None):
@@ -448,17 +477,22 @@ def typefield(path, time_name=None, name=None):
     return field.type_data
 
 
-def readfield(path, time_name=None, name=None, shape=None, boundary=None):
+def readfield(path, time_name=None, name=None, structured=False, boundary=None,
+              order="F", precision=15):
     """
-    Read OpenFoam field and reshape if necessary and possible (not uniform
-    field).
+    Read OpenFoam field and reshape if necessary (structured mesh) and
+    possible (not uniform field).
 
     Args:
         path: str\n
         time_name: str\n
         name: str\n
-        shape: None or iterable\n
-        boundary: None or str 
+        structured: False or True\n
+        boundary: None or str\n
+        order: "F" (default) or "C" \n
+        precision : Number of decimal places to round to (default: 15).
+        If decimals is negative, it specifies the number of positions to the
+        left of the decimal point.
 
     Returns:
         array: array of type of the field; size of the array is the size of the
@@ -469,35 +503,40 @@ def readfield(path, time_name=None, name=None, shape=None, boundary=None):
         field = fluidfoam.readfield('path_of_OpenFoam_case', '0', 'alpha')
     """
 
-    field = OpenFoamFile(path, time_name, name, boundary)
+    field = OpenFoamFile(path, time_name, name, structured=structured,
+                         boundary=boundary, order=order, precision=precision)
     values = field.values
 
     if field.type_data == 'scalar':
-        if shape is not None or field.uniform:
-            values = np.reshape(values, shape, order="F")
+        if structured and not field.uniform:
+            values = np.reshape(values[field.ind], field.shape, order = order)
     elif field.type_data == 'vector':
-        if shape is None or field.uniform:
-            shape = (3, values.size//3)
-        else:
-            shape = (3,) + tuple(shape)
-        values = np.reshape(values, shape, order="F")
+        shape = (3, values.size//3)
+        values = np.reshape(values, shape, order = order)
+        if structured and not field.uniform:
+            values[0:3, :] = values[0:3, field.ind]
+            shape = (3,) + tuple(field.shape)
+            values = np.reshape(values, shape, order = order)
     elif field.type_data == 'symmtensor':
-        if shape is None or field.uniform:
-            shape = (6, values.size//6)
-        else:
-            shape = (6,) + tuple(shape)
-        values = np.reshape(values, shape, order="F")
+        shape = (6, values.size//6)
+        values = np.reshape(values, shape, order = order)
+        if structured and not field.uniform:
+            values[0:6, :] = values[0:6, field.ind]
+            shape = (6,) + tuple(field.shape)
+            values = np.reshape(values, shape, order = order)
     elif field.type_data == 'tensor':
-        if shape is None or field.uniform:
-            shape = (9, values.size//9)
-        else:
-            shape = (9,) + tuple(shape)
-        values = np.reshape(values, shape, order="F")
+        shape = (9, values.size//9)
+        values = np.reshape(values, shape, order = order)
+        if structured and not field.uniform:
+            values[0:9, :] = values[0:9, field.ind]
+            shape = (9,) + tuple(field.shape)
+            values = np.reshape(values, shape, order = order)
 
     return values
 
 
-def readscalar(path, time_name=None, name=None, shape=None, boundary=None):
+def readscalar(path, time_name=None, name=None, structured=False, boundary=None,
+               order="F", precision=15, mode=None):
     """
     Read OpenFoam scalar field and reshape if necessary and possible (not
     uniform field).
@@ -506,8 +545,12 @@ def readscalar(path, time_name=None, name=None, shape=None, boundary=None):
         path: str\n
         time_name: str\n
         name: str\n
-        shape: None or iterable\n
-        boundary: None or str 
+        structured: False or True\n
+        boundary: None or str\n
+        order: "F" (default) or "C" \n
+        precision : Number of decimal places to round to (default: 15).
+        If decimals is negative, it specifies the number of positions to the
+        left of the decimal point.
 
     Returns:
         array: array of scalar field; size of the array is the size of the
@@ -517,20 +560,25 @@ def readscalar(path, time_name=None, name=None, shape=None, boundary=None):
     A way you might use me is:\n
         scalar_a = fluidfoam.readscalar('path_of_OpenFoam_case', '0', 'alpha')
     """
+    if mode=='parallel':
+        raise ValueError('Not Implemented')
+    else:
+        scalar = OpenFoamFile(path, time_name, name, structured=structured,
+                              boundary=boundary, order=order,
+                              precision=precision)
+        values = scalar.values
 
-    scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
-    values = scalar.values
+        if scalar.type_data != 'scalar':  # pragma: no cover
+            raise ValueError('This file does not contain a scalar.')
 
-    if scalar.type_data != 'scalar':  # pragma: no cover
-        raise ValueError('This file does not contain a scalar.')
-
-    if shape is not None:
-        values = np.reshape(values, shape, order="F")
+        if structured:
+            values = values[scalar.ind].reshape(scalar.shape, order = order)
 
     return values
 
 
-def readvector(path, time_name=None, name=None, shape=None, boundary=None):
+def readvector(path, time_name=None, name=None, structured=False, boundary=None,
+               order="F", precision=15):
     """
     Read OpenFoam vector field and reshape if necessary and possible (not
     uniform field).
@@ -539,8 +587,12 @@ def readvector(path, time_name=None, name=None, shape=None, boundary=None):
         path: str\n
         time_name: str\n
         name: str\n
-        shape: None or iterable\n
-        boundary: None or str 
+        structured: False or True\n
+        boundary: None or str\n
+        order: "F" (default) or "C" \n
+        precision : Number of decimal places to round to (default: 15).
+        If decimals is negative, it specifies the number of positions to the
+        left of the decimal point.
 
     Returns:
         array: array of vector field; size of the array is the size of the
@@ -551,34 +603,42 @@ def readvector(path, time_name=None, name=None, shape=None, boundary=None):
         U = fluidfoam.readvector('path_of_OpenFoam_case', '0', 'U')
     """
 
-    vector = OpenFoamFile(path, time_name, name, boundary=boundary)
+    vector = OpenFoamFile(path, time_name, name, structured=structured,
+                          boundary=boundary, order=order, precision=precision)
     values = vector.values
 
     if vector.type_data != 'vector':  # pragma: no cover
         raise ValueError('This file does not contain a vector.')
 
-    if shape is None:
-        shape = (3, values.size//3)
-    else:
-        shape = (3,) + tuple(shape)
-
-    values = np.reshape(values, shape, order="F")
+    shape = (3, values.size//3)
+    values = np.reshape(values, shape, order = order)
+    if structured:
+        if vector.uniform:
+            print("internalfield is uniform; so no reshape possible...")
+        else:
+            values[0:3, :] = values[0:3, vector.ind]
+            shape = (3,) + tuple(vector.shape)
+            values = np.reshape(values, shape, order = order)
 
     return values
 
 
-def readsymmtensor(path, time_name=None, name=None, shape=None,
-                   boundary=None):
+def readsymmtensor(path, time_name=None, name=None, structured=False,
+                   boundary=None, order="F", precision=15):
     """
-    Read OpenFoam symmetrical tensor field and reshape if necessary and possible
-    (not uniform field).
+    Read OpenFoam symmetrical tensor field and reshape if necessary and
+    possible (not uniform field).
 
     Args:
         path: str\n
         time_name: str\n
         name: str\n
-        shape: None or iterable\n
-        boundary: None or str 
+        structured: False or True\n
+        boundary: None or str\n
+        order: "F" (default) or "C" \n
+        precision : Number of decimal places to round to (default: 15).
+        If decimals is negative, it specifies the number of positions to the
+        left of the decimal point.
 
     Returns:
         array: array of symmetrical tensor field; size of the array is the size
@@ -589,27 +649,28 @@ def readsymmtensor(path, time_name=None, name=None, shape=None,
         sigma = fluidfoam.readsymmtensor('path_of_OpenFoam_case', '0', 'sigma')
     """
 
-    scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
+    scalar = OpenFoamFile(path, time_name, name, structured=structured,
+                          boundary=boundary, order=order, precision=precision)
     values = scalar.values
 
     if scalar.type_data != 'symmtensor':  # pragma: no cover
         raise ValueError('This file does not contain a symmtensor.')
 
-    if shape is None:
-        shape = (6, values.size//6)
-    else:
+    shape = (6, values.size//6)
+    values = np.reshape(values, shape, order = order)
+    if structured:
         if scalar.uniform:
             print("internalfield is uniform; so no reshape possible...")
-            shape = (6, values.size//6)
         else:
-            shape = (6,) + tuple(shape)
-
-    values = np.reshape(values, shape, order="F")
+            values[0:6, :] = values[0:6, scalar.ind]
+            shape = (6,) + tuple(scalar.shape)
+            values = np.reshape(values, shape, order = order)
 
     return values
 
 
-def readtensor(path, time_name=None, name=None, shape=None, boundary=None):
+def readtensor(path, time_name=None, name=None, structured=False, boundary=None,
+               order="F", precision=15):
     """
     Read OpenFoam tensor field and reshape if necessary and possible
     (not uniform field).
@@ -618,8 +679,12 @@ def readtensor(path, time_name=None, name=None, shape=None, boundary=None):
         path: str\n
         time_name: str\n
         name: str\n
-        shape: None or iterable\n
-        boundary: None or str 
+        structured: False or True\n
+        boundary: None or str\n
+        order: "F" (default) or "C" \n
+        precision : Number of decimal places to round to (default: 15).
+        If decimals is negative, it specifies the number of positions to the
+        left of the decimal point.
 
     Returns:
         array: array of tensor field; size of the array is the size of the
@@ -630,31 +695,39 @@ def readtensor(path, time_name=None, name=None, shape=None, boundary=None):
         tens = fluidfoam.readtensor('path_of_OpenFoam_case', '0', 'tens')
     """
 
-    scalar = OpenFoamFile(path, time_name, name, boundary=boundary)
+    scalar = OpenFoamFile(path, time_name, name, structured=structured,
+                          boundary=boundary, order=order, precision=precision)
 
     values = scalar.values
 
     if scalar.type_data != 'tensor':  # pragma: no cover
         raise ValueError('This file does not contstartFaceain a tensor.')
 
-    if shape is None:
-        shape = (9, values.size//9)
-    else:
-        shape = (9,) + tuple(shape)
-
-    values = np.reshape(values, shape, order="F")
+    shape = (9, values.size//9)
+    values = np.reshape(values, shape, order = order)
+    if structured:
+        if scalar.uniform:
+            print("internalfield is uniform; so no reshape possible...")
+        else:
+            values[0:9, :] = values[0:9, scalar.ind]
+            shape = (9,) + tuple(scalar.shape)
+            values = np.reshape(values, shape, order = order)
 
     return values
 
 
-def readmesh(rep, shape=None, boundary=None):
+def readmesh(rep, structured=False, boundary=None, order="F", precision=15):
     """
     Read OpenFoam mesh and reshape if necessary (in cartesian structured mesh).
 
     Args:
         rep: str\n
-        shape: None or iterable\n
-        boundary: None or str 
+        structured: False or True\n
+        boundary: None or str\n
+        order: "F" (default) or "C" \n
+        precision : Number of decimal places to round to (default: 15).
+        If decimals is negative, it specifies the number of positions to the
+        left of the decimal point.
 
     Returns:
         array: array of vector (Mesh X, Y, Z); size of the array is the size of
@@ -663,6 +736,12 @@ def readmesh(rep, shape=None, boundary=None):
 
     A way you might use me is:\n
         X, Y, Z = fluidfoam.readmesh('path_of_OpenFoam_case')
+        So X, Y and Z are 1D numpy array with size = nb_cell
+
+    If you play with structured mesh you can shape the X, Y and Z output :\n
+        X, Y, Z = fluidfoam.readmesh('path_of_OpenFoam_case', structured=True)
+        So X, Y and Z are 3D numpy array with shape = (nx, ny, nz)
+
     """
 
 # backward compatibility (when ccx/ccy/ccz need)!!
@@ -673,10 +752,10 @@ def readmesh(rep, shape=None, boundary=None):
         raise ValueError('No constant/polyMesh directory in ', rep,
                          ' Please verify the directory of your case.')
 
-    facefile = OpenFoamFile(rep + '/constant/polyMesh/', name='faces')
-    pointfile = OpenFoamFile(rep + '/constant/polyMesh/', name='points')
-
     if boundary is not None:
+        facefile = OpenFoamFile(rep + '/constant/polyMesh/', name='faces')
+        pointfile = OpenFoamFile(rep + '/constant/polyMesh/', name='points',
+                                 precision=precision)
         bounfile = OpenFoamFile(rep + '/constant/polyMesh/', name='boundary')
         id0 = int(bounfile.boundaryface[str.encode(boundary)][b'startFace'])
         nfaces = int(bounfile.boundaryface[str.encode(boundary)][b'nFaces'])
@@ -694,23 +773,47 @@ def readmesh(rep, shape=None, boundary=None):
             zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
     else:
         owner = OpenFoamFile(rep + '/constant/polyMesh/', name='owner')
-        xs = np.empty(owner.nb_cell, dtype=float)
-        ys = np.empty(owner.nb_cell, dtype=float)
-        zs = np.empty(owner.nb_cell, dtype=float)
-        face = {}
-        for i in range(owner.nb_faces):
-            if not owner.values[i] in face:
-                face[owner.values[i]] = list()
-            face[owner.values[i]].append(facefile.faces[i]['id_pts'][:])
-        for i in range(owner.nb_cell):
-            xs[i] = np.mean(pointfile.values_x[np.concatenate(face[i])[:]])
-            ys[i] = np.mean(pointfile.values_y[np.concatenate(face[i])[:]])
-            zs[i] = np.mean(pointfile.values_z[np.concatenate(face[i])[:]])
-
-        if shape is not None:
-            xs = np.reshape(xs, shape, order="F")
-            ys = np.reshape(ys, shape, order="F")
-            zs = np.reshape(zs, shape, order="F")
+        if os.path.exists(os.path.join(rep, 'constant/C')):
+            xs, ys, zs = readvector(rep, 'constant', 'C', precision=precision)
+        else:
+            facefile = OpenFoamFile(rep + '/constant/polyMesh/', name='faces')
+            pointfile = OpenFoamFile(rep + '/constant/polyMesh/', name='points',
+                                     precision=precision)
+            neigh = OpenFoamFile(rep + '/constant/polyMesh/', name='neighbour')
+            xs = np.empty(owner.nb_cell, dtype=float)
+            ys = np.empty(owner.nb_cell, dtype=float)
+            zs = np.empty(owner.nb_cell, dtype=float)
+            face = {}
+            for i in range(neigh.nb_faces):
+                if not neigh.values[i] in face:
+                    face[neigh.values[i]] = list()
+                face[neigh.values[i]].append(facefile.faces[i]['id_pts'][:])
+            for i in range(owner.nb_faces):
+                if not owner.values[i] in face:
+                    face[owner.values[i]] = list()
+                face[owner.values[i]].append(facefile.faces[i]['id_pts'][:])
+            for i in range(owner.nb_cell):
+                xs[i] = np.mean(
+                        pointfile.values_x[np.unique(
+                                np.concatenate(face[i])[:])])
+                ys[i] = np.mean(
+                        pointfile.values_y[np.unique(
+                                np.concatenate(face[i])[:])])
+                zs[i] = np.mean(
+                        pointfile.values_z[np.unique(
+                                np.concatenate(face[i])[:])])
+        if structured:
+            nx = np.unique(xs).size
+            ny = np.unique(ys).size
+            nz = np.unique(zs).size
+            if nx*ny*nz != owner.nb_cell:
+                raise ValueError('nx.ny.nz not equal to number of cells.'
+                                 'Are you sure that your mesh is cartesian?')
+            ind = np.lexsort((xs, ys, zs))
+            shape = (nx, ny, nz)
+            xs = xs[ind].reshape(shape, order = order)
+            ys = ys[ind].reshape(shape, order = order)
+            zs = zs[ind].reshape(shape, order = order)
 
     return xs, ys, zs
 
