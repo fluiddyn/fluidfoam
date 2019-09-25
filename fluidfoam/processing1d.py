@@ -208,8 +208,8 @@ def plot1dprofil(pathr, varlist):
         z, field, size1d = read1dprofil(pathr+"/"+varlist[i+1]+".xy")
         fields[i+1] = field
 
-    f, axarr = plt.subplots(1, len(varlist), sharey=True)
-    for i in range(len(varlist)):
+    dummy, axarr = plt.subplots(1, len(varlist), sharey=True)
+    for i, dummy in enumerate(varlist):
         axarr[i].plot(fields[i], z)
         axarr[i].set_title(varlist[i])
     plt.show()

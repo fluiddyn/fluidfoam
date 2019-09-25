@@ -9,9 +9,9 @@ This example reads and plots a time series of an OpenFoam scalar field
 # Gets the time directories
 # -------------------------
 #
-# .. note:: Tries if directory is a number and adds it in the time array 
+# .. note:: Tries if directory is a number and adds it in the time array
 import os
-import numpy as np 
+import numpy as np
 
 sol = '../output_samples/box/'
 dir_list = os.listdir(sol)

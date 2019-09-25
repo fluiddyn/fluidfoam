@@ -6,7 +6,7 @@ This module provides functions to list and read OpenFoam PostProcessing Files:
 .. autofunction:: readprobes
 """
 import os
-import numpy as np 
+import numpy as np
 
 def varinforce():
     """ return the var included in postProcessing force files."""

@@ -7,7 +7,6 @@ This module provides functions to design OpenFoam mesh using blockMesh:
 
 """
 
-import os
 import numpy as np
 
 def getgz(h, dz1, N):

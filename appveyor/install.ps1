@@ -24,12 +24,12 @@ function Download ($filename, $url) {
     $basedir = $pwd.Path + "\"
     $filepath = $basedir + $filename
     if (Test-Path $filename) {
-        Write-Host "Reusing" $filepath
+        Write-Output "Reusing" $filepath
         return $filepath
     }
 
     # Download and retry up to 3 times in case of network transient errors.
-    Write-Host "Downloading" $filename "from" $url
+    Write-Output "Downloading" $filename "from" $url
     $retry_attempts = 2
     for ($i = 0; $i -lt $retry_attempts; $i++) {
         try {
@@ -41,7 +41,7 @@ function Download ($filename, $url) {
         }
     }
     if (Test-Path $filepath) {
-        Write-Host "File saved at" $filepath
+        Write-Output "File saved at" $filepath
     } else {
         # Retry once to get the error message if any at the last try
         $webclient.DownloadFile($url, $filepath)
@@ -102,9 +102,9 @@ function DownloadPython ($python_version, $platform_suffix) {
 
 
 function InstallPython ($python_version, $architecture, $python_home) {
-    Write-Host "Installing Python" $python_version "for" $architecture "bit architecture to" $python_home
+    Write-Output "Installing Python" $python_version "for" $architecture "bit architecture to" $python_home
     if (Test-Path $python_home) {
-        Write-Host $python_home "already exists, skipping."
+        Write-Output $python_home "already exists, skipping."
         return $false
     }
     if ($architecture -eq "32") {
@@ -114,7 +114,7 @@ function InstallPython ($python_version, $architecture, $python_home) {
     }
     $installer_path = DownloadPython $python_version $platform_suffix
     $installer_ext = [System.IO.Path]::GetExtension($installer_path)
-    Write-Host "Installing $installer_path to $python_home"
+    Write-Output "Installing $installer_path to $python_home"
     $install_log = $python_home + ".log"
     if ($installer_ext -eq '.msi') {
         InstallPythonMSI $installer_path $python_home $install_log
@@ -122,9 +122,9 @@ function InstallPython ($python_version, $architecture, $python_home) {
         InstallPythonEXE $installer_path $python_home $install_log
     }
     if (Test-Path $python_home) {
-        Write-Host "Python $python_version ($architecture) installation complete"
+        Write-Output "Python $python_version ($architecture) installation complete"
     } else {
-        Write-Host "Failed to install Python in $python_home"
+        Write-Output "Failed to install Python in $python_home"
         Get-Content -Path $install_log
         Exit 1
     }
@@ -142,14 +142,14 @@ function InstallPythonMSI ($msipath, $python_home, $install_log) {
     $uninstall_args = "/qn /x $msipath"
     RunCommand "msiexec.exe" $install_args
     if (-not(Test-Path $python_home)) {
-        Write-Host "Python seems to be installed else-where, reinstalling."
+        Write-Output "Python seems to be installed else-where, reinstalling."
         RunCommand "msiexec.exe" $uninstall_args
         RunCommand "msiexec.exe" $install_args
     }
 }
 
 function RunCommand ($command, $command_args) {
-    Write-Host $command $command_args
+    Write-Output $command $command_args
     Start-Process -FilePath $command -ArgumentList $command_args -Wait -Passthru
 }
 
@@ -158,13 +158,13 @@ function InstallPip ($python_home) {
     $pip_path = $python_home + "\Scripts\pip.exe"
     $python_path = $python_home + "\python.exe"
     if (-not(Test-Path $pip_path)) {
-        Write-Host "Installing pip..."
+        Write-Output "Installing pip..."
         $webclient = New-Object System.Net.WebClient
         $webclient.DownloadFile($GET_PIP_URL, $GET_PIP_PATH)
-        Write-Host "Executing:" $python_path $GET_PIP_PATH
+        Write-Output "Executing:" $python_path $GET_PIP_PATH
         & $python_path $GET_PIP_PATH
     } else {
-        Write-Host "pip already installed."
+        Write-Output "pip already installed."
     }
 }
 
@@ -182,9 +182,9 @@ function DownloadMiniconda ($python_version, $platform_suffix) {
 
 
 function InstallMiniconda ($python_version, $architecture, $python_home) {
-    Write-Host "Installing Python" $python_version "for" $architecture "bit architecture to" $python_home
+    Write-Output "Installing Python" $python_version "for" $architecture "bit architecture to" $python_home
     if (Test-Path $python_home) {
-        Write-Host $python_home "already exists, skipping."
+        Write-Output $python_home "already exists, skipping."
         return $false
     }
     if ($architecture -eq "32") {
@@ -193,15 +193,15 @@ function InstallMiniconda ($python_version, $architecture, $python_home) {
         $platform_suffix = "x86_64"
     }
     $filepath = DownloadMiniconda $python_version $platform_suffix
-    Write-Host "Installing" $filepath "to" $python_home
+    Write-Output "Installing" $filepath "to" $python_home
     $install_log = $python_home + ".log"
     $args = "/S /D=$python_home"
-    Write-Host $filepath $args
+    Write-Output $filepath $args
     Start-Process -FilePath $filepath -ArgumentList $args -Wait -Passthru
     if (Test-Path $python_home) {
-        Write-Host "Python $python_version ($architecture) installation complete"
+        Write-Output "Python $python_version ($architecture) installation complete"
     } else {
-        Write-Host "Failed to install Python in $python_home"
+        Write-Output "Failed to install Python in $python_home"
         Get-Content -Path $install_log
         Exit 1
     }
@@ -212,12 +212,12 @@ function InstallMinicondaPip ($python_home) {
     $pip_path = $python_home + "\Scripts\pip.exe"
     $conda_path = $python_home + "\Scripts\conda.exe"
     if (-not(Test-Path $pip_path)) {
-        Write-Host "Installing pip..."
+        Write-Output "Installing pip..."
         $args = "install --yes pip"
-        Write-Host $conda_path $args
+        Write-Output $conda_path $args
         Start-Process -FilePath "$conda_path" -ArgumentList $args -Wait -Passthru
     } else {
-        Write-Host "pip already installed."
+        Write-Output "pip already installed."
     }
 }
 
