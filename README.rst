@@ -2,7 +2,7 @@
 fluidfoam
 ========
 
-|release| |docs| |coverage|
+|release| |docs| |AppVeyor|_ |coverage|
 
 .. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
    :target: https://pypi.python.org/pypi/fluidfoam/
@@ -11,6 +11,9 @@ fluidfoam
 .. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
    :target: http://fluidfoam.readthedocs.org
    :alt: Documentation status
+
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/ipwdnr1an8su429q?svg=true
+.. _AppVeyor: https://ci.appveyor.com/project/CyrilleBonamy/fluidfoam/history
 
 .. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
    :target: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/
@@ -22,9 +25,9 @@ What is this repository for?
 -------
 
 * Openfoam Tools
-* Version : 0.1.0
-* Supported OpenFoam Versions : 2.4.0, 4.1, 5.0
-* Supported Python Versions : 2.7.x, 3.5
+* Version : 0.1.6
+* Supported OpenFoam Versions : 2.4.0, 4.1, 5.0, 6.0, v1712 plus, v1806 plus
+* Supported Python Versions : 2.7.x, >= 3.4
 
 Deployment instructions
 -------
@@ -34,7 +37,7 @@ The simplest way to install fluidfoam is by using pip::
   pip install fluidfoam
 
 You can get the source code from `Bitbucket
-<https://bitbucket.org/sedfoam/fluidfoam>`_ or from `the Python Package Index
+<https://bitbucket.org/fluiddyn/fluidfoam>`_ or from `the Python Package Index
 <https://pypi.python.org/pypi/fluidfoam/>`_.
 
 The development mode is often useful. From the root directory, run::
@@ -85,13 +88,13 @@ Contacts
 * Cyrille.Bonamy@legi.cnrs.fr
 * Julien.Chauchat@grenoble-inp.fr
 * Pierre.Augier@legi.cnrs.fr
+* Guillaume.Maurice@univ-grenoble-alpes.fr
 * Tim.Nagel@legi.cnrs.fr
-* Thibaud.Revil-Baudard@legi.cnrs.fr
+* Antoine.Mathieu@univ-grenoble-alpes.fr
 
 License
 -------
 
-fluidfoam is distributed under the CeCILL-B_ License, a BSD compatible
-french license.
+fluidfoam is distributed under the GNU General Public License v2 (GPLv2).
 
-.. _CeCILL-B: http://www.cecill.info/index.en.html
+.. _GPLv2: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html

@@ -93,6 +93,20 @@ boundaryField
     {
         type            empty;
     }
+    outlet
+    {
+        type            inletOutlet;
+        inletValue      uniform (0 0 0);
+        value           nonuniform List<vector>
+5
+(
+(0.1 0.3 0.2)
+(0.1 0.3 0.2)
+(0.1 0.3 0.2)
+(0.1 0.3 0.2)
+(0.1 0.3 0.2)
+);
+    }
 }
 
 

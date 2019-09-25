@@ -1,8 +1,10 @@
 Sphinx>=1.1
+matplotlib
 numpy
 numpydoc
 cython
 mako
 psutil
 pandas
+sphinx_gallery
 jupyter
