@@ -43,7 +43,7 @@ def readforce(path, namepatch='forces', time_name='0', name='forces'):
     data = content.split(b'\n')
     j = 0
     header = True
-    for i, line in enumerate(data[:-1]):
+    for dummy, line in enumerate(data[:-1]):
         if '#'.encode() in line:
             j += 1
         elif '#'.encode() not in line and header==True:
@@ -85,7 +85,7 @@ def readprobes(path, probes_name='probes', time_name='0', name='U'):
         content = f.readlines()
     j = 0
     header = True
-    for i, line in enumerate(content):
+    for dummy, line in enumerate(content):
         if '#'.encode() in line:
             j += 1
         elif '#'.encode() not in line and header == True:
