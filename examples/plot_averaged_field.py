@@ -2,7 +2,7 @@
 Read and Plot a spatially averaged profile from a structured mesh
 =================================================================
 
-This example reads and plots a spatially averaged profile of the first 
+This example reads and plots a spatially averaged profile of the first
 component of an OpenFoam vector field from a structured mesh
 """
 

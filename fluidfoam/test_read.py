@@ -26,14 +26,14 @@ class SimpleTestCase(unittest.TestCase):
         for sol in sols:
             alpha = readscalar(sol, timename, 'alpha')
             sigma = readsymmtensor(sol, timename, 'sigma')
-            sigmauniform = readsymmtensor(sol, timename, 'sigmauniform')
+            dummy = readsymmtensor(sol, timename, 'sigmauniform')
             taus = readtensor(sol, timename, 'Taus')
             readtensor(sol, timename, 'Taus', boundary='top')
             u1 = readarray(sol, timename, 'U')
 
             u = readvector(sol, timename, 'U')
-            x, y, z = readmesh(sol)
-            x, y, z = readmesh(sol + timename)
+            dummy, dummy, dummy = readmesh(sol)
+            x, y, dummy = readmesh(sol + timename)
 
             self.assertEqual(size, len(alpha))
             self.assertEqual(3*size, u.size)
@@ -46,7 +46,7 @@ class SimpleTestCase(unittest.TestCase):
             for i, v in alpha_samples.items():
                 self.assertAlmostEqual(v, alpha[i], places=places)
         alphashort1 = readscalar('output_samples/ascii/', '0', 'alpha10')
-        Tstream = readscalar('output_samples/ascii/', '0', 'T')
+        dummy = readscalar('output_samples/ascii/', '0', 'T')
         alphauniform = readscalar('output_samples/ascii/', '0', 'alphauniform')
         readvector('output_samples/ascii/', '0', 'Uuniform')
         alphauniform = readscalar('output_samples/bin/', '0', 'alphauniform')
