@@ -26,7 +26,7 @@ What is this repository for?
 
 * Openfoam Tools
 * Version : 0.1.6
-* Supported OpenFoam Versions : 2.4.0, 4.1, 5.0, 6.0, v1712 plus, v1806 plus
+* Supported OpenFoam Versions : 2.4.0, 4.1 to 7, v1712plus to v1906plus
 * Supported Python Versions : 2.7.x, >= 3.4
 
 Deployment instructions
@@ -36,8 +36,8 @@ The simplest way to install fluidfoam is by using pip::
 
   pip install fluidfoam
 
-You can get the source code from `Bitbucket
-<https://bitbucket.org/fluiddyn/fluidfoam>`_ or from `the Python Package Index
+You can get the source code from `github
+<https://github.com/fluiddyn/fluidfoam>`_ or from `the Python Package Index
 <https://pypi.python.org/pypi/fluidfoam/>`_.
 
 The development mode is often useful. From the root directory, run::
@@ -48,21 +48,25 @@ The development mode is often useful. From the root directory, run::
 Committing instructions (in development mode)
 -------
 
-To get the status of the files::
+To clone the repository::
 
-  hg st
+  git clone https://github.com/fluiddyn/fluidfoam
+  
+To get the status of the repository::
 
-In case of new file(s)::
+  git status
 
-  hg add new_file
+In case of new/modified file(s)::
+
+  git add new_file
 
 To commit a revision on the local repository::
 
-  hg ci -m "comment on the revision"
+  git commit -m "comment on the revision"
 
 To push the revision on the central repository::
 
-  hg push
+  git push
 
 
 Update instructions (in development mode)
@@ -70,11 +74,11 @@ Update instructions (in development mode)
 
 Pull the last revision::
 
-  hg pull
+  git pull
 
 Deploy::
 
-  hg up
+  git up
 
 
 Example Usage
