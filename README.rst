@@ -22,7 +22,7 @@ fluidfoam
 The fluidfoam package provides Python classes useful to perform some plot with OpenFoam data.
 
 What is this repository for?
--------
+----------------------------
 
 * Openfoam Tools
 * Version : 0.1.6
@@ -30,7 +30,7 @@ What is this repository for?
 * Supported Python Versions : 2.7.x, >= 3.4
 
 Deployment instructions
--------
+-----------------------
 
 The simplest way to install fluidfoam is by using pip::
 
@@ -46,7 +46,7 @@ The development mode is often useful. From the root directory, run::
 
 
 Committing instructions (in development mode)
--------
+---------------------------------------------
 
 A good starting point is to follow this `forking tutorial <https://guides.github.com/activities/forking/>`_.
 
@@ -73,7 +73,7 @@ To push the revision on your github fluidfoam repository::
 To propose your changes into the main fluidfoam project, follow again the `forking tutorial <https://guides.github.com/activities/forking/>`_.
 
 Example Usage
--------
+-------------
 
 * http://servforge.legi.grenoble-inp.fr/pub/soft-sedfoam/
 

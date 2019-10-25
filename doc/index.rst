@@ -14,7 +14,7 @@ What is this repository for?
 
 * Openfoam Tools
 * Version : 0.1.6
-* Supported OpenFoam Versions : 2.4.0, 4.1, 5.0, 6.0, v1712+, v1806+
+* Supported OpenFoam Versions : 2.4.0, 4.1 to 7, v1712plus to v1906plus
 * Supported Python Versions : 2.7.x, >= 3.4
 
 
@@ -23,10 +23,10 @@ Deployment instructions
 
 The simplest way to install fluidfoam is by using pip::
 
-  pip install fluidfoam
+  pip install fluidfoam --user
 
-You can get the source code from `Bitbucket
-<https://bitbucket.org/fluiddyn/fluidfoam>`_ or from `the Python Package Index
+You can get the source code from `github
+<https://github.com/fluiddyn/fluidfoam>`_ or from `the Python Package Index
 <https://pypi.python.org/pypi/fluidfoam/>`_.
 
 The development mode is often useful. From the root directory, run::
@@ -37,128 +37,56 @@ The development mode is often useful. From the root directory, run::
 Committing instructions (in development mode)
 ---------------------------------------------
 
-To get the status of the files::
+A good starting point is to follow this `forking tutorial <https://guides.github.com/activities/forking/>`_.
 
-  hg st
+To clone your fork of fluidfoam repository::
 
-In case of new file(s)::
+  git clone https://github.com/your_username/fluidfoam
+  
+To get the status of the repository::
 
-  hg add new_file
+  git status
+
+In case of new/modified file(s)::
+
+  git add new_file
 
 To commit a revision on the local repository::
 
-  hg ci -m "comment on the revision"
+  git commit -m "comment on the revision"
 
-To push the revision on the central repository::
+To push the revision on your github fluidfoam repository::
 
-  hg push
+  git push
 
-
-Update instructions (in development mode)
------------------------------------------
-
-Pull the last revision::
-
-  hg pull
-
-Deploy::
-
-  hg up
-
+To propose your changes into the main fluidfoam project, follow again the `forking tutorial <https://guides.github.com/activities/forking/>`_.
 
 Example Usage
 -------------
 
 * http://servforge.legi.grenoble-inp.fr/pub/soft-sedfoam/
 
-Contacts
---------
+Core Developers
+---------------
 
 * Cyrille.Bonamy@legi.cnrs.fr
 * Julien.Chauchat@grenoble-inp.fr
+* Antoine.Mathieu@univ-grenoble-alpes.fr
+
+Emeritus Core Developers
+------------------------
+
 * Pierre.Augier@legi.cnrs.fr
+
+Emeritus Developers
+------------------------
+
 * Guillaume.Maurice@univ-grenoble-alpes.fr
 * Tim.Nagel@legi.cnrs.fr
-* Antoine.Mathieu@univ-grenoble-alpes.fr
 
 License
 -------
 
-fluidfoam is distributed under the CeCILL-B_ License, a BSD compatible
-french license.
+fluidfoam is distributed under the GNU General Public License v2 (GPLv2).
 
-.. _CeCILL-B: http://www.cecill.info/index.en.html
-
-
-.. User Guide
-.. ----------
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Contents:
-
-..   overview
-..   install
-..   tutorial
-..   examples
-
-
-Modules Reference
------------------
-
-Here is presented the general organization of the package
-and the documentation of the modules, classes and
-functions.
-
-.. autosummary::
-   :toctree: generated/
-
-   fluidfoam.readof
-   fluidfoam.processing1d
-   fluidfoam.readpostpro
-   fluidfoam.meshdesign
-
-.. toctree::
-   :maxdepth: 2
-   :caption: Example galleries:
-
-   auto_examples/index
-
-
-More
-----
-
-.. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
-   :target: https://pypi.python.org/pypi/fluidfoam/
-   :alt: Latest version
-
-.. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
-   :target: http://fluidfoam.readthedocs.org
-   :alt: Documentation status
-
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/ipwdnr1an8su429q?svg=true
-.. _AppVeyor: https://ci.appveyor.com/project/CyrilleBonamy/fluidfoam/history
-
-.. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
-   :target: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/
-   :alt: Code coverage
-
-
-
-
-- `FluidFoam forge on Bitbucket <https://bitbucket.org/fluiddyn/fluidfoam>`_
-- FluidFoam in PyPI |release|
-- Unittest coverage |coverage|
-
-.. toctree::
-   :maxdepth: 1
-
-..   changes
-..   to_do
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`modindex`
-* :ref:`search`
+.. _GPLv2: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
