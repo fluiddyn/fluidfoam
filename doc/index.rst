@@ -90,3 +90,78 @@ License
 fluidfoam is distributed under the GNU General Public License v2 (GPLv2).
 
 .. _GPLv2: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+
+
+.. User Guide
+.. ----------
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Contents:
+
+..   overview
+..   install
+..   tutorial
+..   examples
+
+
+Modules Reference
+-----------------
+
+Here is presented the general organization of the package
+and the documentation of the modules, classes and
+functions.
+
+.. autosummary::
+   :toctree: generated/
+
+   fluidfoam.readof
+   fluidfoam.processing1d
+   fluidfoam.readpostpro
+   fluidfoam.meshdesign
+
+.. toctree::
+   :maxdepth: 2
+   :caption: Example galleries:
+
+   auto_examples/index
+
+
+More
+----
+
+.. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
+   :target: https://pypi.python.org/pypi/fluidfoam/
+   :alt: Latest version
+
+.. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
+   :target: http://fluidfoam.readthedocs.org
+   :alt: Documentation status
+
+.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/ipwdnr1an8su429q?svg=true
+.. _AppVeyor: https://ci.appveyor.com/project/CyrilleBonamy/fluidfoam/history
+
+.. |coverage| image:: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/graph/badge.svg
+   :target: https://codecov.io/bb/sedfoam/fluidfoam/branch/default/
+   :alt: Code coverage
+
+
+
+
+- `FluidFoam forge on github
+<https://github.com/fluiddyn/fluidfoam>`_
+- FluidFoam in PyPI |release|
+- Unittest coverage |coverage|
+
+.. toctree::
+   :maxdepth: 1
+
+..   changes
+..   to_do
+
+Indices and tables
+==================
+
+* :ref:`genindex`
+* :ref:`modindex`
+* :ref:`search`
