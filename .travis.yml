@@ -10,7 +10,7 @@ python:
 
 
 env:
-  - TOXENV=py,codecov-travis
+  - TOXENV=py,codecov
 
 
 matrix:
