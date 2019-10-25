@@ -26,7 +26,7 @@ What is this repository for?
 
 * Openfoam Tools
 * Version : 0.1.6
-* Supported OpenFoam Versions : 2.4.0, 4.1, 5.0, 6.0, v1712 plus, v1806 plus
+* Supported OpenFoam Versions : 2.4.0, 4.1 to 7, v1712plus to v1906plus
 * Supported Python Versions : 2.7.x, >= 3.4
 
 Deployment instructions
@@ -34,10 +34,10 @@ Deployment instructions
 
 The simplest way to install fluidfoam is by using pip::
 
-  pip install fluidfoam
+  pip install fluidfoam --user
 
-You can get the source code from `Bitbucket
-<https://bitbucket.org/fluiddyn/fluidfoam>`_ or from `the Python Package Index
+You can get the source code from `github
+<https://github.com/fluiddyn/fluidfoam>`_ or from `the Python Package Index
 <https://pypi.python.org/pypi/fluidfoam/>`_.
 
 The development mode is often useful. From the root directory, run::
@@ -48,49 +48,52 @@ The development mode is often useful. From the root directory, run::
 Committing instructions (in development mode)
 -------
 
-To get the status of the files::
+A good starting point is to follow this `forking tutorial <https://guides.github.com/activities/forking/>`_.
 
-  hg st
+To clone your fork of fluidfoam repository::
 
-In case of new file(s)::
+  git clone https://github.com/your_username/fluidfoam
+  
+To get the status of the repository::
 
-  hg add new_file
+  git status
+
+In case of new/modified file(s)::
+
+  git add new_file
 
 To commit a revision on the local repository::
 
-  hg ci -m "comment on the revision"
+  git commit -m "comment on the revision"
 
-To push the revision on the central repository::
+To push the revision on your github fluidfoam repository::
 
-  hg push
+  git push
 
-
-Update instructions (in development mode)
--------
-
-Pull the last revision::
-
-  hg pull
-
-Deploy::
-
-  hg up
-
+To propose your changes into the main fluidfoam project, follow again the `forking tutorial <https://guides.github.com/activities/forking/>`_.
 
 Example Usage
 -------
 
 * http://servforge.legi.grenoble-inp.fr/pub/soft-sedfoam/
 
-Contacts
--------
+Core Developers
+---------------
 
 * Cyrille.Bonamy@legi.cnrs.fr
 * Julien.Chauchat@grenoble-inp.fr
+* Antoine.Mathieu@univ-grenoble-alpes.fr
+
+Emeritus Core Developers
+------------------------
+
 * Pierre.Augier@legi.cnrs.fr
+
+Emeritus Developers
+------------------------
+
 * Guillaume.Maurice@univ-grenoble-alpes.fr
 * Tim.Nagel@legi.cnrs.fr
-* Antoine.Mathieu@univ-grenoble-alpes.fr
 
 License
 -------
