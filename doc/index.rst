@@ -148,8 +148,7 @@ More
 
 
 
-- `FluidFoam forge on github
-<https://github.com/fluiddyn/fluidfoam>`_
+- `FluidFoam forge on github <https://github.com/fluiddyn/fluidfoam>`_
 - FluidFoam in PyPI |release|
 - Unittest coverage |coverage|
 
