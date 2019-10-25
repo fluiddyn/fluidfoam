@@ -15,8 +15,8 @@ fluidfoam
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/ipwdnr1an8su429q?svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/CyrilleBonamy/fluidfoam/history
 
-.. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/branch/default/graph/badge.svg
-   :target: https://codecov.io/gh/fluiddyn/fluidfoam/branch/default/
+.. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/graph/badge.svg
+   :target: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/
    :alt: Code coverage
 
 The fluidfoam package provides Python classes useful to perform some plot with OpenFoam data.
