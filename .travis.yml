@@ -1,0 +1,35 @@
+sudo: required
+dist: xenial
+language: python
+
+
+python:
+  - 2.7
+  - 3.6
+  - 3.7
+
+
+env:
+  - TOXENV=py,codecov-travis
+
+
+matrix:
+  fast_finish: true
+
+before_cache:
+  - |
+      coverage erase
+      rm -f $HOME/.cache/pip/log/debug.log
+
+cache:
+    directories:
+        - $HOME/.cache/pip
+        # - $TRAVIS_BUILD_DIR/.tox
+
+install:
+    - pip install -U pip pipenv tox==3.6 tox-pipenv coverage
+    - pip install -U numpy
+
+script:
+    - set -o pipefail
+    - tox
