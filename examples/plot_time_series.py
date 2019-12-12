@@ -15,15 +15,16 @@ import numpy as np
 
 sol = '../output_samples/box/'
 dir_list = os.listdir(sol)
-time_list = np.empty(0)
+time_list = []
 
 for directory in dir_list:
     try:
         float(directory)
-        time_list = np.append(time_list, directory)
+        time_list.append(directory)
     except:
         pass
-time_list = np.sort(time_list)
+time_list.sort(key=int)
+time_list=np.array(time_list)
 
 ###############################################################################
 # Reads a scalar value at a given position for different times
