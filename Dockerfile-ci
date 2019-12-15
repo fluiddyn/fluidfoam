@@ -19,7 +19,7 @@ RUN apt-get update --fix-missing && \
     apt-get clean
 
 WORKDIR /home/openfoam
-RUN /bin/bash -c "hg clone https://bitbucket.org/sedfoam/fluidfoam"
+RUN /bin/bash -c "git clone https://github.com/fluiddyn/fluidfoam"
 WORKDIR /home/openfoam/fluidfoam
 RUN /bin/bash -c "make"
 RUN /bin/bash -c "make clean"
