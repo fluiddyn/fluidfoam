@@ -8,6 +8,20 @@ This module provides functions to list and read OpenFoam PostProcessing Files:
 import os
 import numpy as np
 
+def _find_latesttime(path):
+    dir_list = os.listdir(path)
+    time_list = []
+
+    for directory in dir_list:
+        try:
+            float(directory)
+            time_list.append(directory)
+        except:
+            pass
+    time_list.sort(key=float)
+    return(time_list[-1])
+
+
 def varinforce():
     """ return the var included in postProcessing force files."""
 
@@ -15,13 +29,14 @@ def varinforce():
                  'Fpoy', 'Fpoz', 'Mpx', 'Mpy', 'Mpz', 'Mvx', 'Mvy', 'Mvz',
                  'Mpox','Mpoy','Mpoz']
 
+
 def readforce(path, namepatch='forces', time_name='0', name='forces'):
     """ read the data contained in the force file .
     create the forces variables in the Forcesfile object
 
     Args:
         path: str\n
-        time_name: str\n
+        time_name: str ('latestTime' is supported)\n
         name: str
 
     Returns:
@@ -37,7 +52,11 @@ def readforce(path, namepatch='forces', time_name='0', name='forces'):
         ,'Mvx','Mvy','Mvz','Mpox','Mpoy','Mpoz']
     """
 
-    with open(os.path.join(path, 'postProcessing', namepatch, time_name,
+    path_namepatch = os.path.join(path, 'postProcessing', namepatch)
+    if time_name is 'latestTime':
+        time_name = _find_latesttime(path_namepatch)
+   
+    with open(os.path.join(path_namepatch, time_name,
                            name+'.dat'),'rb') as f:
         content = f.read()
     data = content.split(b'\n')
@@ -70,7 +89,7 @@ def readprobes(path, probes_name='probes', time_name='0', name='U'):
         Args:
             path: str\n
             probes_name: str\n
-            time_name: str\n
+            time_name: str ('latestTime' is supported)\n
             name: str
 
         Returns:
@@ -80,7 +99,12 @@ def readprobes(path, probes_name='probes', time_name='0', name='U'):
             probe_data = read('path_of_OpenFoam_case', '0', 'probes', 'U')
 
     """
-    with open(os.path.join(path, 'postProcessing', probes_name, time_name,
+
+    path_probes_name = os.path.join(path, 'postProcessing', probes_name)
+    if time_name is 'latestTime':
+        time_name = _find_latesttime(path_probes_name)
+
+    with open(os.path.join(path_probes_name, time_name,
                            name), 'rb') as f:
         content = f.readlines()
     j = 0

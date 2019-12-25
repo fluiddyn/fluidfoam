@@ -24,6 +24,7 @@ class SimpleTestCase(unittest.TestCase):
     def _test_functions(self, readscalar, readsymmtensor, readtensor,
                         readvector, readmesh, readarray):
         for sol in sols:
+            alpha = readscalar(sol, 'latestTime', 'alpha')
             alpha = readscalar(sol, timename, 'alpha')
             sigma = readsymmtensor(sol, timename, 'sigma')
             dummy = readsymmtensor(sol, timename, 'sigmauniform')
@@ -31,7 +32,7 @@ class SimpleTestCase(unittest.TestCase):
             readtensor(sol, timename, 'Taus', boundary='top')
             u1 = readarray(sol, timename, 'U')
 
-            u = readvector(sol, timename, 'U')
+            u = readvector(sol, 'latestTime', 'U')
             dummy, dummy, dummy = readmesh(sol)
             x, y, dummy = readmesh(sol + timename)
 
