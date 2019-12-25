@@ -38,12 +38,28 @@ def _make_path(path, time_name=None, name=None):
     return path
 
 
+def _find_latesttime(path):
+    dir_list = os.listdir(path)
+    time_list = []
+
+    for directory in dir_list:
+        try:
+            float(directory)
+            time_list.append(directory)
+        except:
+            pass
+    time_list.sort(key=float)
+    return(time_list[-1])    
+
+
 class OpenFoamFile(object):
     """OpenFoam file parser."""
     def __init__(self, path, time_name=None, name=None, structured=False,
                  boundary=None, order="F", precision=15):
 
         self.pathcase = path
+        if time_name is 'latestTime':
+            time_name = _find_latesttime(path)
         self.path = _make_path(path, time_name, name)
         print('Reading file ' + self.path)
 
@@ -458,7 +474,7 @@ def typefield(path, time_name=None, name=None):
 
     Args:
         path: str\n
-        time_name: str\n
+        time_name: str ('latestTime' is supported)\n
         name: str
 
     Returns:
@@ -485,7 +501,7 @@ def readfield(path, time_name=None, name=None, structured=False, boundary=None,
 
     Args:
         path: str\n
-        time_name: str\n
+        time_name: str ('latestTime' is supported)\n
         name: str\n
         structured: False or True\n
         boundary: None or str\n
@@ -543,7 +559,7 @@ def readscalar(path, time_name=None, name=None, structured=False, boundary=None,
 
     Args:
         path: str\n
-        time_name: str\n
+        time_name: str ('latestTime' is supported)\n
         name: str\n
         structured: False or True\n
         boundary: None or str\n
@@ -585,7 +601,7 @@ def readvector(path, time_name=None, name=None, structured=False, boundary=None,
 
     Args:
         path: str\n
-        time_name: str\n
+        time_name: str ('latestTime' is supported)\n
         name: str\n
         structured: False or True\n
         boundary: None or str\n
@@ -631,7 +647,7 @@ def readsymmtensor(path, time_name=None, name=None, structured=False,
 
     Args:
         path: str\n
-        time_name: str\n
+        time_name: str ('latestTime' is supported)\n
         name: str\n
         structured: False or True\n
         boundary: None or str\n
@@ -677,7 +693,7 @@ def readtensor(path, time_name=None, name=None, structured=False, boundary=None,
 
     Args:
         path: str\n
-        time_name: str\n
+        time_name: str ('latestTime' is supported)\n
         name: str\n
         structured: False or True\n
         boundary: None or str\n

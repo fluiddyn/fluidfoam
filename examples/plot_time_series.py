@@ -23,7 +23,7 @@ for directory in dir_list:
         time_list.append(directory)
     except:
         pass
-time_list.sort(key=int)
+time_list.sort(key=float)
 time_list=np.array(time_list)
 
 ###############################################################################
