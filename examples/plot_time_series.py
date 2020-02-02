@@ -60,3 +60,6 @@ plt.plot(time_list, time_series)
 # Setting axis labels
 plt.xlabel('t (s)')
 plt.ylabel('p (Pa)')
+
+# add grid
+plt.grid()

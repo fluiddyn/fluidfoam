@@ -55,3 +55,6 @@ plt.plot(vel_averaged[0], y[0, :, 0])
 #Setting axis labels
 plt.xlabel('U (m/s)')
 plt.ylabel('y (m)')
+
+# add grid
+plt.grid()

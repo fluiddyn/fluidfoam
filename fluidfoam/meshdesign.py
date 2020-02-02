@@ -9,6 +9,7 @@ This module provides functions to design OpenFoam mesh using blockMesh:
 
 import numpy as np
 
+
 def getgz(h, dz1, N):
     """ Given a domain size h, a first grid size dz1 and a number of points N
         this function returns the common ratio, the grading gz to enter
@@ -26,8 +27,9 @@ def getgz(h, dz1, N):
     toto = np.where(np.imag(sol) == 0)
     solreal = sol[toto]
     titi = np.where(np.real(solreal) > 0)
-    titi = np.where(np.logical_and(np.real(solreal) > 0,
-                                   np.real(solreal) < 0.9999))
+    titi = np.where(
+        np.logical_and(np.real(solreal) > 0, np.real(solreal) < 0.9999)
+    )
     solgood = solreal[titi]
     # Compute the common ratio of the sequence
     try:
@@ -48,12 +50,12 @@ def getgz(h, dz1, N):
 
     # print some output
     print("grid sizes, common ratio and grading factor")
-    print('z[N-1]=', z[N - 1])
-    print('dz[0]=', dz[0])
-    print('dz[N-2]=', dz[N - 2])
-    print('common ratio: r=', r)
-    print('gz=', gz)
-    print('1/gz=', 1. / gz)
+    print("z[N-1]=", z[N - 1])
+    print("dz[0]=", dz[0])
+    print("dz[N-2]=", dz[N - 2])
+    print("common ratio: r=", r)
+    print("gz=", gz)
+    print("1/gz=", 1. / gz)
     return z, dz, gz
 
 
@@ -80,7 +82,7 @@ def getdzs(h, gz, N):
 
     #  print some output
     print("grid size of the first and last cells:")
-    print('dz[0]=', dz1)
-    print('dz[N-1]=', dzN)
+    print("dz[0]=", dz1)
+    print("dz[N-1]=", dzN)
 
     return dz1, dzN

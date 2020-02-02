@@ -43,43 +43,49 @@ def create1dprofil_spe(pathw, waxis, var, varname, typevar):
     """
 
     size1d = waxis.shape[0]
-    filename = ''
+    filename = ""
     field = var
-    filename = ''+varname
+    filename = "" + varname
 
-    if typevar == 'scalar':
-        filename1 = pathw+'/1d_profil/'+filename+'.xy'
+    if typevar == "scalar":
+        filename1 = pathw + "/1d_profil/" + filename + ".xy"
         f = open(filename1, "w")
-        f.write('(\n')
-        if field.shape==(1,):
+        f.write("(\n")
+        if field.shape == (1,):
             for cell in range(size1d):
-                f.write('('+str(waxis[cell])+' '+str(field[0])+')\n')
+                f.write("(" + str(waxis[cell]) + " " + str(field[0]) + ")\n")
         else:
             for cell in range(size1d):
-                f.write('('+str(waxis[cell])+' '+str(field[cell])+')\n')
-        f.write(')\n')
+                f.write("(" + str(waxis[cell]) + " " + str(field[cell]) + ")\n")
+        f.write(")\n")
         f.close()
-    elif typevar == 'vector':
+    elif typevar == "vector":
         for i in range(3):
-            filename1 = pathw+'/1d_profil/'+filename+str(i)+'.xy'
+            filename1 = pathw + "/1d_profil/" + filename + str(i) + ".xy"
             f = open(filename1, "w")
-            f.write('(\n')
-            if field.shape==(3,1):
+            f.write("(\n")
+            if field.shape == (3, 1):
                 for cell in range(size1d):
-                    f.write('('+str(waxis[cell])+' '+str(field[i, 0])+')\n')
+                    f.write(
+                        "(" + str(waxis[cell]) + " " + str(field[i, 0]) + ")\n"
+                    )
             else:
                 for cell in range(size1d):
-                    f.write('('+str(waxis[cell])+' '+str(field[i, cell])+')\n')
-            f.write(')\n')
+                    f.write(
+                        "(" + str(waxis[cell]) + " " + str(field[i, cell]) + ")\n"
+                    )
+            f.write(")\n")
             f.close()
     else:
-        print('PROBLEM with input: Good input is for example :')
-        print('fluidfoam.create1dprofil_spe("/data/1dcompute/", Y, epsilon, "epsilon", "scalar")\n')
-    status = 'create 1D profiles: done'
+        print("PROBLEM with input: Good input is for example :")
+        print(
+            'fluidfoam.create1dprofil_spe("/data/1dcompute/", Y, epsilon, "epsilon", "scalar")\n'
+        )
+    status = "create 1D profiles: done"
     return status
 
 
-def create1dprofil(pathr, pathw, timename, axis ,varlist):
+def create1dprofil(pathr, pathw, timename, axis, varlist):
     """
     This function provides way to read 1D profiles at time timename of pathr
     and write them in OpenFoam Format in the 1d_profil folder of pathw
@@ -105,53 +111,69 @@ def create1dprofil(pathr, pathw, timename, axis ,varlist):
 
     X, Y, Z = readmesh(pathr)
     size1d = Y.shape[0]
-    filename = ''
+    filename = ""
     for var in varlist:
         field = readfield(pathr, timename, var)
         typevar = typefield(pathr, timename, var)
 
-        if axis=='X':
-            waxis=X
-        elif axis=='Y':
-            waxis=Y
-        elif axis=='Z':
-            waxis=Z
+        if axis == "X":
+            waxis = X
+        elif axis == "Y":
+            waxis = Y
+        elif axis == "Z":
+            waxis = Z
         else:
-            print('axis does not exist, please check input parameters\n')
+            print("axis does not exist, please check input parameters\n")
 
-        filename = ''+var
+        filename = "" + var
 
-        if typevar == 'scalar':
-            filename1 = pathw+'/1d_profil/'+filename+'.xy'
+        if typevar == "scalar":
+            filename1 = pathw + "/1d_profil/" + filename + ".xy"
             f = open(filename1, "w")
-            f.write('(\n')
-            if field.shape==(1,):
+            f.write("(\n")
+            if field.shape == (1,):
                 for cell in range(size1d):
-                    f.write('('+str(waxis[cell])+' '+str(field[0])+')\n')
+                    f.write("(" + str(waxis[cell]) + " " + str(field[0]) + ")\n")
             else:
                 for cell in range(size1d):
-                    f.write('('+str(waxis[cell])+' '+str(field[cell])+')\n')
-#            np.savetxt(f, np.c_[Y, field], fmt="(%s %s)")
-            f.write(')\n')
+                    f.write(
+                        "(" + str(waxis[cell]) + " " + str(field[cell]) + ")\n"
+                    )
+            #            np.savetxt(f, np.c_[Y, field], fmt="(%s %s)")
+            f.write(")\n")
             f.close()
-        elif typevar == 'vector':
+        elif typevar == "vector":
             for i in range(3):
-                filename1 = pathw+'/1d_profil/'+filename+str(i)+'.xy'
+                filename1 = pathw + "/1d_profil/" + filename + str(i) + ".xy"
                 f = open(filename1, "w")
-                f.write('(\n')
-                if field.shape==(3,1):
+                f.write("(\n")
+                if field.shape == (3, 1):
                     for cell in range(size1d):
-                        f.write('('+str(waxis[cell])+' '+str(field[i, 0])+')\n')
+                        f.write(
+                            "("
+                            + str(waxis[cell])
+                            + " "
+                            + str(field[i, 0])
+                            + ")\n"
+                        )
                 else:
                     for cell in range(size1d):
-                        f.write('('+str(waxis[cell])+' '+str(field[i, cell])+')\n')
-                f.write(')\n')
+                        f.write(
+                            "("
+                            + str(waxis[cell])
+                            + " "
+                            + str(field[i, cell])
+                            + ")\n"
+                        )
+                f.write(")\n")
                 f.close()
-            print('Warning for pyof users : Ua=Ua0, Va=Ua2, Wa=Ua1\n')
+            print("Warning for pyof users : Ua=Ua0, Va=Ua2, Wa=Ua1\n")
         else:
-            print('PROBLEM with varlist input: Good input is for example :')
-            print('fluidfoam.create1dprofil("/data/1dcompute/", "/data/1dcompute/", "750", "Y",[\'omega\',\'p\'])\n')
-    status = 'create 1D profiles: done'
+            print("PROBLEM with varlist input: Good input is for example :")
+            print(
+                'fluidfoam.create1dprofil("/data/1dcompute/", "/data/1dcompute/", "750", "Y",[\'omega\',\'p\'])\n'
+            )
+    status = "create 1D profiles: done"
     return status
 
 
@@ -173,17 +195,17 @@ def read1dprofil(file_name):
 
     with open(file_name) as handle:
 
-        size1d = len(handle.readlines())-2
+        size1d = len(handle.readlines()) - 2
         z = np.empty(size1d)
         field = np.empty(size1d)
         handle.seek(0)
         for line_num, line in enumerate(handle):
-            if ((line_num != 0) & (line_num != size1d+1)):
-                line = line.replace(')', '')
-                line = line.replace('(', '')
+            if (line_num != 0) & (line_num != size1d + 1):
+                line = line.replace(")", "")
+                line = line.replace("(", "")
                 cols = line.split()
-                z[(line_num-1)] = cols[0]
-                field[(line_num-1)] = cols[1]
+                z[(line_num - 1)] = cols[0]
+                field[(line_num - 1)] = cols[1]
         return z, field, size1d
 
 
@@ -201,12 +223,12 @@ def plot1dprofil(pathr, varlist):
 
     import matplotlib.pyplot as plt
 
-    z, field, size1d = read1dprofil(pathr+"/"+varlist[0]+".xy")
+    z, field, size1d = read1dprofil(pathr + "/" + varlist[0] + ".xy")
     fields = np.empty([len(varlist), size1d])
     fields[0] = field
-    for i in range(len(varlist)-1):
-        z, field, size1d = read1dprofil(pathr+"/"+varlist[i+1]+".xy")
-        fields[i+1] = field
+    for i in range(len(varlist) - 1):
+        z, field, size1d = read1dprofil(pathr + "/" + varlist[i + 1] + ".xy")
+        fields[i + 1] = field
 
     dummy, axarr = plt.subplots(1, len(varlist), sharey=True)
     for i, dummy in enumerate(varlist):
