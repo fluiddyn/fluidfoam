@@ -10,6 +10,7 @@ class SimpleTestCase(unittest.TestCase):
     def test_read_forces(self):
         dummy = fluidfoam.readforce(case)
         dummy = fluidfoam.readforce(case, time_name = 'latestTime')
+        dummy = fluidfoam.readforce(case, time_name = 'mergeTime')
         #self.assertEqual(1, len(postpro.forcedirs))
         print('create force object')
 

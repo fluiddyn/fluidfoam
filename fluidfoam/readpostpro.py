@@ -36,7 +36,7 @@ def readforce(path, namepatch='forces', time_name='0', name='forces'):
 
     Args:
         path: str\n
-        time_name: str ('latestTime' is supported)\n
+        time_name: str ('latestTime' and 'mergeTime' are supported)\n
         name: str
 
     Returns:
@@ -55,7 +55,31 @@ def readforce(path, namepatch='forces', time_name='0', name='forces'):
     path_namepatch = os.path.join(path, 'postProcessing', namepatch)
     if time_name is 'latestTime':
         time_name = _find_latesttime(path_namepatch)
-   
+    elif time_name is 'mergeTime':
+        time_list = []
+        dir_list = os.listdir(path + '/postProcessing/' + namepatch)
+        for directory in dir_list:
+            try:
+                float(directory)
+                time_list.append(directory)
+            except:
+                pass
+        time_list.sort(key = float)
+        time_list = np.array(time_list)
+        for timename in time_list:
+            tab = readforce(path, namepatch, timename, name)
+            if 'tab_merge' in locals():
+                for jj in range(np.size(tab[:, 0])):
+                    if tab[jj, 0]>tab_merge[-1, 0]:
+                        break
+                    else:
+                        continue
+                if jj+1 < np.size(tab[:, 0]):
+                    tab_merge = np.concatenate([tab_merge, tab[jj:, :]])
+            else:
+                tab_merge = tab
+        return tab_merge
+
     with open(os.path.join(path_namepatch, time_name,
                            name+'.dat'),'rb') as f:
         content = f.read()
