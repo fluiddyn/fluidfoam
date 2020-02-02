@@ -28,7 +28,7 @@ cache:
 
 install:
     - pip install -U pip pipenv tox==3.6 tox-pipenv coverage
-    - pip install -U numpy
+    - pip install -U numpy black
 
 script:
     - set -o pipefail

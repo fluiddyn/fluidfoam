@@ -13,6 +13,9 @@ clean:
 tests:
 	python -m unittest discover
 
+black:
+	black -l 82 fluidfoam
+
 tests_coverage:
 	mkdir -p .coverage
 	coverage run -p -m unittest discover
