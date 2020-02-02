@@ -62,7 +62,7 @@ class SimpleTestCase(unittest.TestCase):
             for i, v in alpha_samples.items():
                 self.assertAlmostEqual(v, alpha[i], places=places)
         alphashort1 = readscalar("output_samples/ascii", "0", "alpha10")
-        dummy = readscalar("output_samples/ascii", "0", "T")
+        readscalar("output_samples/ascii", "0", "T")
         alphauniform = readscalar("output_samples/ascii", "0", "alphauniform")
         readvector("output_samples/ascii", "0", "Uuniform")
         alphauniform = readscalar("output_samples/bin", "0", "alphauniform")
