@@ -153,7 +153,7 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
     for dummy, line in enumerate(content):
         if "#".encode() in line:
             j += 1
-        elif "#".encode() not in line and header == True:
+        elif "#".encode() not in line and header:
             header = False
             line = line.replace(b")", b"")
             line = line.split(b"(")
