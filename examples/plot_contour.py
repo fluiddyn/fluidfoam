@@ -45,9 +45,12 @@ vel = readvector(sol, timename, 'U', True)
 # .. note:: Here the position z is the middle (// is used to have an integer)
 
 import matplotlib.pyplot as plt
+import numpy as np
 
 plt.figure()
-plt.contourf(x[:, :, nz//2], y[:, :, nz//2], vel[0, :, :, nz//2])
+levels = np.arange(0, 0.178, 0.001)
+plt.contourf(x[:, :, nz//2], y[:, :, nz//2], vel[0, :, :, nz//2],
+             levels=levels)
 
 # Setting axis labels
 plt.xlabel('x (m)')
@@ -59,7 +62,8 @@ plt.ylabel('y (m)')
 #
 
 plt.figure()
-plt.contourf(x[:, :, nz//2], y[:, :, nz//2], vel[0, :, :, nz//2])
+plt.contourf(x[:, :, nz//2], y[:, :, nz//2], vel[0, :, :, nz//2],
+             levels=levels)
 
 # Setting axis labels
 plt.xlabel('x (m)')
