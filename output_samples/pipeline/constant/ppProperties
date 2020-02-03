@@ -1,0 +1,42 @@
+/*--------------------------------*- C++ -*----------------------------------*	\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.7.1                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      ppProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// parameters for pff
+
+//alphaMax         alphaMax         [ 0 0 0 0 0 0 0 ] 0.635;
+alphaMax        0.635;
+
+alphaMinFriction alphaMinFriction [ 0 0 0 0 0 0 0 ] 0.57;
+
+Fr               Fr [ 1 -1 -2 0 0 0 0 ] 5e-2;
+
+eta              eta [ 0 0 0 0 0 0 0 ] 3;
+
+p                p [ 0 0 0 0 0 0 0 ] 5;
+
+// parameters for ppMagf (if g0<0 is not used)
+
+preAlphaExp     500;
+
+expMax          10000;
+
+g0              g0 [ 1 -1 -2 0 0 0 0 ] -1e+3;
+
+packingLimiter  no;
+
+
+// ************************************************************************* //

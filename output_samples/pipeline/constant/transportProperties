@@ -1,0 +1,51 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  1.7.1                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      transportProperties;
+}
+// * * * * * * * * * * * * sediment properties * * * * * * * * * * * * //
+phasea
+{
+    rho             rho [ 1 -3 0 0 0 ] 2650;
+    nu              nu [ 0 2 -1 0 0 ] 1e-6;
+    d               d [ 0 1 0 0 0 0 0 ] 0.36e-3;
+    sF              sF   [ 0 0  0 0 0 0 0 ] 1.;    // shape Factor to adjust settling velocity for non-spherical particles
+    hExp            hExp [ 0 0  0 0 0 0 0 ] 2.65;  // hindrance exponent for drag: beta^(-hExp) (2.65 by default)
+}
+
+phaseb
+{
+    rho             rho [ 1 -3 0 0 0 ] 1000;
+    nu              nu [ 0 2 -1 0 0 ] 1.e-06;
+    d               d [ 0 1 0 0 0 0 0 ] 10e-6;
+    sF              sF   [ 0 0  0 0 0 0 0 ] 1.;
+    hExp            hExp [ 0 0  0 0 0 0 0 ] 2.65;
+}
+//*********************************************************************** //
+
+alphaSmall      alphaSmall [ 0 0 0 0 0 0 0 ] 1e-5;  // minimum volume fraction (phase a) for division by alpha 
+
+alphaAlpha      alphaAlpha [ 0 0 0 0 0 ] 0;         // surface tension
+
+Cvm             Cvm [ 0 0 0 0 0 ] 0;                // Virtual/Added Mass coefficient
+
+Cl              Cl [ 0 0 0 0 0 ] 0;                 // Lift force coefficient
+
+Ct              Ct [ 0 0 0 0 0 ] 1;                 // Eddy diffusivity coefficient for phase a
+
+
+transportModel  Newtonian;
+
+nu              nu [ 0 2 -1 0 0 0 0 ] 1e-06;
+nuMax        nuMax [0 2 -1 0 0 0 0] 10;      // viscosity limiter for the Frictional model (required for stability)
+// ************************************************************************* //

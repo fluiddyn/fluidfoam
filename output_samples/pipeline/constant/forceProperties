@@ -1,0 +1,39 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2.3.0                                 |
+|   \\  /    A nd           | Web:      www.OpenFOAM.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    class       dictionary;
+    location    "constant";
+    object      forceProperties;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+// * * * * * * * * * * * * * following are for presure * * * * * * * * * * * * * * * //
+//tilt             tilt             [ 0  0  0 0 0 0 0 ] 0;
+//gradPAMP1        gradPAMP1        [ 1 -2 -2 0 0 0 0 ] (0 0 0 );       // pressure osci amp
+//gradPAMP2        gradPAMP2        [ 1 -2 -2 0 0 0 0 ] ( 0 0 0 );      // pressure osci amp
+//gradPOSC         gradPOSC         [ 1 -2 -2 0 0 0 0 ] (0 0 0 ); // pressure osci real value
+gradPMEAN        gradPMEAN        [ 1 -2 -2 0 0 0 0 ] (0 0 0 ); // mean pressure
+oscpT            oscpT            [ 0  0  0 0 0 0 0 ] 0.0;            // osci period
+initTheta        initTheta        [ 0  0  0 0 0 0 0 ] 0;              // initial deg since osci pressure is programed with sin
+InitFreeze       InitFreeze       [ 0  0  0 0 0 0 0 ] 0;              // Ua set to zero at each time step
+
+
+Cvm             Cvm [ 0 0 0 0 0 ] 0;                // Virtual/Added Mass coefficient
+Cl              Cl [ 0 0 0 0 0 ] 0;                 // Lift force coefficient
+Ct              Ct [ 0 0 0 0 0 ] 0;                 // Eddy diffusivity coefficient for phase a
+
+
+spongeLayer      off;
+xSmin            xSmin            [0 1 0 0 0 0 0 ] 0.5;               // position at which the sponge layer start
+xSmax            xSmax            [0 1 0 0 0 0 0 ] 1.2;               // position at which the sponge layer stop
+
+debugInfo	true; 
+// * * * * * * * * * * * * end of definition of pressure * * * * * * * * * * * * * //
