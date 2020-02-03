@@ -38,7 +38,7 @@ phi = readscalar(sol, timename, 'phi')
 
 ###############################################################################
 # Interpolate the fields on a structured grid
-# --------------------
+# -------------------------------------------
 #
 # .. note:: The vector and scalar fields are interpolated on a specified
 #           structured grid
@@ -71,8 +71,8 @@ vely_i = griddata((x, y), vel[1, :], (xinterp, yinterp), method='linear')
 
 
 ###############################################################################
-# Plots the contour of the interpolted scalarfield phi, streamlines and a patch
-# ---------------------------------------------------------------------------
+# Plots the contour of the interpolted scalarfield phi and add a patch
+# --------------------------------------------------------------------
 #
 # .. note:: The scalar field phi reprensents the concentration of sediment in
 #           in a 2D two-phase flow simulation of erosion below a pipeline
@@ -94,6 +94,11 @@ plt.gca().add_patch(circle)
 levels = np.arange(0.1, 0.63, 0.001)
 plt.contourf(xi/d, yi/d, phi_i, cmap=plt.cm.Reds, levels=levels)
 
+
+###############################################################################
+# Calculates and adds the streamlines on the same plot
+# ---------------------------------------------
+#
 # Calculation of the streamline width as a function of the velociy magnitude
 vel_i = np.sqrt(velx_i**2 + vely_i**2)
 lw = pow(vel_i, 1.5)/vel_i.max()
