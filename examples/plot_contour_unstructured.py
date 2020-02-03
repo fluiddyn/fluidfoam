@@ -71,7 +71,7 @@ vely_i = griddata((x, y), vel[1, :], (xinterp, yinterp), method='linear')
 
 
 ###############################################################################
-# Plots the contour of the interpolted scalarfield phi and add a patch
+# Plots the contour of the interpolted scalarfield phi, streamlines and a patch
 # ---------------------------------------------------------------------------
 #
 # .. note:: The scalar field phi reprensents the concentration of sediment in
@@ -93,11 +93,6 @@ plt.gca().add_patch(circle)
 # Plots the contour of sediment concentration
 levels = np.arange(0.1, 0.63, 0.001)
 plt.contourf(xi/d, yi/d, phi_i, cmap=plt.cm.Reds, levels=levels)
-
-###############################################################################
-# Calculates and adds the streamlines on the same plot
-# ---------------------------------------------
-#
 
 # Calculation of the streamline width as a function of the velociy magnitude
 vel_i = np.sqrt(velx_i**2 + vely_i**2)
