@@ -1,6 +1,6 @@
 """
 Read and Plot a contour of OpenFoam output from an unstructured mesh
-=================================================================
+====================================================================
 
 This example reads and plots a contour of an OpenFoam vector field from an
 unstructured mesh by interpolation on a structured grid
@@ -8,7 +8,7 @@ unstructured mesh by interpolation on a structured grid
 
 ###############################################################################
 # Reads the mesh
-# ---------------------------------------------------------
+# --------------
 #
 # .. note:: It reads the mesh coordinates and stores them in variables x, y
 #           and z
@@ -23,7 +23,7 @@ x, y, z = readmesh(sol)
 
 ###############################################################################
 # Reads vector and scalar field
-# --------------------
+# -----------------------------
 #
 # .. note:: It reads vector and scalar field from an unstructured mesh
 #           and stores them in vel and phi variables
@@ -97,7 +97,7 @@ plt.contourf(xi/d, yi/d, phi_i, cmap=plt.cm.Reds, levels=levels)
 
 ###############################################################################
 # Calculates and adds the streamlines on the same plot
-# ---------------------------------------------
+# ----------------------------------------------------
 #
 # Calculation of the streamline width as a function of the velociy magnitude
 vel_i = np.sqrt(velx_i**2 + vely_i**2)
