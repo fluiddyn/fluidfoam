@@ -1,6 +1,6 @@
 """
 Read and Plot a contour of OpenFoam output from an unstructured mesh
-=================================================================
+====================================================================
 
 This example reads and plots a contour of an OpenFoam vector field from an
 unstructured mesh by interpolation on a structured grid
@@ -8,7 +8,7 @@ unstructured mesh by interpolation on a structured grid
 
 ###############################################################################
 # Reads the mesh
-# ---------------------------------------------------------
+# --------------
 #
 # .. note:: It reads the mesh coordinates and stores them in variables x, y
 #           and z
@@ -23,7 +23,7 @@ x, y, z = readmesh(sol)
 
 ###############################################################################
 # Reads vector and scalar field
-# --------------------
+# -----------------------------
 #
 # .. note:: It reads vector and scalar field from an unstructured mesh
 #           and stores them in vel and phi variables
@@ -71,8 +71,8 @@ vely_i = griddata((x, y), vel[1, :], (xinterp, yinterp), method='linear')
 
 
 ###############################################################################
-# Plots the contour of the interpolted scalarfield phi and add a patch
-# --------------------------------------------------------------------
+# Plots the contour of the interpolted scalarfield phi, streamlines and a patch 
+# -----------------------------------------------------------------------------
 #
 # .. note:: The scalar field phi reprensents the concentration of sediment in
 #           in a 2D two-phase flow simulation of erosion below a pipeline
@@ -94,14 +94,10 @@ plt.gca().add_patch(circle)
 levels = np.arange(0.1, 0.63, 0.001)
 plt.contourf(xi/d, yi/d, phi_i, cmap=plt.cm.Reds, levels=levels)
 
-
-###############################################################################
-# Calculates and adds the streamlines on the same plot
-# ---------------------------------------------
-#
 # Calculation of the streamline width as a function of the velociy magnitude
 vel_i = np.sqrt(velx_i**2 + vely_i**2)
 lw = pow(vel_i, 1.5)/vel_i.max()
 
+# Plots the streamlines
 plt.streamplot(xi/d, yi/d, velx_i, vely_i, color='C0', density=[2, 1],
                linewidth=lw, arrowsize=0.05)

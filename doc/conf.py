@@ -82,7 +82,7 @@ master_doc = 'index'
 
 # General information about the project.
 project = u'fluidfoam'
-copyright = u'2018, Cyrille Bonamy'
+copyright = u'2020, Cyrille Bonamy'
 author = 'Cyrille Bonamy'
 
 # The version info for the project you're documenting, acts as replacement for
