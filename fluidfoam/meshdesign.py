@@ -33,11 +33,11 @@ def getgz(h, dz1, N):
     solgood = solreal[titi]
     # Compute the common ratio of the sequence
     try:
-        r = 1. / np.real(np.real(solgood[0]))
+        r = 1.0 / np.real(np.real(solgood[0]))
     except IndexError:
         print("dz1 so high compared to the number of cell and the domain size")
         print("gz would be superior to 1 : NOT IMPLEMENTED")
-        r = 1.
+        r = 1.0
         gz = 0
     # Compute the grading factor for blockMesh
     gz = r ** (N - 2)
@@ -55,7 +55,7 @@ def getgz(h, dz1, N):
     print("dz[N-2]=", dz[N - 2])
     print("common ratio: r=", r)
     print("gz=", gz)
-    print("1/gz=", 1. / gz)
+    print("1/gz=", 1.0 / gz)
     return z, dz, gz
 
 
@@ -66,9 +66,9 @@ def getdzs(h, gz, N):
         Usage: dz1,dzN=getdzs(h,gz,N)
     """
     # Compute the common ratio of the sequence
-    r = gz ** (1. / (N - 1))
+    r = gz ** (1.0 / (N - 1))
     if r != 1:
-        dz1 = h * (1. - r) / (1. - r ** (N - 1))
+        dz1 = h * (1.0 - r) / (1.0 - r ** (N - 1))
         dzN = gz * dz1
     else:
         dz1 = h / float(N - 1)
