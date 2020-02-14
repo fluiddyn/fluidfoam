@@ -183,7 +183,11 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
             header = False
             line = line.replace(b")", b"")
             line = line.split(b"(")
-            dim = len(line[1].split())
+            try:
+                dim = len(line[1].split())
+            except IndexError:
+                dim = 1
+                line = line[0].split()
             time_vect = np.zeros(len(content) - j)
             time_vect[0] = line[0]
             tab = np.zeros([len(content) - j, len(line) - 1, dim], dtype=float)
@@ -208,7 +212,11 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
             j += 1
             line = line.replace(b")", b"")
             line = line.split(b"(")
-            time_vect[j] = line[0]
+            try:
+                time_vect[j] = line[0]
+            except ValueError:
+                line = line[0].split()
+                time_vect[j] = line[0]
             for k, probedata in enumerate(line[1:]):
                 values = probedata.split()
                 for l, vect in enumerate(values):
