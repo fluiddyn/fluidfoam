@@ -131,7 +131,7 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
         Args:
             path: str\n
             probes_name: str\n
-            time_name: str ('latestTime' is supported)\n
+            time_name: str ('latestTime' and 'mergeTime' are supported)\n
             name: str
 
         Returns:
@@ -145,6 +145,32 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
     path_probes_name = os.path.join(path, "postProcessing", probes_name)
     if time_name is "latestTime":
         time_name = _find_latesttime(path_probes_name)
+    elif time_name is "mergeTime":
+        time_list = []
+        dir_list = os.listdir(path + "/postProcessing/" + probes_name)
+        for directory in dir_list:
+            try:
+                float(directory)
+                time_list.append(directory)
+            except:
+                pass
+        time_list.sort(key=float)
+        time_list = np.array(time_list)
+        for timename in time_list:
+            time_vect, tab = readprobes(path, probes_name, timename, name)
+            if "tab_merge" in locals():
+                for jj in range(np.size(time_vect[:])):
+                    if time_vect[jj] > timevect_merge[-1]:
+                        break
+                    else:
+                        continue
+                if jj + 1 < np.size(time_vect[:]):
+                    timevect_merge = np.concatenate([timevect_merge, time_vect[jj:]])
+                    tab_merge = np.concatenate([tab_merge, tab[jj:, :]])
+            else:
+                timevect_merge = time_vect
+                tab_merge = tab
+        return timevect_merge, tab_merge
 
     with open(os.path.join(path_probes_name, time_name, name), "rb") as f:
         content = f.readlines()
