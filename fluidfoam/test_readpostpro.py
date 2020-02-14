@@ -21,3 +21,4 @@ class SimpleTestCase(unittest.TestCase):
         self.assertEqual(6, len(time_vect))
         time_vect, dummy = fluidfoam.readprobes(case, time_name="mergeTime")
         self.assertEqual(13, len(time_vect))
+        time_vect, dummy = fluidfoam.readprobes(case, time_name="0", name="p")
