@@ -483,7 +483,7 @@ class OpenFoamFile(object):
                 )
             )
         else:
-            lines = data.split(b"\n(")
+            lines = data.split(b"\n(")[1:]
             lines = [line.split(b")")[0] for line in lines]
             data = b" ".join(lines).strip()
             self.values = np.array([int(s) for s in data.split()])
