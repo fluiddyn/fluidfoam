@@ -27,7 +27,7 @@ cache:
         # - $TRAVIS_BUILD_DIR/.tox
 
 install:
-    - pip install -U pip pipenv tox==3.6 tox-pipenv coverage==4.5.4
+    - pip install -U pip pipenv tox==3.6 tox-pipenv=1.9.0 coverage==4.5.4
     - pip install -U numpy
 
 script:
