@@ -71,6 +71,8 @@ class SimpleTestCase(unittest.TestCase):
         x, y, z = readmesh("output_samples/bin/3d", boundary="bottom")
         self.assertEqual(10, len(alphashort1))
         self.assertEqual(1, len(alphauniform))
+        readscalar("output_samples/ascii/wohead", "p")
+        readvector("output_samples/ascii/wohead", "faceCentres")
 
     def test_read_functions(self):
         self._test_functions(

@@ -11,10 +11,10 @@ import numpy as np
 
 
 def getgz(h, dz1, N):
-    """ Given a domain size h, a first grid size dz1 and a number of points N
-        this function returns the common ratio, the grading gz to enter
-        in blockMesk and the z and dz vectors.
-        Usage: z,dz,gz=getgz(h,dz1,N)
+    """Given a domain size h, a first grid size dz1 and a number of points N
+    this function returns the common ratio, the grading gz to enter
+    in blockMesk and the z and dz vectors.
+    Usage: z,dz,gz=getgz(h,dz1,N)
     """
     # polynomial p of the sequence terms summation between 0 and N-1
     p = np.zeros(N)
@@ -60,10 +60,10 @@ def getgz(h, dz1, N):
 
 
 def getdzs(h, gz, N):
-    """ Given a domain size h, a grading factor gz and a number of points N
-        this function returns the grid size of the first and the last
-        points.
-        Usage: dz1,dzN=getdzs(h,gz,N)
+    """Given a domain size h, a grading factor gz and a number of points N
+    this function returns the grid size of the first and the last
+    points.
+    Usage: dz1,dzN=getdzs(h,gz,N)
     """
     # Compute the common ratio of the sequence
     r = gz ** (1.0 / (N - 1))
