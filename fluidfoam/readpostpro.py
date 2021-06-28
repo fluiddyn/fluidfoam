@@ -50,7 +50,7 @@ def varinforce():
 
 
 def readforce(path, namepatch="forces", time_name="0", name="forces"):
-    """ read the data contained in the force file .
+    """read the data contained in the force file .
     create the forces variables in the Forcesfile object
 
     Args:
@@ -125,20 +125,20 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
 
 
 def readprobes(path, probes_name="probes", time_name="0", name="U"):
-    """ read the data contained in the force file .
-        create the forces variables in the Forcesfile object
+    """read the data contained in the force file .
+    create the forces variables in the Forcesfile object
 
-        Args:
-            path: str\n
-            probes_name: str\n
-            time_name: str ('latestTime' and 'mergeTime' are supported)\n
-            name: str
+    Args:
+        path: str\n
+        probes_name: str\n
+        time_name: str ('latestTime' and 'mergeTime' are supported)\n
+        name: str
 
-        Returns:
-            array: array of time values and array of probes data;
+    Returns:
+        array: array of time values and array of probes data;
 
-        A way you might use me is:\n
-            probe_data = read('path_of_OpenFoam_case', '0', 'probes', 'U')
+    A way you might use me is:\n
+        probe_data = read('path_of_OpenFoam_case', '0', 'probes', 'U')
 
     """
 
@@ -165,7 +165,9 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
                     else:
                         continue
                 if jj + 1 < np.size(time_vect[:]):
-                    timevect_merge = np.concatenate([timevect_merge, time_vect[jj:]])
+                    timevect_merge = np.concatenate(
+                        [timevect_merge, time_vect[jj:]]
+                    )
                     tab_merge = np.concatenate([tab_merge, tab[jj:, :]])
             else:
                 timevect_merge = time_vect

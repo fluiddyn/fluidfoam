@@ -64,6 +64,7 @@ class OpenFoamFile(object):
         boundary=None,
         order="F",
         precision=15,
+        datatype=None,
     ):
 
         self.pathcase = path
@@ -91,7 +92,12 @@ class OpenFoamFile(object):
 
         self.header = self._parse_session(b"FoamFile")
 
-        self.is_ascii = self.header[b"format"] == b"ascii"
+        try:
+            self.is_ascii = self.header[b"format"] == b"ascii"
+            self.noheader = False
+        except KeyError:
+            self.is_ascii = True
+            self.noheader = True
 
         for line in self.lines_stripped:
             if line.startswith(b"dimensions"):
@@ -109,7 +115,9 @@ class OpenFoamFile(object):
         elif (name is "owner") or (name is "neighbour"):
             self._parse_owner()
         else:
-            self._parse_data(boundary=boundary, precision=precision)
+            self._parse_data(
+                boundary=boundary, precision=precision, datatype=datatype
+            )
         if structured:
             self._determine_order(order=order, precision=precision)
 
@@ -174,7 +182,7 @@ class OpenFoamFile(object):
 
         return dict_session
 
-    def _parse_data(self, boundary, precision=15):
+    def _parse_data(self, boundary, datatype, precision=15):
 
         if boundary is not None:
             boun = str.encode(boundary)
@@ -186,27 +194,38 @@ class OpenFoamFile(object):
                 self._nearest_data(boundary=boundary, precision=precision)
                 return
         else:
-            data = self.content.split(b"internalField")[1]
+            try:
+                data = self.content.split(b"internalField")[1]
+            except IndexError:
+                data = self.content
 
         lines = data.split(b"\n")
         shortline = lines[0].split(b">")[-1]
         words = lines[0].split()
 
-        self.nonuniform = words[0] == b"nonuniform"
-        self.uniform = words[0] == b"uniform"
-        self.codestream = words[0] == b"#codeStream"
-        self.short = shortline[-1] == b";"
+        if not self.noheader:
+            self.nonuniform = words[0] == b"nonuniform"
+            self.uniform = words[0] == b"uniform"
+            self.codestream = words[0] == b"#codeStream"
+            self.short = shortline[-1] == b";"
 
-        self.type_data = self.header[b"class"]
+            self.type_data = self.header[b"class"]
 
-        if b"ScalarField" in self.type_data:
-            self.type_data = "scalar"
-        elif b"VectorField" in self.type_data:
-            self.type_data = "vector"
-        elif b"SymmTensorField" in self.type_data:
-            self.type_data = "symmtensor"
-        elif b"TensorField" in self.type_data:
-            self.type_data = "tensor"
+            if b"ScalarField" in self.type_data:
+                self.type_data = "scalar"
+            elif b"VectorField" in self.type_data:
+                self.type_data = "vector"
+            elif b"SymmTensorField" in self.type_data:
+                self.type_data = "symmtensor"
+            elif b"TensorField" in self.type_data:
+                self.type_data = "tensor"
+        else:
+            self.uniform = False
+            self.codestream = False
+            self.nonuniform = True
+            shortline = lines[1].split(b">")[-1]
+            self.short = shortline[-1] == b";"
+            self.type_data = datatype
 
         if self.uniform:
             nb_pts = 1
@@ -538,6 +557,7 @@ def readfield(
     boundary=None,
     order="F",
     precision=15,
+    datatype=None,
 ):
     """
     Read OpenFoam field and reshape if necessary (structured mesh) and
@@ -552,7 +572,9 @@ def readfield(
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15).
         If decimals is negative, it specifies the number of positions to the
-        left of the decimal point.
+        left of the decimal point. \n
+        datatype: None (default) or str ("scalar", "vector"...) necessary in
+        case of files without header
 
     Returns:
         array: array of type of the field; size of the array is the size of the
@@ -571,6 +593,7 @@ def readfield(
         boundary=boundary,
         order=order,
         precision=precision,
+        datatype=datatype,
     )
     values = field.values
 
@@ -646,6 +669,7 @@ def readscalar(
             boundary=boundary,
             order=order,
             precision=precision,
+            datatype="scalar",
         )
         values = scalar.values
 
@@ -699,6 +723,7 @@ def readvector(
         boundary=boundary,
         order=order,
         precision=precision,
+        datatype="vector",
     )
     values = vector.values
 
@@ -759,6 +784,7 @@ def readsymmtensor(
         boundary=boundary,
         order=order,
         precision=precision,
+        datatype="symmtensor",
     )
     values = scalar.values
 
@@ -819,6 +845,7 @@ def readtensor(
         boundary=boundary,
         order=order,
         precision=precision,
+        datatype="tensor",
     )
 
     values = scalar.values
