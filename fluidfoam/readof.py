@@ -1,5 +1,5 @@
-"""Read OpenFoam Files for Python
-===========================================
+"""Reading OpenFoam Files with Python
+=====================================
 This module provides functions to read OpenFoam Files:
 
 .. autofunction:: readmesh
@@ -568,9 +568,7 @@ def readfield(
         structured: False or True\n
         boundary: None or str\n
         order: "F" (default) or "C" \n
-        precision : Number of decimal places to round to (default: 15).
-        If decimals is negative, it specifies the number of positions to the
-        left of the decimal point. \n
+        precision : Number of decimal places to round to (default: 15)\n
         datatype: None (default) or str ("scalar", "vector"...) necessary in
         case of files without header
 
@@ -645,8 +643,6 @@ def readscalar(
         boundary: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15).
-        If decimals is negative, it specifies the number of positions to the
-        left of the decimal point.
 
     Returns:
         array: array of scalar field; size of the array is the size of the
@@ -701,8 +697,6 @@ def readvector(
         boundary: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15).
-        If decimals is negative, it specifies the number of positions to the
-        left of the decimal point.
 
     Returns:
         array: array of vector field; size of the array is the size of the
@@ -762,8 +756,6 @@ def readsymmtensor(
         boundary: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15).
-        If decimals is negative, it specifies the number of positions to the
-        left of the decimal point.
 
     Returns:
         array: array of symmetrical tensor field; size of the array is the size
@@ -823,8 +815,6 @@ def readtensor(
         boundary: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15).
-        If decimals is negative, it specifies the number of positions to the
-        left of the decimal point.
 
     Returns:
         array: array of tensor field; size of the array is the size of the
@@ -874,8 +864,6 @@ def readmesh(path, structured=False, boundary=None, order="F", precision=15):
         boundary: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15).
-        If decimals is negative, it specifies the number of positions to the
-        left of the decimal point.
 
     Returns:
         array: array of vector (Mesh X, Y, Z); size of the array is the size of
