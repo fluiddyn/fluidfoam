@@ -114,6 +114,7 @@ functions.
 
 .. autosummary::
    :toctree: generated/
+   :caption: General
 
    fluidfoam.readof
    fluidfoam.processing1d
