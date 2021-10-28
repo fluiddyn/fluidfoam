@@ -64,7 +64,7 @@ To propose your changes into the main fluidfoam project, follow again the `forki
 Example Usage
 -------------
 
-* http://servforge.legi.grenoble-inp.fr/pub/soft-sedfoam/
+* https://sedfoam.github.io
 
 Core Developers
 ---------------
