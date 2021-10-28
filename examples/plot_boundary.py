@@ -57,7 +57,6 @@ cbar.set_label("Ux (m/s)")
 # Setting axis labels
 plt.xlabel("x (m)")
 plt.ylabel("z (m)")
-plt.show()
 
 ###############################################################################
 # If you don't know the plane
@@ -75,4 +74,3 @@ ax.set_ylabel("y (m)")
 ax.set_zlabel("z (m)")
 cbar = plt.colorbar(ax3d)
 cbar.set_label("Ux (m/s)")
-plt.show()
