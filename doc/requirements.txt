@@ -1,4 +1,4 @@
-Sphinx>=1.1
+Sphinx>=4
 matplotlib
 numpy
 numpydoc
