@@ -3,5 +3,6 @@
 Gallery of Examples
 ===================
 
-Some examples
-
+First examples
+--------------
+This gallery consists of introductory examples.

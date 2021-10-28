@@ -61,10 +61,12 @@ extensions = [
 ]
 
 sphinx_gallery_conf = {
-     # path to your examples scripts
-     'examples_dirs': '../examples',
-     # path where to save gallery generated examples
-     'gallery_dirs': 'auto_examples',
+    # path to your examples scripts
+    'examples_dirs': '../examples',
+    # path where to save gallery generated examples
+    'gallery_dirs': 'auto_examples',
+    # specify the order of examples to be according to filename
+    'within_subsection_order': FileNameSortKey,
 }
 
 
