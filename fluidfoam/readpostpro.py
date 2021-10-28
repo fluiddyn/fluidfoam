@@ -23,38 +23,13 @@ def _find_latesttime(path):
     return time_list[-1]
 
 
-def varinforce():
-    """ return the var included in postProcessing force files."""
-
-    return [
-        "T",
-        "Fpx",
-        "Fpy",
-        "Fpz",
-        "Fvx",
-        "Fvy",
-        "Fvz",
-        "Fpox",
-        "Fpoy",
-        "Fpoz",
-        "Mpx",
-        "Mpy",
-        "Mpz",
-        "Mvx",
-        "Mvy",
-        "Mvz",
-        "Mpox",
-        "Mpoy",
-        "Mpoz",
-    ]
-
-
 def readforce(path, namepatch="forces", time_name="0", name="forces"):
     """read the data contained in the force file .
     create the forces variables in the Forcesfile object
 
     Args:
         path: str\n
+        namepatch: str\n
         time_name: str ('latestTime' and 'mergeTime' are supported)\n
         name: str
 
@@ -63,12 +38,9 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
         time
 
     A way you might use me is:\n
-        force = readforce('path_of_OpenFoam_case', '0', 'forces')
+        force = readforce(path='path_of_OpenFoam_case', namepatch='forces',
+                          time_name='0', name='forces')
 
-    It will create and fill the force variables:\n
-        ['T','Fpx','Fpy','Fpz','Fvx','Fvy','Fvz'
-        ,'Fpox','Fpoy','Fpoz','Mpx','Mpy','Mpz'
-        ,'Mvx','Mvy','Mvz','Mpox','Mpoy','Mpoz']
     """
 
     path_namepatch = os.path.join(path, "postProcessing", namepatch)
