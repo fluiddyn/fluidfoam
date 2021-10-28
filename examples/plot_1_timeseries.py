@@ -1,6 +1,6 @@
 """
-Read and Plot a time series of OpenFoam scalar field
-====================================================
+Time series of OpenFoam scalar field
+====================================
 
 This example reads and plots a time series of an OpenFoam scalar field
 """

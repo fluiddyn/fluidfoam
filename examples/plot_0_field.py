@@ -1,6 +1,6 @@
 """
-Read and Plot OpenFoam output field
-===================================
+First example
+=============
 
 This example doesn't do much, it just reads and makes a simple plot of OpenFoam
 field

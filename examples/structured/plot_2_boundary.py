@@ -1,6 +1,6 @@
 """
-Read and Plot a OpenFoam field from a boundary/patch of a structured mesh
-=========================================================================
+Contour and scatter from a boundary/patch
+=========================================
 
 This example reads and plots the first component of an OpenFoam
 vector field from a boundary (patch) of a structured mesh
@@ -17,7 +17,7 @@ vector field from a boundary (patch) of a structured mesh
 from fluidfoam import readmesh
 
 
-sol = "../output_samples/box/"
+sol = "../../output_samples/box/"
 
 x, y, z = readmesh(path=sol, structured=True, boundary="topWall")
 
@@ -34,7 +34,6 @@ print("Boundary shape = ", nface)
 # import readvector function from fluidfoam package
 from fluidfoam import readvector
 
-sol = "../output_samples/box/"
 timename = "0"
 vel = readvector(sol, timename, "U", structured=True, boundary="topWall")
 

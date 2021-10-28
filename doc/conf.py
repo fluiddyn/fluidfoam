@@ -23,6 +23,9 @@ mpl.use('Agg')
 import matplotlib.pyplot as plt
 plt.ioff()
 
+#import sphinx_gallery
+from sphinx_gallery.sorting import FileNameSortKey
+
 import fluidfoam
 
 here = os.path.dirname(__file__)

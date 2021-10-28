@@ -1,6 +1,6 @@
 """
-Read and Plot a contour of OpenFoam output from an unstructured mesh
-====================================================================
+Contour from an unstructured mesh
+=================================
 
 This example reads and plots a contour of an OpenFoam vector field from an
 unstructured mesh by interpolation on a structured grid
@@ -17,7 +17,7 @@ unstructured mesh by interpolation on a structured grid
 from fluidfoam import readmesh
 
 
-sol = '../output_samples/pipeline/'
+sol = '../../output_samples/pipeline/'
 
 x, y, z = readmesh(sol)
 

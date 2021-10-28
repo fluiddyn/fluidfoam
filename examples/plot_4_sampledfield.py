@@ -1,6 +1,6 @@
 """
-Read and Plot OpenFoam output field of files without header
-===========================================================
+output field of files without header (sampling)
+===============================================
 
 This example doesn't do much, it just reads and makes a simple plot of OpenFoam
 field in case of files without header (as for example the output of sampling

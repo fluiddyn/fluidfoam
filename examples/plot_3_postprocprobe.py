@@ -1,6 +1,6 @@
 """
-Read and Plot a time series of OpenFoam postProcessing probe
-============================================================
+Time series of postProcessing probe
+===================================
 
 This example reads and plots a series of postProcessing probe
 """
