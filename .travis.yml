@@ -4,9 +4,8 @@ language: python
 
 
 python:
-  - 2.7
-  - 3.6
   - 3.7
+  - 3.8
 
 
 env:
@@ -27,7 +26,7 @@ cache:
         # - $TRAVIS_BUILD_DIR/.tox
 
 install:
-    - pip install -U pip pipenv tox==3.6 tox-pipenv==1.9.0 coverage==4.5.4
+    - pip install -U pip pipenv tox tox-pipenv coverage
     - pip install -U numpy
 
 script:

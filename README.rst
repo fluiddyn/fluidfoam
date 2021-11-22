@@ -27,7 +27,7 @@ What is this repository for?
 * Openfoam Tools
 * Version : 0.2.2
 * Supported OpenFoam Versions : 2.4.0, 4.1 to 7, v1712plus to v1912plus
-* Supported Python Versions : 2.7.x, >= 3.8
+* Supported Python Versions : >= 3.7
 
 Deployment instructions
 -----------------------
@@ -80,8 +80,8 @@ Example Usage
 Core Developers
 ---------------
 
-* Cyrille.Bonamy@legi.cnrs.fr
-* Julien.Chauchat@grenoble-inp.fr
+* Cyrille.Bonamy@univ-grenoble-alpes.fr
+* Julien.Chauchat@univ-grenoble-alpes.fr
 * Antoine.Mathieu@univ-grenoble-alpes.fr
 
 Emeritus Core Developers
