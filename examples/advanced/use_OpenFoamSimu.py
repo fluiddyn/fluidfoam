@@ -14,8 +14,8 @@ that contains all the results of one simulations.
 #           simulation
 #
 
-# import the class fluidFoamPP
-from fluidFoamPP import fluidFoamPP
+# import the class OpenFoamSimu
+from fluidfoam import OpenFoamSimu
 
 #path were all simulations are located
 path = '../../output_samples'
@@ -27,7 +27,7 @@ timeStep = '4'
 
 #Load simulation and create an object called mySimu that contain the results of
 #the simulation, structured=True indicates that the mesh is structured
-mySimu = fluidFoamPP(path=path, simu=simu, timeStep=timeStep, structured=True)
+mySimu = OpenFoamSimu(path=path, simu=simu, timeStep=timeStep, structured=True)
 # .. note:: All data saved at timeStep of the desired simulations are
 #           automatically loaded as a variable of object mySimu.
 #           You can now what variables have been loaded using function keys() of
@@ -50,7 +50,7 @@ import numpy as np
 mySimu.vel_averaged = np.mean(np.mean(mySimu.U, 3), 1)
 
 ###############################################################################
-# Now plots the profile of the averaged first velocity component
+# Now plot the profile of the averaged first velocity component
 # --------------------------------------------------------------
 #
 
