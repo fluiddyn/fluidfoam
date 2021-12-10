@@ -1,14 +1,14 @@
 """
-Organize simulations results data
-=================================
+Use OpenFoamSimu to post-process simulation
+===========================================
 
-This example shows how to organize the results of a simulation into an object
-that contains all the results of one simulations.
+This example shows how to organize the results of a simulation into an
+OpenFoamSimu object that contains all the results of one simulation.
 """
 
 ###############################################################################
-# First create a simulation object with fluidFoamPP
-# -------------------------------------------------
+# First create a simulation object with OpenFoamSimu
+# --------------------------------------------------
 #
 # .. note:: This class allows you to create an object associated to a
 #           simulation
@@ -19,7 +19,7 @@ from fluidfoam import OpenFoamSimu
 
 #path were all simulations are located
 path = '../../output_samples'
-#Name of simulation to load, if not given, the program lists all simulations
+#Name of the simulation to load, if not given, the program lists all simulations
 #located in path and ask you to choose which one to load
 simu = 'box'
 #time step to load, if not given, load last time step
@@ -28,9 +28,9 @@ timeStep = '4'
 #Load simulation and create an object called mySimu that contain the results of
 #the simulation, structured=True indicates that the mesh is structured
 mySimu = OpenFoamSimu(path=path, simu=simu, timeStep=timeStep, structured=True)
-# .. note:: All data saved at timeStep of the desired simulations are
-#           automatically loaded as a variable of object mySimu.
-#           You can now what variables have been loaded using function keys() of
+# .. note:: Each file saved at timeStep of the simulation  are
+#           automatically loaded as variables of object mySimu.
+#           You can know what variables have been loaded using function keys() of
 #           the class
 
 mySimu.keys()
