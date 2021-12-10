@@ -83,6 +83,7 @@ Core Developers
 * Cyrille.Bonamy@univ-grenoble-alpes.fr
 * Julien.Chauchat@univ-grenoble-alpes.fr
 * Antoine.Mathieu@univ-grenoble-alpes.fr
+* Remi.Chassagne@univ-grenoble-alpes.fr
 
 Emeritus Core Developers
 ------------------------

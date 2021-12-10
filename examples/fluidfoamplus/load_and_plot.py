@@ -26,7 +26,7 @@ simu = 'box'
 timeStep = '4'
 
 #Load simulation and create an object called mySimu that contain the results of
-#the simulation
+#the simulation, structured=True indicates that the mesh is structured
 mySimu = fluidFoamPP(path=path, simu=simu, timeStep=timeStep, structured=True)
 # .. note:: All data saved at timeStep of the desired simulations are
 #           automatically loaded as a variable of object mySimu.
