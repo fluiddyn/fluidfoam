@@ -7,6 +7,7 @@ from fluidfoam.processing1d import create1dprofil, read1dprofil
 from fluidfoam.processing1d import create1dprofil_spe, plot1dprofil
 from fluidfoam.meshdesign import getgz, getdzs
 from fluidfoam.readpostpro import readforce, readprobes
+from fluidfoam.OpenFoamSimu import OpenFoamSimu
 from fluidfoam._version import __version__
 
 warnings.simplefilter("always", category=DeprecationWarning)
