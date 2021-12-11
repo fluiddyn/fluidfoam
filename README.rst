@@ -12,8 +12,8 @@ fluidfoam
    :target: http://fluidfoam.readthedocs.org
    :alt: Documentation status
 
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/ipwdnr1an8su429q?svg=true
-.. _AppVeyor: https://ci.appveyor.com/project/CyrilleBonamy/fluidfoam/history
+.. |Travis| image:: https://app.travis-ci.com/fluiddyn/fluidfoam.svg?branch=master
+   :target: https://app.travis-ci.com/github/fluiddyn/fluidfoam 
 
 .. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/
