@@ -1,6 +1,6 @@
 """
-Use OpenFoamSimu to post-process simulation
-===========================================
+OpenFoamSimu to post-process simulation
+=======================================
 
 This example shows how to organize the results of a simulation into an
 OpenFoamSimu object that contains all the results of one simulation.

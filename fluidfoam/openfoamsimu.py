@@ -34,9 +34,9 @@ class OpenFoamSimu(object):
             self.simu = simu
             self.directory = self._find_directory(path, simu)
 
-        self.readOpenFoam(timeStep=timeStep, structured=structured)
+        self.readopenfoam(timeStep=timeStep, structured=structured)
 
-    def readOpenFoam(self, timeStep=None, structured=True):
+    def readopenfoam(self, timeStep=None, structured=True):
         """
         Reading SedFoam results
         Load the last time step saved of the simulation
@@ -168,4 +168,19 @@ class OpenFoamSimu(object):
             directory = directories[0]
 
         return directory + "/"
+
+
+if __name__ == "__main__":
+
+    simu = "box"
+    timeStep = "4"
+
+    for d in dirs:
+        rep = os.path.join(os.path.dirname(__file__), "../output_samples")
+
+        mySimu = OpenFoamSimu(path=rep, simu=simu, timeStep=timeStep, structured=True)
+
+        mySimu.keys()
+
+        mySimu.U
 
