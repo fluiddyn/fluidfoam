@@ -14,6 +14,7 @@ fluidfoam
 
 .. |Travis| image:: https://app.travis-ci.com/fluiddyn/fluidfoam.svg?branch=master
    :target: https://app.travis-ci.com/github/fluiddyn/fluidfoam 
+   :alt: Build status
 
 .. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/
