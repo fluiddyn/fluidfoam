@@ -120,6 +120,7 @@ functions.
    fluidfoam.processing1d
    fluidfoam.readpostpro
    fluidfoam.meshdesign
+   fluidfoam.openfoamsimu
 
 .. toctree::
    :maxdepth: 2

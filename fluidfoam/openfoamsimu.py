@@ -1,3 +1,14 @@
+"""Class to load all data saved at timeStep of an openFoam simulation
+=====================================================================
+
+.. autoclass:: OpenFoamSimu
+
+.. automethod:: OpenFoamSimu.keys
+
+.. automethod:: OpenFoamSimu.readopenfoam
+
+"""
+
 import os, sys
 import subprocess
 from fluidfoam import readmesh, readfield
@@ -11,21 +22,21 @@ class DirectorySimuError(Error):
                 "No directory found for simulation named {}".format(simu))
 
 class OpenFoamSimu(object):
+    """Class to load all data saved at timeStep of an openFoam simulation
 
-    def __init__(self, path, simu=None, timeStep=None, structured=False):
-        """Class to load all data saved at timeStep of an openFoam simulation
-
-        Args:
-            path : str, reference path where simulations are stored. You may want to
-                provide path if all your simulations are located inside path and
-                subfolders of path. You can do it by modifying in the __init__
-                path='/path/to/the/simulations/'\n
-            simu : str, name of the simu that has to be loaded. If None, it will
-                lists all existing simulation names in path and ask you to choose\n
-            timeStep : str, timeStep to load. If None, load the last time step\n
-            structured : bool, true if the mesh is structured
+    Args:
+        path : str, reference path where simulations are stored. You may want to
+            provide path if all your simulations are located inside path and
+            subfolders of path. You can do it by modifying in the __init__
+            path='/path/to/the/simulations/'\n
+        simu : str, name of the simu that has to be loaded. If None, it will
+            lists all existing simulation names in path and ask you to choose\n
+        timeStep : str, timeStep to load. If None, load the last time step\n
+        structured : bool, true if the mesh is structured
 
         """
+
+    def __init__(self, path, simu=None, timeStep=None, structured=False):
 
         if simu == None:
             self.directory = self._choose_simulation(path)
@@ -90,7 +101,7 @@ class OpenFoamSimu(object):
 
     def keys(self):
         """
-        Print the name all variables loaded from simulation results
+        Print the name of all variables loaded from simulation results
         """
         print("Loaded available variables are :")
         print(self.variables)

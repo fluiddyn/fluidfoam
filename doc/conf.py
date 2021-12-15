@@ -24,7 +24,7 @@ import matplotlib.pyplot as plt
 plt.ioff()
 
 #import sphinx_gallery
-from sphinx_gallery.sorting import FileNameSortKey
+from sphinx_gallery.sorting import ExplicitOrder
 
 import fluidfoam
 
@@ -69,7 +69,10 @@ sphinx_gallery_conf = {
     # path where to save gallery generated examples
     'gallery_dirs': 'auto_examples',
     # specify the order of examples to be according to filename
-    'within_subsection_order': FileNameSortKey,
+    'subsection_order': ExplicitOrder(['../examples/',
+                                       '../examples/structured/',
+                                       '../examples/unstructured/',
+                                       '../examples/advanced/']),
 }
 
 
