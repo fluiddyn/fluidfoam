@@ -74,7 +74,7 @@ def getdzs(h, gz, N):
     # Compute the common ratio of the sequence
     r = gz ** (1.0 / (N - 1))
     if r != 1:
-        dz1 = h * (1.0 - r) / (1.0 - r ** (N - 1))
+        dz1 = h * (1.0 - r) / (1.0 - r ** N)
         dzN = gz * dz1
     else:
         dz1 = h / float(N - 1)
