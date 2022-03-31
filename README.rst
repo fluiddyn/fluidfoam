@@ -16,7 +16,7 @@ fluidfoam
    :target: https://app.travis-ci.com/github/fluiddyn/fluidfoam 
    :alt: Build status
 
-.. |Github-action| image:: https://github.com/cyrillebonamy/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
+.. |Github-action| image:: https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
    :target: https://github.com/fluiddyn/fluidfoam/actions
    :alt: CI status
 
