@@ -2,7 +2,7 @@
 fluidfoam
 ========
 
-|release| |docs| |Travis| |coverage|
+|release| |docs| |Travis| |Github-action| |coverage|
 
 .. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
    :target: https://pypi.python.org/pypi/fluidfoam/
@@ -15,6 +15,10 @@ fluidfoam
 .. |Travis| image:: https://app.travis-ci.com/fluiddyn/fluidfoam.svg?branch=master
    :target: https://app.travis-ci.com/github/fluiddyn/fluidfoam 
    :alt: Build status
+
+.. |Github-action| image:: https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
+   :target: https://github.com/fluiddyn/fluidfoam/actions
+   :alt: CI status
 
 .. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/

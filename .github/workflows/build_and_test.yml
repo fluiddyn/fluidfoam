@@ -1,0 +1,50 @@
+name: build
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    outputs:
+      version_changed: ${{ steps.check_file_changed.outputs.files_changed }}
+    steps:
+      - run: pip install -U pip pipenv coverage
+      - run: pip install -U numpy scipy matplotlib
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: set -o pipefail
+      - name: Build and install fluidfoam
+        run: |
+          cd ${{ github.workspace }} && python setup.py develop --user
+      - name: Test fluidfoam
+        run: make tests
+      - name: Test fluidfoam coverage
+        run: make tests_coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.codecov }}
+          fail_ci_if_error: true
+          files: ./.coverage/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          verbose: true        
+  Publish-Pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    if: github.ref == 'refs/heads/master'
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - uses: dorny/paths-filter@v2
+        id: changes
+        with:
+          filters: |
+            src:
+              - 'fluidfoam/_version.py'
+      - name: Deploy package
+        if: steps.changes.outputs.src == 'true'
+        uses: remorses/pypi@master
+        with:
+          setupfile: ./setup.py
+          username: ${{ secrets.pypi_username }}
+          password: ${{ secrets.pypi_password }}
+
