@@ -1,6 +1,6 @@
 """
-Contour from an unstructured mesh
-=================================
+Contour and streamlines from an unstructured mesh
+=================================================
 
 This example reads and plots a contour of an OpenFoam vector field from an
 unstructured mesh by interpolation on a structured grid
@@ -14,12 +14,7 @@ unstructured mesh by interpolation on a structured grid
 #           and z
 
 # import readmesh function from fluidfoam package
-import matplotlib.pyplot as plt
-import numpy as np
-from scipy.interpolate import griddata
-from fluidfoam import readvector, readscalar
 from fluidfoam import readmesh
-
 
 sol = '../../output_samples/pipeline/'
 
@@ -33,7 +28,7 @@ x, y, z = readmesh(sol)
 #           and stores them in vel and alpha variables
 
 # import readvector and readscalar functions from fluidfoam package
-
+from fluidfoam import readvector, readscalar
 
 timename = '25'
 vel = readvector(sol, timename, 'Ub')
@@ -45,7 +40,8 @@ alpha = readscalar(sol, timename, 'alpha')
 #
 # .. note:: The vector and scalar fields are interpolated on a specified
 #           structured grid
-
+import numpy as np
+from scipy.interpolate import griddata
 
 # Number of division for linear interpolation
 ngridx = 500
@@ -76,6 +72,7 @@ vely_i = griddata((x, y), vel[1, :], (xinterp, yinterp), method='linear')
 #
 # .. note:: The scalar field alpha reprensents the concentration of sediment in
 #           in a 2D two-phase flow simulation of erosion below a pipeline
+import matplotlib.pyplot as plt
 
 # Define plot parameters
 fig = plt.figure(figsize=(8.5, 3), dpi=100)

@@ -16,7 +16,6 @@ vector field from a structured mesh
 # import readmesh function from fluidfoam package
 from fluidfoam import readmesh
 
-
 sol = '../../output_samples/box/'
 
 x, y, z = readmesh(sol, True)

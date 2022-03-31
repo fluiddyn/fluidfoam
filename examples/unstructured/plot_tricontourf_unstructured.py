@@ -1,6 +1,6 @@
 """
-Contour from an unstructured mesh
-=================================
+Contour from an unstructured mesh without interpolation
+=======================================================
 
 This example reads and plots a contour of an OpenFoam vector field from an
 unstructured mesh by triangulation WITHOUT interpolation on a structured grid
@@ -14,11 +14,7 @@ unstructured mesh by triangulation WITHOUT interpolation on a structured grid
 #           and z
 
 # import readmesh function from fluidfoam package
-import numpy as np
-import matplotlib.pyplot as plt
-from fluidfoam import readvector, readscalar
 from fluidfoam import readmesh
-
 
 sol = '../../output_samples/pipeline/'
 
@@ -32,7 +28,7 @@ x, y, z = readmesh(sol)
 #           and stores it
 
 # import readvector and readscalar functions from fluidfoam package
-
+from fluidfoam import readvector, readscalar
 
 timename = '25'
 vel = readvector(sol, timename, 'Ub')
@@ -40,11 +36,13 @@ alpha = readscalar(sol, timename, 'alpha')
 
 
 ###############################################################################
-# Plots the contour of the scalarfield alpha and a patch
+# Plots the contour of the volscalarfield alpha and a patch
 # -----------------------------------------------------------------------------
 #
 # .. note:: The scalar field alpha reprensents the concentration of sediment in
 #           in a 2D two-phase flow simulation of erosion below a pipeline
+import numpy as np
+import matplotlib.pyplot as plt
 
 # Define plot parameters
 fig, ax = plt.subplots(figsize=(8.5, 3), dpi=100)
