@@ -1,6 +1,6 @@
 """
-Contour from an unstructured mesh without interpolation
-=======================================================
+Contour from an unstructured mesh (no interpolation)
+====================================================
 
 This example reads and plots a contour of an OpenFoam vector field from an
 unstructured mesh by triangulation WITHOUT interpolation on a structured grid
