@@ -48,7 +48,7 @@ class SimpleTestCase(unittest.TestCase):
 
             u = readvector(sol, "latestTime", "U")
             dummy, dummy, dummy = readmesh(sol)
-            x, y, dummy = readmesh(sol + timename)
+            x, y, dummy = readmesh(sol, time_name=timename)
 
             self.assertEqual(size, len(alpha))
             self.assertEqual(3 * size, u.size)
@@ -69,6 +69,8 @@ class SimpleTestCase(unittest.TestCase):
         x, y, z = readmesh("output_samples/bin", boundary="bottom")
         x, y, z = readmesh("output_samples/bin/3d")
         x, y, z = readmesh("output_samples/bin/3d", boundary="bottom")
+        x, y, z = readmesh("output_samples/box", time_name="4")
+        x, y, z = readmesh("output_samples/box", time_name="3")
         self.assertEqual(10, len(alphashort1))
         self.assertEqual(1, len(alphauniform))
         fluidfoam.readscalar("output_samples/ascii/wohead", "p")
