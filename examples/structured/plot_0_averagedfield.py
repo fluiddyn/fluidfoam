@@ -18,7 +18,7 @@ from fluidfoam import readmesh
 
 sol = '../../output_samples/box/'
 
-x, y, z = readmesh(sol, True)
+x, y, z = readmesh(sol, structured=True)
 
 ###############################################################################
 # Reads a vector field
@@ -31,7 +31,7 @@ x, y, z = readmesh(sol, True)
 from fluidfoam import readvector
 
 timename = '0'
-vel = readvector(sol, timename, 'U', True)
+vel = readvector(sol, timename, 'U', structured=True)
 
 ###############################################################################
 # Averaging along x and z axis (1 and 3)

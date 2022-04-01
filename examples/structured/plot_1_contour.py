@@ -18,7 +18,7 @@ from fluidfoam import readmesh
 
 sol = '../../output_samples/box/'
 
-x, y, z = readmesh(sol, True)
+x, y, z = readmesh(sol, structured=True)
 
 nx, ny, nz = x.shape
 print("Nx = ", nx, "Ny = ", ny, "Nz = ", nz)
@@ -34,7 +34,7 @@ print("Nx = ", nx, "Ny = ", ny, "Nz = ", nz)
 from fluidfoam import readvector
 
 timename = '0'
-vel = readvector(sol, timename, 'U', True)
+vel = readvector(sol, timename, 'U', structured=True)
 
 ###############################################################################
 # Now plots the contour of the first velocity component at a given z position
