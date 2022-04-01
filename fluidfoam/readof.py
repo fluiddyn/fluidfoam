@@ -505,7 +505,8 @@ class OpenFoamFile(object):
                 continue
             break
         self.nb_faces = int(line)
-        data = self.content.split(line, 2)[2]
+        print(self.content.split(line, 2)[0])
+        data = self.content.split(line, 2)[-1]
 
         self.type_data = self.header[b"class"]
 
