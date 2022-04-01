@@ -197,8 +197,9 @@ class OpenFoamFile(object):
             if b"value" in self.content.split(boun)[1].split(b"}")[0]:
                 data = self.content.split(boun)[1].split(b"value")[1]
             else:
-                print(R+"Warning : No data on boundary/patch")
-                print("Using the values of the nearest cells"+W)
+                if self.verbose:
+                    print(R+"Warning : No data on boundary/patch")
+                    print("Using the values of the nearest cells"+W)
                 self._nearest_data(boundary=boundary, precision=precision)
                 return
         else:
@@ -243,8 +244,9 @@ class OpenFoamFile(object):
                 data = data.replace(b");", b"\n);")
             else:
                 data = words[1].split(b";")[0]
-            print(R+"Warning : uniform field  of type " + self.type_data + "!\n")
-            print("Only constant field in output\n"+W)
+            if self.verbose:
+                print(R+"Warning : uniform field  of type " + self.type_data + "!\n")
+                print("Only constant field in output\n"+W)
         elif shortline.count(b";") >= 1:
             nb_pts = int(shortline.split(b"(")[0])
             data = shortline.split(b"(")[1]
@@ -252,7 +254,8 @@ class OpenFoamFile(object):
             data = data.replace(b");", b"\n);")
         elif self.codestream:
             nb_pts = 0
-            print(R+"Warning : codeStream field! I can not read the source code!\n"+W)
+            if self.verbose:
+                print(R+"Warning : codeStream field! I can not read the source code!\n"+W)
         else:
             nb_pts = int(lines[1])
             data = b"\n(".join(data.split(b"\n(")[1:])
@@ -332,8 +335,9 @@ class OpenFoamFile(object):
                 data = data.replace(b");", b"\n);")
             else:
                 data = words[1].split(b";")[0]
-            print(R+"Warning : uniform field  of type " + self.type_data + "!\n")
-            print("Only constant field in output\n"+W)
+            if self.verbose:
+                print(R+"Warning : uniform field  of type " + self.type_data + "!\n")
+                print("Only constant field in output\n"+W)
         elif shortline.count(b";") >= 1:
             nb_pts = int(shortline.split(b"(")[0])
             data = shortline.split(b"(")[1]
@@ -341,7 +345,8 @@ class OpenFoamFile(object):
             data = data.replace(b");", b"\n);")
         elif self.codestream:
             nb_pts = 0
-            print(R+"Warning : codeStream field! I can not read the source code!\n"+W)
+            if self.verbose:
+                print(R+"Warning : codeStream field! I can not read the source code!\n"+W)
         else:
             nb_pts = int(lines[1])
             data = b"\n(".join(data.split(b"\n(")[1:])
