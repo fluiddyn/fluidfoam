@@ -117,13 +117,15 @@ class OpenFoamFile(object):
 
         self.boundary = self._parse_session(b"boundaryField")
 
-        if name == "boundary":
+        if name == None:
+            self._parse_data(boundary=boundary, precision=precision, datatype=datatype)
+        elif name.endswith("boundary"):
             self.boundaryface = self._parse_boundaryfile()
-        elif name == "faces":
+        elif name.endswith("faces"):
             self._parse_face()
-        elif name == "points":
+        elif name.endswith("points"):
             self._parse_points(precision=precision)
-        elif (name == "owner") or (name == "neighbour"):
+        elif name.endswith("owner") or name.endswith("neighbour"):
             self._parse_owner()
         else:
             self._parse_data(boundary=boundary, precision=precision, datatype=datatype)
@@ -456,7 +458,7 @@ class OpenFoamFile(object):
                     break
                 else:
                     self.faces[i - 1] = {}
-                    self.faces[i - 1]["npts"] = line.split(b"(")[0]
+                    self.faces[i - 1]["npts"] = int(line.split(b"(")[0])
                     self.faces[i - 1]["id_pts"] = [
                         int(s) for s in ((line.split(b"(")[1].split(b")")[0]).split())
                     ]
@@ -951,8 +953,9 @@ def readmesh(
             verbose=verbose)
         if time_name != None:
             pointfile = OpenFoamFile(
-                _make_path(path, time_name, "polyMesh"),
-                name="points",
+                path=path,
+                time_name=time_name,
+                name="polyMesh/points",
                 precision=precision,
                 verbose=verbose
             )
@@ -1001,8 +1004,9 @@ def readmesh(
             )
             if time_name != None:
                 pointfile = OpenFoamFile(
-                    _make_path(path, time_name, "polyMesh"),
-                    name="points",
+                    path=path,
+                    time_name=time_name,
+                    name="polyMesh/points",
                     precision=precision,
                     verbose=verbose
                 )

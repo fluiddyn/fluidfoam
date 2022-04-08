@@ -71,6 +71,7 @@ class SimpleTestCase(unittest.TestCase):
         x, y, z = readmesh("output_samples/bin/3d", boundary="bottom")
         x, y, z = readmesh("output_samples/box", time_name="4")
         x, y, z = readmesh("output_samples/box", time_name="3")
+        x, y, z = readmesh("output_samples/box", time_name="latestTime")
         self.assertEqual(10, len(alphashort1))
         self.assertEqual(1, len(alphauniform))
         fluidfoam.readscalar("output_samples/ascii/wohead", "p")
