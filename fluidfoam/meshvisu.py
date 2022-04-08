@@ -48,9 +48,10 @@ class MeshVisu:
         # if a time_name is given, read points in path/[time_name]/polyMesh/points
         if time_name != None:
             self.__pointfile = OpenFoamFile(
-                path = os.path.join(path, time_name, 'polyMesh'),
-                name = "points",
-                verbose = verbose
+                 path = path,
+                 time_name = time_name,
+                 name = 'polyMesh/points',
+                 verbose = verbose
                 )
         # else, just read the constant/polyMesh/points file
         else:

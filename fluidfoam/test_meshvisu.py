@@ -3,7 +3,6 @@ import numpy as np
 
 from fluidfoam import MeshVisu
 
-case = "output_samples"
 
 simus = [
     "output_samples/box",
@@ -16,7 +15,7 @@ simus = [
 class SimpleTestCase(unittest.TestCase):
     def test_read_mesh(self):
         for simu in simus:
-            myMesh = MeshVisu(path=case)
+            myMesh = MeshVisu(path=simu)
             
     def test_update_mesh(self):
         myMesh = MeshVisu(path="output_samples/pipeline")
