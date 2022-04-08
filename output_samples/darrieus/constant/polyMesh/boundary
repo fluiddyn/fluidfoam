@@ -1,0 +1,171 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  2112                                  |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      ascii;
+    arch        "LSB;label=32;scalar=64";
+    class       polyBoundaryMesh;
+    location    "constant/polyMesh";
+    object      boundary;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+
+16
+(
+    BLADE1
+    {
+        type            wall;
+        inGroups        1 ( wall );
+        nFaces          356;
+        startFace       395037;
+    }
+
+    BLADE2
+    {
+        type            wall;
+        inGroups        1 ( wall );
+        nFaces          356;
+        startFace       395393;
+    }
+
+    SYMM_LAT2_ROTOR
+    {
+        type            empty;
+        inGroups        1 ( empty );
+        nFaces          102144;
+        startFace       395749;
+    }
+
+    SYMM_LAT1_ROTOR
+    {
+        type            empty;
+        inGroups        1 ( empty );
+        nFaces          102144;
+        startFace       497893;
+    }
+
+    INTERFACE_ROTOR_INNER
+    {
+        type            cyclicAMI;
+        inGroups        1 ( cyclicAMI );
+        nFaces          634;
+        startFace       600037;
+        matchTolerance  0.0001;
+        transform       unknown;
+        neighbourPatch  INTERFACE_INNER;
+        AMIMethod       faceAreaWeightAMI;
+        restartUncoveredSourceFace 1;
+    }
+
+    INTERFACE_ROTOR_OUTER
+    {
+        type            cyclicAMI;
+        inGroups        1 ( cyclicAMI );
+        nFaces          634;
+        startFace       600671;
+        matchTolerance  0.0001;
+        transform       unknown;
+        neighbourPatch  INTERFACE_OUTER;
+        AMIMethod       faceAreaWeightAMI;
+        restartUncoveredSourceFace 1;
+    }
+
+    SYMM_LAT2_INNER
+    {
+        type            empty;
+        inGroups        1 ( empty );
+        nFaces          25245;
+        startFace       601305;
+    }
+
+    SYMM_LAT1_INNER
+    {
+        type            empty;
+        inGroups        1 ( empty );
+        nFaces          25245;
+        startFace       626550;
+    }
+
+    INTERFACE_INNER
+    {
+        type            cyclicAMI;
+        inGroups        1 ( cyclicAMI );
+        nFaces          396;
+        startFace       651795;
+        matchTolerance  0.0001;
+        transform       unknown;
+        neighbourPatch  INTERFACE_ROTOR_INNER;
+        AMIMethod       faceAreaWeightAMI;
+        restartUncoveredSourceFace 1;
+    }
+
+    SYMM_LAT2_OUTER
+    {
+        type            empty;
+        inGroups        1 ( empty );
+        nFaces          71086;
+        startFace       652191;
+    }
+
+    SYMM_LAT1_OUTER
+    {
+        type            empty;
+        inGroups        1 ( empty );
+        nFaces          71086;
+        startFace       723277;
+    }
+
+    INTERFACE_OUTER
+    {
+        type            cyclicAMI;
+        inGroups        1 ( cyclicAMI );
+        nFaces          320;
+        startFace       794363;
+        matchTolerance  0.0001;
+        transform       unknown;
+        neighbourPatch  INTERFACE_ROTOR_OUTER;
+        AMIMethod       faceAreaWeightAMI;
+        restartUncoveredSourceFace 1;
+    }
+
+    TOP
+    {
+        type            symmetryPlane;
+        inGroups        1 ( symmetryPlane );
+        nFaces          427;
+        startFace       794683;
+    }
+
+    BOTTOM
+    {
+        type            symmetryPlane;
+        inGroups        1 ( symmetryPlane );
+        nFaces          427;
+        startFace       795110;
+    }
+
+    INLET
+    {
+        type            patch;
+        nFaces          138;
+        startFace       795537;
+    }
+
+    OUTLET
+    {
+        type            patch;
+        nFaces          138;
+        startFace       795675;
+    }
+
+)
+
+
+// ************************************************************************* //
