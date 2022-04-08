@@ -21,7 +21,7 @@ setup(
     packages=find_packages(exclude=['tutorials']),
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
-    install_requires=['numpy>=1.11', 'scipy',
+    install_requires=['numpy>=1.11', 'scipy==1.7.3',
                       'matplotlib>=1.5'],
     # metadata for upload to PyPI
     author = "Cyrille Bonamy",
@@ -47,6 +47,7 @@ setup(
         # Python 3 or both.
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
+        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9'
         ])
