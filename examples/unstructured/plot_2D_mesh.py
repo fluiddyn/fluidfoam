@@ -35,7 +35,12 @@ import matplotlib.pyplot as plt
 from  matplotlib.collections import LineCollection
 import matplotlib.patches as patches
 
-fig, ax = plt.subplots( figsize = (8,8))
+# compute mesh aspect ratio:
+xmin, xmax = myMesh.get_xlim()
+ymin, ymax = myMesh.get_ylim()
+AR = (ymax - ymin) / (xmax - xmin)
+
+fig, ax = plt.subplots( figsize = (8,8*AR))
 # create a collection with edges and print it
 ln_coll = LineCollection(myMesh.get_all_edgesInBox(), linewidths = 0.25, colors = 'brown')
 ax.add_collection(ln_coll, autolim=True)
@@ -58,7 +63,7 @@ ax.axis('off')
 ###############################################################################
 # Update the box to zoom on the cylinder
 # --------------------------------------------------------------
-myMesh.update_box(((0, 0, -1), (0.05, 0.05, 1)))
+myMesh.update_box(((0, 0, -1), (0.03, 0.03, 1)))
                     
 fig, ax = plt.subplots( figsize = (8,8))
 # create a collection with edges and print it
