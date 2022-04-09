@@ -10,9 +10,9 @@ This module provides functions to read OpenFoam Mesh:
 
 .. automethod:: MeshVisu.get_zlim
 
-.. automethod:: get_all_edgesInBox
+.. automethod:: MeshVisu.get_all_edgesInBox
 
-.. automethod:: update_box
+.. automethod:: MeshVisu.update_box
 
 """
 
@@ -20,7 +20,7 @@ from fluidfoam import OpenFoamFile
 import os
 import numpy as np
 
-class MeshVisu:
+class MeshVisu(object):
     """
     Read OpenFoam mesh of 2D planar simulation and
     list all the edges contained in a box.

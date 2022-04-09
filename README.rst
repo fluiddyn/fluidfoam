@@ -34,8 +34,8 @@ What is this repository for?
 * Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2112plus
 * Supported Python Versions : >= 3.7
 
-Documentation and Example
--------------------------
+Documentation and Examples
+--------------------------
 
 `http://fluidfoam.readthedocs.org
 <http://fluidfoam.readthedocs.org>`_
@@ -117,6 +117,6 @@ Emeritus Developers
 License
 -------
 
-fluidfoam is distributed under the GNU General Public License v2 (GPLv2).
+fluidfoam is distributed under the GNU General Public License v3 (GPLv3 or newer).
 
-.. _GPLv2: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+.. _GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
