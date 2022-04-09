@@ -31,8 +31,14 @@ What is this repository for?
 
 * Openfoam Tools
 * Version : 0.2.2
-* Supported OpenFoam Versions : 2.4.0, 4.1 to 7, v1712plus to v1912plus
+* Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2112plus
 * Supported Python Versions : >= 3.7
+
+Documentation and Example
+-------------------------
+
+`http://fluidfoam.readthedocs.org
+<http://fluidfoam.readthedocs.org>`_
 
 Deployment instructions
 -----------------------
@@ -80,15 +86,22 @@ To propose your changes into the main fluidfoam project, follow again the `forki
 Example Usage
 -------------
 
-* http://servforge.legi.grenoble-inp.fr/pub/soft-sedfoam/
+* https://sedfoam.github.io
 
 Core Developers
 ---------------
 
 * Cyrille.Bonamy@univ-grenoble-alpes.fr
+
+Other Contributors
+------------------
+
 * Julien.Chauchat@univ-grenoble-alpes.fr
-* Antoine.Mathieu@univ-grenoble-alpes.fr
+* amathieu@udel.edu
 * Remi.Chassagne@univ-grenoble-alpes.fr
+* Quentin.Clemencot@univ-grenoble-alpes.fr
+* Matthias.Renaud@univ-grenoble-alpes.fr
+* Alban.Gilletta.De.Saint.Joseph@france-energies-marines.org
 
 Emeritus Core Developers
 ------------------------

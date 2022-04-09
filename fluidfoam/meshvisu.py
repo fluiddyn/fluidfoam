@@ -1,7 +1,18 @@
-"""Visuaisation of OpenFoam Mesh with Python
-=====================================
+"""Visualisation of OpenFoam Mesh with Python
+=============================================
 This module provides functions to read OpenFoam Mesh:
 
+.. autoclass:: MeshVisu
+
+.. automethod:: MeshVisu.get_xlim
+
+.. automethod:: MeshVisu.get_ylim
+
+.. automethod:: MeshVisu.get_zlim
+
+.. automethod:: get_all_edgesInBox
+
+.. automethod:: update_box
 
 """
 
