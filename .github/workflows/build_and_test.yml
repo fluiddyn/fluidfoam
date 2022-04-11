@@ -44,7 +44,7 @@ jobs:
         if: steps.changes.outputs.src == 'true'
         uses: remorses/pypi@master
         with:
-          setupfile: ./setup.py
+          setup_file: ./setup.py
           username: ${{ secrets.pypi_username }}
           password: ${{ secrets.pypi_password }}
 
