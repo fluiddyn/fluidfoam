@@ -14,9 +14,8 @@ What is this repository for?
 
 * Openfoam Tools
 * Version : 0.2.2
-* Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2106plus
+* Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2112plus
 * Supported Python Versions : >= 3.7
-
 
 Deployment instructions
 -----------------------
@@ -70,8 +69,16 @@ Core Developers
 ---------------
 
 * Cyrille.Bonamy@univ-grenoble-alpes.fr
+
+Other Contributors
+------------------
+
 * Julien.Chauchat@univ-grenoble-alpes.fr
-* Antoine.Mathieu@univ-grenoble-alpes.fr
+* amathieu@udel.edu
+* Remi.Chassagne@univ-grenoble-alpes.fr
+* Quentin.Clemencot@univ-grenoble-alpes.fr
+* Matthias.Renaud@univ-grenoble-alpes.fr
+* Alban.Gilletta.De.Saint.Joseph@france-energies-marines.org
 
 Emeritus Core Developers
 ------------------------
@@ -87,9 +94,9 @@ Emeritus Developers
 License
 -------
 
-fluidfoam is distributed under the GNU General Public License v2 (GPLv2).
+fluidfoam is distributed under the GNU General Public License v3 (GPLv3 or newer).
 
-.. _GPLv2: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+.. _GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html
 
 
 .. User Guide
@@ -120,6 +127,7 @@ functions.
    fluidfoam.processing1d
    fluidfoam.readpostpro
    fluidfoam.meshdesign
+   fluidfoam.meshvisu
    fluidfoam.openfoamsimu
 
 .. toctree::
@@ -139,6 +147,14 @@ More
 .. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
    :target: http://fluidfoam.readthedocs.org
    :alt: Documentation status
+
+.. |Travis| image:: https://app.travis-ci.com/fluiddyn/fluidfoam.svg?branch=master
+   :target: https://app.travis-ci.com/github/fluiddyn/fluidfoam 
+   :alt: Build status
+
+.. |Github-action| image:: https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
+   :target: https://github.com/fluiddyn/fluidfoam/actions
+   :alt: CI status
 
 .. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/ipwdnr1an8su429q?svg=true
 .. _AppVeyor: https://ci.appveyor.com/project/CyrilleBonamy/fluidfoam/history

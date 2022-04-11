@@ -1,7 +1,18 @@
-"""Visuaisation of OpenFoam Mesh with Python
-=====================================
+"""Visualisation of OpenFoam Mesh with Python
+=============================================
 This module provides functions to read OpenFoam Mesh:
 
+.. autoclass:: MeshVisu
+
+.. automethod:: MeshVisu.get_xlim
+
+.. automethod:: MeshVisu.get_ylim
+
+.. automethod:: MeshVisu.get_zlim
+
+.. automethod:: MeshVisu.get_all_edgesInBox
+
+.. automethod:: MeshVisu.update_box
 
 """
 
@@ -9,7 +20,7 @@ from fluidfoam import OpenFoamFile
 import os
 import numpy as np
 
-class MeshVisu:
+class MeshVisu(object):
     """
     Read OpenFoam mesh of 2D planar simulation and
     list all the edges contained in a box.
