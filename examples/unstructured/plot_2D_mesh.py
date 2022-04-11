@@ -1,6 +1,6 @@
 """
 Create vectorised visualisations of the mesh
-=======================================
+============================================
 
 This example shows how to use MeshVisu object to plot vectorised images
 of 2D planar meshes.
@@ -8,7 +8,7 @@ of 2D planar meshes.
 
 ###############################################################################
 # First create a visualisable mesh object with MeshVisu
-# --------------------------------------------------
+# --------------------------------------------------------------
 #
 # .. note:: This class allows you to create a list of edges contained inside
 #           a box. This list of edges will then be ploted.
@@ -33,7 +33,7 @@ myMesh = MeshVisu( path =  '../../output_samples/pipeline')
 
 import matplotlib.pyplot as plt
 from  matplotlib.collections import LineCollection
-import matplotlib.patches as patches
+#import matplotlib.patches as patches
 
 # compute mesh aspect ratio:
 xmin, xmax = myMesh.get_xlim()
@@ -55,13 +55,9 @@ ax.set_aspect('equal')
 # to don't print axis:
 ax.axis('off')
 
-# to save the figure in path (example path = './my_mesh.pdf')
-# plt.savefig(path, dpi=fig.dpi, transparent = True, bbox_inches = 'tight')
-
-
 
 ###############################################################################
-# Update the box to zoom on the cylinder
+# Update the box to zoom on the cylinder and save figure 
 # --------------------------------------------------------------
 myMesh.update_box(((0, 0, -1), (0.03, 0.03, 1)))
                     
@@ -80,9 +76,9 @@ ax.set_aspect('equal')
 # to don't print axis:
 ax.axis('off')
 
-# to save the figure in path (example path = './my_mesh.pdf')
-#plt.savefig(path, dpi=fig.dpi, transparent = True, bbox_inches = 'tight')
-
+# to save the figure in pdf or svg format, uncomment one of the following two lines:
+# plt.savefig('./myCylinderZomm.pdf', dpi=fig.dpi, transparent = True, bbox_inches = 'tight')
+# plt.savefig('./myCylinderZomm.svg', dpi=fig.dpi, transparent = True, bbox_inches = 'tight')
 
 ###############################################################################
 # Visualisation of dynamic case in xz plane
