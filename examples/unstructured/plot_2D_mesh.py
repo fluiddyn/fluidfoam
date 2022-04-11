@@ -33,7 +33,6 @@ myMesh = MeshVisu( path =  '../../output_samples/pipeline')
 
 import matplotlib.pyplot as plt
 from  matplotlib.collections import LineCollection
-#import matplotlib.patches as patches
 
 # compute mesh aspect ratio:
 xmin, xmax = myMesh.get_xlim()
