@@ -34,6 +34,7 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
+        uses: actions/setup-python@v2
       - uses: dorny/paths-filter@v2
         id: changes
         with:
@@ -42,9 +43,9 @@ jobs:
               - 'fluidfoam/_version.py'
       - name: Deploy package
         if: steps.changes.outputs.src == 'true'
-        uses: remorses/pypi@master
+        uses: casperdcl/deploy-pypi@v2
         with:
-          setup_file: ./setup.py
-          username: ${{ secrets.pypi_username }}
-          password: ${{ secrets.pypi_password }}
-
+          password: ${{ secrets.PYPI_TOKEN }}
+          pip: wheel -w dist/ --no-deps .
+          # only upload if a tag is pushed (otherwise just build & check)
+          # upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
