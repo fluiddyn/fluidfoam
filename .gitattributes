@@ -1,2 +1,3 @@
-output_samples/* linguist-vendored
-appveyor/* linguist-vendored
+output_samples/** linguist-vendored
+appveyor/** linguist-vendored
+doc/** linguist-documentation

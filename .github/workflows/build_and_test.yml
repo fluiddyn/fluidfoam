@@ -48,4 +48,4 @@ jobs:
           password: ${{ secrets.PYPI_TOKEN }}
           pip: wheel -w dist/ --no-deps .
           # only upload if a tag is pushed (otherwise just build & check)
-          # upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
+          upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}
