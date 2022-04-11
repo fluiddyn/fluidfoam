@@ -9,7 +9,7 @@ python:
 
 
 env:
-  - TOXENV=py,codecov
+  - TOXENV=py
 
 
 matrix:
@@ -17,16 +17,14 @@ matrix:
 
 before_cache:
   - |
-      coverage erase
       rm -f $HOME/.cache/pip/log/debug.log
 
 cache:
     directories:
         - $HOME/.cache/pip
-        # - $TRAVIS_BUILD_DIR/.tox
 
 install:
-    - pip install -U pip pipenv tox tox-pipenv coverage
+    - pip install -U pip pipenv tox tox-pipenv
     - pip install -U numpy
 
 script:

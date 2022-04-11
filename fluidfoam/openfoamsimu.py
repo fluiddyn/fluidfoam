@@ -22,19 +22,20 @@ class DirectorySimuError(Error):
                 "No directory found for simulation named {}".format(simu))
 
 class OpenFoamSimu(object):
-    """Class to load all data saved at timeStep of an openFoam simulation
+    """
+    Class to load all data saved at timeStep of an openFoam simulation
 
     Args:
-        path : str, reference path where simulations are stored. You may want to
-            provide path if all your simulations are located inside path and
-            subfolders of path. You can do it by modifying in the __init__
-            path='/path/to/the/simulations/'\n
-        simu : str, name of the simu that has to be loaded. If None, it will
-            lists all existing simulation names in path and ask you to choose\n
-        timeStep : str, timeStep to load. If None, load the last time step\n
-        structured : bool, true if the mesh is structured
-
-        """
+        path: str, reference path where simulations are stored.\n
+            You may want to provide path if all your simulations are located
+            inside path and subfolders of path. You can do it by modifying
+            in the __init__ path='/path/to/the/simulations/'\n
+        simu: str, name of the simu that has to be loaded.\n
+            If simu=None, it will lists all existing simulation names in path
+            and ask you to choose.\n
+        timeStep: str, timeStep to load. If None, load the last time step\n
+        structured: bool, true if the mesh is structured
+    """
 
     def __init__(self, path, simu=None, timeStep=None, structured=False):
 

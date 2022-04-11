@@ -2,7 +2,7 @@
 fluidfoam
 ========
 
-|release| |docs| |Travis| |coverage|
+|release| |docs| |Travis| |Github-action| |coverage|
 
 .. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
    :target: https://pypi.python.org/pypi/fluidfoam/
@@ -16,6 +16,10 @@ fluidfoam
    :target: https://app.travis-ci.com/github/fluiddyn/fluidfoam 
    :alt: Build status
 
+.. |Github-action| image:: https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
+   :target: https://github.com/fluiddyn/fluidfoam/actions
+   :alt: CI status
+
 .. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/
    :alt: Code coverage
@@ -27,8 +31,14 @@ What is this repository for?
 
 * Openfoam Tools
 * Version : 0.2.2
-* Supported OpenFoam Versions : 2.4.0, 4.1 to 7, v1712plus to v1912plus
+* Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2112plus
 * Supported Python Versions : >= 3.7
+
+Documentation and Examples
+--------------------------
+
+`http://fluidfoam.readthedocs.org
+<http://fluidfoam.readthedocs.org>`_
 
 Deployment instructions
 -----------------------
@@ -76,15 +86,22 @@ To propose your changes into the main fluidfoam project, follow again the `forki
 Example Usage
 -------------
 
-* http://servforge.legi.grenoble-inp.fr/pub/soft-sedfoam/
+* https://sedfoam.github.io
 
 Core Developers
 ---------------
 
 * Cyrille.Bonamy@univ-grenoble-alpes.fr
+
+Other Contributors
+------------------
+
 * Julien.Chauchat@univ-grenoble-alpes.fr
-* Antoine.Mathieu@univ-grenoble-alpes.fr
+* amathieu@udel.edu
 * Remi.Chassagne@univ-grenoble-alpes.fr
+* Quentin.Clemencot@univ-grenoble-alpes.fr
+* Matthias.Renaud@univ-grenoble-alpes.fr
+* Alban.Gilletta.De.Saint.Joseph@france-energies-marines.org
 
 Emeritus Core Developers
 ------------------------
@@ -100,6 +117,6 @@ Emeritus Developers
 License
 -------
 
-fluidfoam is distributed under the GNU General Public License v2 (GPLv2).
+fluidfoam is distributed under the GNU General Public License v3 (GPLv3 or newer).
 
-.. _GPLv2: https://www.gnu.org/licenses/old-licenses/gpl-2.0.en.html
+.. _GPLv3: https://www.gnu.org/licenses/gpl-3.0.en.html

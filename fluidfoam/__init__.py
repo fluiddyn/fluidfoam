@@ -2,11 +2,12 @@ import warnings
 
 from fluidfoam.readof import readscalar, readvector, readtensor
 from fluidfoam.readof import readsymmtensor, readfield, readmesh
-from fluidfoam.readof import typefield
+from fluidfoam.readof import typefield, OpenFoamFile
 from fluidfoam.processing1d import create1dprofil, read1dprofil
 from fluidfoam.processing1d import create1dprofil_spe, plot1dprofil
 from fluidfoam.meshdesign import getgz, getdzs
 from fluidfoam.readpostpro import readforce, readprobes
+from fluidfoam.meshvisu import MeshVisu
 from fluidfoam.openfoamsimu import OpenFoamSimu
 from fluidfoam._version import __version__
 

@@ -1,6 +1,6 @@
 """
-Contour from an unstructured mesh
-=================================
+Contour and streamlines from an unstructured mesh
+=================================================
 
 This example reads and plots a contour of an OpenFoam vector field from an
 unstructured mesh by interpolation on a structured grid
@@ -16,7 +16,6 @@ unstructured mesh by interpolation on a structured grid
 # import readmesh function from fluidfoam package
 from fluidfoam import readmesh
 
-
 sol = '../../output_samples/pipeline/'
 
 x, y, z = readmesh(sol)
@@ -26,15 +25,14 @@ x, y, z = readmesh(sol)
 # -----------------------------
 #
 # .. note:: It reads vector and scalar field from an unstructured mesh
-#           and stores them in vel and phi variables
+#           and stores them in vel and alpha variables
 
 # import readvector and readscalar functions from fluidfoam package
 from fluidfoam import readvector, readscalar
 
-
 timename = '25'
 vel = readvector(sol, timename, 'Ub')
-phi = readscalar(sol, timename, 'phi')
+alpha = readscalar(sol, timename, 'alpha')
 
 ###############################################################################
 # Interpolate the fields on a structured grid
@@ -42,10 +40,8 @@ phi = readscalar(sol, timename, 'phi')
 #
 # .. note:: The vector and scalar fields are interpolated on a specified
 #           structured grid
-
-# import griddata from scipy package
-from scipy.interpolate import griddata
 import numpy as np
+from scipy.interpolate import griddata
 
 # Number of division for linear interpolation
 ngridx = 500
@@ -65,16 +61,16 @@ yi = np.linspace(yinterpmin, yinterpmax, ngridy)
 xinterp, yinterp = np.meshgrid(xi, yi)
 
 # Interpolation of scalra fields and vector field components
-phi_i = griddata((x, y), phi, (xinterp, yinterp), method='linear')
+alpha_i = griddata((x, y), alpha, (xinterp, yinterp), method='linear')
 velx_i = griddata((x, y), vel[0, :], (xinterp, yinterp), method='linear')
 vely_i = griddata((x, y), vel[1, :], (xinterp, yinterp), method='linear')
 
 
-###############################################################################
-# Plots the contour of the interpolted scalarfield phi, streamlines and a patch 
-# -----------------------------------------------------------------------------
+#################################################################################
+# Plots the contour of the interpolted scalarfield alpha, streamlines and a patch
+# -------------------------------------------------------------------------------
 #
-# .. note:: The scalar field phi reprensents the concentration of sediment in
+# .. note:: The scalar field alpha reprensents the concentration of sediment in
 #           in a 2D two-phase flow simulation of erosion below a pipeline
 import matplotlib.pyplot as plt
 
@@ -92,7 +88,7 @@ plt.gca().add_patch(circle)
 
 # Plots the contour of sediment concentration
 levels = np.arange(0.1, 0.63, 0.001)
-plt.contourf(xi/d, yi/d, phi_i, cmap=plt.cm.Reds, levels=levels)
+plt.contourf(xi/d, yi/d, alpha_i, cmap=plt.cm.Reds, levels=levels)
 
 # Calculation of the streamline width as a function of the velociy magnitude
 vel_i = np.sqrt(velx_i**2 + vely_i**2)
