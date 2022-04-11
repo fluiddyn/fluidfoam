@@ -1,6 +1,6 @@
-"""Visualisation of OpenFoam Mesh with Python
-=============================================
-This module provides functions to read OpenFoam Mesh:
+"""Visualisation of 2D OpenFoam Mesh with Python
+================================================
+This module provides functions to read 2D OpenFoam Mesh:
 
 .. autoclass:: MeshVisu
 
@@ -13,6 +13,10 @@ This module provides functions to read OpenFoam Mesh:
 .. automethod:: MeshVisu.get_all_edgesInBox
 
 .. automethod:: MeshVisu.update_box
+
+.. automethod:: MeshVisu.get_box
+
+.. automethod:: MeshVisu.set_box_to_mesh_size
 
 """
 
@@ -27,7 +31,7 @@ class MeshVisu(object):
 
     Args:
         path: str\n
-        box:  tuple of box's dimension: ((xmin, ymin, zmin), (xmax, ymax, zmax)) 
+        box:  tuple of box's dimension: ((xmin, ymin, zmin), (xmax, ymax, zmax))\n
                (if None, includes the whole mesh)\n
         plane: str  plane in which the mesh is contained, either:\n
                'xy': the xy-plane of outgoing normal z (default value)\n
@@ -36,8 +40,16 @@ class MeshVisu(object):
         time_name: str ('latestTime' is supported)\n
         verbose : True or False (default: True)\n
 
-    A way you might use me is:\n
-        MyMesh = fluidfoam.MeshVisu('path_of_OpenFoam_case', '0', 'alpha')
+    A way you might use me is:
+        MyMesh = fluidfoam.MeshVisu(path = 'path_of_OpenFoam_case')\n
+        
+    Then a minimal example to generate and save vectorial mesh figure could be:
+        import matplotlib.pyplot as plt\n
+        from  matplotlib.collections import LineCollection\n
+        fig, ax = plt.subplots()\n
+        ln_coll = LineCollection(MyMesh.get_all_edgesInBox())\n
+        ax.add_collection(ln_coll, autolim=True)\n
+        plt.savefig('./myMesh.svg', dpi=fig.dpi, transparent = True, bbox_inches = 'tight')\n
     """
     def __init__(
         self,
@@ -82,30 +94,59 @@ class MeshVisu(object):
           
         # Step 3: list edges in box
         self.__plane = plane
-        self.set_edges_in_box(verbose = verbose)
+        self._set_edges_in_box(verbose = verbose)
         
             
     def update_box(self, box, verbose = True):
-        """ update box = ((xmin, ymin, zmin), (xmax, ymax, zmax)) """
+        """ updates the mesh visualization box
+        
+        Args:
+            box: tuple ((xmin, ymin, zmin), (xmax, ymax, zmax))
+
+        A way you might use me is:\n
+            MyMesh.update(box = ((0, 0, -1), (0.05, 0.05, 1)))
+        
+         """
         if len(box[0]) != 3 or len(box[1]) != 3:
             raise ValueError("box mins and maxs must be float tuples of lenght 3")
         self.__box = box
         # update egdes in box
-        self.set_edges_in_box(verbose = verbose)
+        self._set_edges_in_box(verbose = verbose)
         
     def get_box(self):
+        """ return the mesh visualization box 
+        
+        Returns:
+            tuple: ((xmin, ymin, zmin), (xmax, ymax, zmax))"""
         return self.__box
     
     def get_xlim(self):
+        """ returns the x limits of the mesh visualization box.
+        
+        Returns:
+            tuple of floats: (xmin, xmax)
+        """
         return (self.__box[0][0], self.__box[1][0])
                 
     def get_ylim(self):
+        """ returns the y limits of the mesh visualization box.
+        
+        Returns:
+            tuple of floats: (ymin, ymax)
+        """
         return (self.__box[0][1], self.__box[1][1])
         
     def get_zlim(self):
+        """ returns the z limits of the mesh visualization box.
+        
+        Returns:
+            tuple of floats: (zmin, zmax)
+        """
         return (self.__box[0][2], self.__box[1][2])
     
     def set_box_to_mesh_size(self, verbose=False):
+        """ Set the mesh visualization box to mesh size.
+        """
         minx = np.min(self.__pointfile.values_x)
         miny = np.min(self.__pointfile.values_y)
         minz = np.min(self.__pointfile.values_z)
@@ -118,7 +159,7 @@ class MeshVisu(object):
                 \n (maxx, maxy, maxz) = {self.__box[1]}")
         
         
-    def set_edges_in_box(self,  verbose=False):
+    def _set_edges_in_box(self,  verbose=False):
         """
         create edgesInBox, a list of edges. 
         Eatch edge is in the form ((x0, y0), (x1, y1)) (if mesh contain in 'xy' plane)
@@ -136,8 +177,8 @@ class MeshVisu(object):
         #          To avoid unnecessary duplication when displaying, 
         #          we only list the segments belonging to z0.
         
-        self.set_plane_coord(plane = plane)
-        plane_coord = self.get_plane_coord()
+        self._set_plane_coord(plane = plane)
+        plane_coord = self._get_plane_coord()
         tmp_id_edges = set() # set that will contain tuples of int which are
                            # index of points in __pointfile.values_z array
         
@@ -145,9 +186,9 @@ class MeshVisu(object):
         box = self.get_box()       
               
         for i in range(nfaces):
-            face = self.get_face(i)
+            face = self._get_face(i)
             # First, we check if the face belong to z0 plane:
-            if self.is_face_in_plane(face, plane, plane_coord):
+            if self._is_face_in_plane(face, plane, plane_coord):
                 # A face is defined by a list of point indice.
                 # two successive points is such a list are connected by an edge,
                 # as well as the last and the first point:
@@ -156,7 +197,7 @@ class MeshVisu(object):
                     # we don't want to add 2 times the same edge in __edgesInBox.
                     # tmp_id_edges is a set, so if you try to add an element that
                     # it already contains, that element will not be added
-                    if self.is_point_in_box(j, box) or self.is_point_in_box(k, box):
+                    if self._is_point_in_box(j, box) or self._is_point_in_box(k, box):
                         # we add tuple of index in ascending order
                         if j < k:
                             tmp_id_edges.add((j, k))
@@ -185,19 +226,27 @@ class MeshVisu(object):
                 y1, z1 = self.__pointfile.values_y[j],  self.__pointfile.values_z[j]
                 self.__edgesInBox.append(((y0, z0), (y1, z1)))    
             
-    def get_edgeInBox(self, i):
-        """ get the edge of indice i """
-        return (self.__edgesInBox[i])
     
     def get_all_edgesInBox(self):
-        """ get the list of all edges in box """
+        """ 
+         return the list of all edges in box. \n
+         Eatch edge is describe by a tuple of tuples of float: ((x0, y0), (x1, y1)). \n
+         (x0, y0) being the coordonates of the fisrt point, (x1, y1), the 
+         coordinates of the second point. \n
+         This list can be given as an argument to the matplotlib LineCollection 
+         function, which allows to display a large number of segments on an image.
+        
+        Returns:
+            list of tuples
+        """
         return (self.__edgesInBox)
         
-    def set_plane_coord(self, plane):
-        """we assume mesh is 2D in xy-plane. Therefore there is only 
-        one cell in the z-direction, so the z-coordinates of the points have only 
-        two possible values. We choose one of them arbitrarily, named it z0. 
-        We will only draw the segments belonging to the plane z=z0.
+    def _set_plane_coord(self, plane):
+        """we assume mesh is 2D planar. Therefore there is only 
+        one cell in the third direction (normal to mesh), so the 3rd coordinates 
+        of the mesh points have only two possible values. We choose one of them 
+        arbitrarily, named it __plane_coord. \n
+        We will only draw the segments belonging to the plane at __plane_coord.
         """
         if plane == 'xy':
             self.__plane_coord = self.__pointfile.values_z[0]
@@ -208,14 +257,16 @@ class MeshVisu(object):
         else:
             print(f"plane={plane} but must be str egals to 'xy', 'xz' or 'yz'")
         
-    def get_plane_coord(self):
+    def _get_plane_coord(self):
+        """we assume mesh is 2D planar,
+         return the plan coordonate in normal direction"""
         return self.__plane_coord
     
-    def get_face(self, i):
+    def _get_face(self, i):
         """ get the dictionnary describing the face i """
         return (self.__facefile.faces[i])
     
-    def is_point_in_box(self, i, box):
+    def _is_point_in_box(self, i, box):
         """ return a booleen, True if the point of indice i in inside 
         the box, False otherwise.
         """
@@ -233,7 +284,7 @@ class MeshVisu(object):
         else:
             return True
             
-    def is_face_in_plane(self, face, plane, plane_coord):
+    def _is_face_in_plane(self, face, plane, plane_coord):
         """
         check if all points of the face belong to the plane
         """
