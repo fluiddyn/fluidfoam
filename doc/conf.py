@@ -59,6 +59,7 @@ extensions = [
     'sphinx.ext.viewcode', 'sphinx.ext.autosummary',
     'numpydoc',
     'sphinx_gallery.gen_gallery',
+    'sphinx-favicon',
     # 'mathmacro',
     # 'breathe'
 ]
@@ -74,6 +75,16 @@ sphinx_gallery_conf = {
                                        '../examples/unstructured/',
                                        '../examples/advanced/']),
 }
+
+
+favicons = [
+    {
+        "rel": "icon",
+        "sizes": "180x180",
+        "static-file": "favicon.png",  # => use `_static/icon.svg`
+        "type": "image/png",
+    },
+]
 
 
 # breathe_projects = {'fluidfft_cpp': 'doxygen/xml'}

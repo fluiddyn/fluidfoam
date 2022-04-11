@@ -3,3 +3,4 @@ matplotlib
 numpy
 numpydoc
 sphinx_gallery
+sphinx-favicon
