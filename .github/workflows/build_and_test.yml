@@ -34,15 +34,15 @@ jobs:
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
-        uses: actions/setup-python@v2
-      - uses: dorny/paths-filter@v2
-        id: changes
-        with:
-          filters: |
-            src:
-              - 'fluidfoam/_version.py'
+      - uses: actions/setup-python@v2
+#      - uses: dorny/paths-filter@v2
+#        id: changes
+#        with:
+#          filters: |
+#            src:
+#              - 'fluidfoam/_version.py'
       - name: Deploy package
-        if: steps.changes.outputs.src == 'true'
+#        if: steps.changes.outputs.src == 'true'
         uses: casperdcl/deploy-pypi@v2
         with:
           password: ${{ secrets.PYPI_TOKEN }}
