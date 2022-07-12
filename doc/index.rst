@@ -79,6 +79,7 @@ Other Contributors
 * Quentin.Clemencot@univ-grenoble-alpes.fr
 * Matthias.Renaud@univ-grenoble-alpes.fr
 * Alban.Gilletta.De.Saint.Joseph@france-energies-marines.org
+* Gabriel Goncalves
 
 Emeritus Core Developers
 ------------------------
