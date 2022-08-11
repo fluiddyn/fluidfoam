@@ -97,7 +97,7 @@ class OpenFoamSimu(object):
 
         for var in self.variables:
             #Load all variables and assign them as a variable of the object
-            self.__setattr__(var, readfield(path=self.directory,
+            self.__setattr__(var.replace('.', '_'), readfield(path=self.directory,
                 time_name=self.timeStep, name=var, structured=structured))
 
     def keys(self):
