@@ -14,6 +14,9 @@ elif 'b' in __version__:
 else:
     devstatus = 'Development Status :: 5 - Production/Stable'
 
+def readme():
+    with open('README.rst') as f:
+        return f.read()
 
 setup(
     name="fluidfoam",
@@ -27,6 +30,8 @@ setup(
     author = "Cyrille Bonamy",
     author_email = "cyrille.bonamy@univ-grenoble-alpes.fr",
     description = "Openfoam PostProcessing Python Tools",
+    long_description_content_type="text/markdown",
+    long_description = readme(),
     license = 'GPLv2',
     keywords = ["Openfoam", "postprocessing", "CFD"],
     url = "http://legi.grenoble-inp.fr",   # project home page, if any
@@ -47,7 +52,7 @@ setup(
         # Python 3 or both.
         'Programming Language :: Python',
         'Programming Language :: Python :: 3',
-        'Programming Language :: Python :: 3.7',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9'
+        'Programming Language :: Python :: 3.10'
         ])
