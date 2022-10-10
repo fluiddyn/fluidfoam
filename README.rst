@@ -12,10 +12,6 @@ fluidfoam
    :target: http://fluidfoam.readthedocs.org
    :alt: Documentation status
 
-.. |Travis| image:: https://app.travis-ci.com/fluiddyn/fluidfoam.svg?branch=master
-   :target: https://app.travis-ci.com/github/fluiddyn/fluidfoam 
-   :alt: Build status
-
 .. |Github-action| image:: https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
    :target: https://github.com/fluiddyn/fluidfoam/actions
    :alt: CI status
@@ -32,7 +28,7 @@ What is this repository for?
 * Openfoam Tools
 * Version : 0.2.3
 * Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2112plus
-* Supported Python Versions : >= 3.7
+* Supported Python Versions : >= 3.8
 
 Documentation and Examples
 --------------------------
