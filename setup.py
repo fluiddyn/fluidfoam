@@ -27,6 +27,7 @@ setup(
     author = "Cyrille Bonamy",
     author_email = "cyrille.bonamy@univ-grenoble-alpes.fr",
     description = "Openfoam PostProcessing Python Tools",
+    long_description = README.rst
     license = 'GPLv2',
     keywords = ["Openfoam", "postprocessing", "CFD"],
     url = "http://legi.grenoble-inp.fr",   # project home page, if any
@@ -49,4 +50,5 @@ setup(
         'Programming Language :: Python :: 3',
         'Programming Language :: Python :: 3.8',
         'Programming Language :: Python :: 3.9'
+        'Programming Language :: Python :: 3.10'
         ])
