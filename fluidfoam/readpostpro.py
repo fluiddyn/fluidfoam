@@ -169,7 +169,7 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
             print(
                 "Reading file "
                 + os.path.join(
-                    path, "postProcessing", probes_name, time_name, name
+                    path_probes_name, time_name, name
                 )
             )
             print(
