@@ -44,7 +44,7 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
 
     """
 
-    path_namepatch = glob(f'{path}/**/probes', recursive=True)[0]
+    path_namepatch = glob(f'{path}/**/'+namepatch, recursive=True)[0]
     if time_name is "latestTime":
         time_name = _find_latesttime(path_namepatch)
     elif time_name is "mergeTime":
@@ -115,7 +115,7 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
 
     """
 
-    path_probes_name = glob(f'{path}/**/probes', recursive=True)[0]
+    path_probes_name = glob(f'{path}/**/'+probes_name, recursive=True)[0]
     if time_name is "latestTime":
         time_name = _find_latesttime(path_probes_name)
     elif time_name is "mergeTime":
