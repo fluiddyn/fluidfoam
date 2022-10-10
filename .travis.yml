@@ -24,7 +24,7 @@ cache:
         - $HOME/.cache/pip
 
 install:
-    - pip install -U pip pipenv tox tox-pipenv
+    - pip install -U tox tox-pipenv
     - pip install -U numpy
 
 script:
