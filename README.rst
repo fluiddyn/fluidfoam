@@ -2,7 +2,7 @@
 fluidfoam
 ========
 
-|release| |docs| |Travis| |Github-action| |coverage|
+|release| |docs| |Github-action| |coverage|
 
 .. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
    :target: https://pypi.python.org/pypi/fluidfoam/
