@@ -115,6 +115,10 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
 
     """
 
+    time_vect = None
+    tab = None
+    jj = 0
+
     path_probes_name = glob(f'{path}/**/'+probes_name, recursive=True)[0]
     if time_name is "latestTime":
         time_name = _find_latesttime(path_probes_name)
@@ -196,4 +200,9 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
                 values = probedata.split()
                 for l, vect in enumerate(values):
                     tab[j, k, l] = np.array(vect, dtype=float)
+    if time_vect is None:
+        time_vect = np.array([])
+    if tab is None:
+        tab = np.array([])
+
     return time_vect, tab
