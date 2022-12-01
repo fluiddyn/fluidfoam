@@ -7,6 +7,7 @@ This module provides functions to list and read OpenFoam PostProcessing Files:
 """
 import os
 import numpy as np
+from glob import glob
 
 
 def _find_latesttime(path):
@@ -43,12 +44,12 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
 
     """
 
-    path_namepatch = os.path.join(path, "postProcessing", namepatch)
+    path_namepatch = glob(f'{path}/**/'+namepatch, recursive=True)[0]
     if time_name is "latestTime":
         time_name = _find_latesttime(path_namepatch)
     elif time_name is "mergeTime":
         time_list = []
-        dir_list = os.listdir(path + "/postProcessing/" + namepatch)
+        dir_list = os.listdir(path_namepatch)
         for directory in dir_list:
             try:
                 float(directory)
@@ -114,12 +115,16 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
 
     """
 
-    path_probes_name = os.path.join(path, "postProcessing", probes_name)
+    time_vect = None
+    tab = None
+    jj = 0
+
+    path_probes_name = glob(f'{path}/**/'+probes_name, recursive=True)[0]
     if time_name is "latestTime":
         time_name = _find_latesttime(path_probes_name)
     elif time_name is "mergeTime":
         time_list = []
-        dir_list = os.listdir(path + "/postProcessing/" + probes_name)
+        dir_list = os.listdir(path_probes_name)
         for directory in dir_list:
             try:
                 float(directory)
@@ -168,7 +173,7 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
             print(
                 "Reading file "
                 + os.path.join(
-                    path, "postProcessing", probes_name, time_name, name
+                    path_probes_name, time_name, name
                 )
             )
             print(
@@ -195,4 +200,9 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
                 values = probedata.split()
                 for l, vect in enumerate(values):
                     tab[j, k, l] = np.array(vect, dtype=float)
+    if time_vect is None:
+        time_vect = np.array([])
+    if tab is None:
+        tab = np.array([])
+
     return time_vect, tab
