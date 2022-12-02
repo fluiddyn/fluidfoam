@@ -1065,18 +1065,17 @@ def readmesh(
 
 if __name__ == "__main__":
 
-    dirs = ["0.ascii", "0.asciigz", "0.bin", "0.bingz"]
+    dirs = ["ascii", "asciigz", "bin", "bingz"]
 
     for d in dirs:
-        rep = os.path.join(os.path.dirname(__file__), "../output_samples")
+        rep = os.path.join(os.path.dirname(__file__), "../output_samples/", d)
+                               
+        values = readscalar(rep, "0", "alpha")
 
-        values = readscalar(rep, d, "alpha")
-
-        values = readsymmtensor(rep, d, "sigma")
-
-        values = readtensor(rep, d, "Taus")
-
-        values = readvector(rep, d, "U")
-
-        path = os.path.join(rep, d)
-        xs, ys, zs = readmesh(path)
+        values = readsymmtensor(rep, "0", "sigma")
+            
+        values = readtensor(rep, "0", "Taus")
+                                       
+        values = readvector(rep, "0", "U")
+                
+        xs, ys, zs = readmesh(rep)
