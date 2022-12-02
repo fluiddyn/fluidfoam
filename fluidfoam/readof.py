@@ -34,11 +34,11 @@ P = '\033[35m'  # purple
 
 
 def _make_path(path, time_name=None, name=None):
-    if time_name != None and name == None:  # pragma: no cover
+    if time_name is not None and name is None:  # pragma: no cover
         path = os.path.join(path, time_name)
-    elif name != None and time_name == None:  # pragma: no cover
+    elif name is not None and time_name is None:  # pragma: no cover
         path = os.path.join(path, name)
-    elif name != None and time_name != None:
+    elif name is not None and time_name is not None:
         path = os.path.join(path, time_name, name)
     if not os.path.exists(path) and os.path.exists(path + ".gz"):
         path += ".gz"
@@ -117,8 +117,10 @@ class OpenFoamFile(object):
 
         self.boundary = self._parse_session(b"boundaryField")
 
-        if name == None:
-            self._parse_data(boundary=boundary, precision=precision, datatype=datatype)
+        if name is None:
+            self._parse_data(boundary=boundary,
+                             precision=precision,
+                             datatype=datatype)
         elif name.endswith("boundary"):
             self.boundaryface = self._parse_boundaryfile()
         elif name.endswith("faces"):
@@ -128,9 +130,13 @@ class OpenFoamFile(object):
         elif name.endswith("owner") or name.endswith("neighbour"):
             self._parse_owner()
         else:
-            self._parse_data(boundary=boundary, precision=precision, datatype=datatype)
+            self._parse_data(boundary=boundary,
+                             precision=precision,
+                             datatype=datatype)
         if structured:
-            self._determine_order(boundary=boundary, order=order, precision=precision)
+            self._determine_order(boundary=boundary,
+                                  order=order,
+                                  precision=precision)
 
     def _parse_boundaryfile(self):
 
@@ -143,7 +149,7 @@ class OpenFoamFile(object):
                 in_section = True
                 level += 1
                 continue
-            if in_section == True:
+            if in_section is True:
                 if line == b"{":
                     level += 1
                     continue
@@ -172,7 +178,7 @@ class OpenFoamFile(object):
             if line == title:
                 in_section = True
                 continue
-            if in_section == True:
+            if in_section is True:
                 if line == b"{":
                     level += 1
                     continue
@@ -195,7 +201,7 @@ class OpenFoamFile(object):
 
     def _parse_data(self, boundary, datatype, precision=15):
 
-        if boundary != None:
+        if boundary is not None:
             boun = str.encode(boundary)
             if b"value" in self.content.split(boun)[1].split(b"}")[0]:
                 data = self.content.split(boun)[1].split(b"value")[1]
@@ -248,7 +254,8 @@ class OpenFoamFile(object):
             else:
                 data = words[1].split(b";")[0]
             if self.verbose:
-                print(R+"Warning : uniform field  of type " + self.type_data + "!\n")
+                print(R+"Warning : uniform field  of type "
+                        + self.type_data + "!\n")
                 print("Only constant field in output\n"+W)
         elif shortline.count(b";") >= 1:
             nb_pts = int(shortline.split(b"(")[0])
@@ -258,7 +265,8 @@ class OpenFoamFile(object):
         elif self.codestream:
             nb_pts = 0
             if self.verbose:
-                print(R+"Warning : codeStream field! I can not read the source code!\n"+W)
+                print(R+"Warning : codeStream field! "
+                        + "I can not read the source code!\n"+W)
         else:
             nb_pts = int(lines[1])
             data = b"\n(".join(data.split(b"\n(")[1:])
@@ -343,7 +351,8 @@ class OpenFoamFile(object):
             else:
                 data = words[1].split(b";")[0]
             if self.verbose:
-                print(R+"Warning : uniform field  of type " + self.type_data + "!\n")
+                print(R+"Warning : uniform field  of type "
+                        + self.type_data + "!\n")
                 print("Only constant field in output\n"+W)
         elif shortline.count(b";") >= 1:
             nb_pts = int(shortline.split(b"(")[0])
@@ -353,7 +362,8 @@ class OpenFoamFile(object):
         elif self.codestream:
             nb_pts = 0
             if self.verbose:
-                print(R+"Warning : codeStream field! I can not read the source code!\n"+W)
+                print(R+"Warning : codeStream field! "
+                        + "I can not read the source code!\n"+W)
         else:
             nb_pts = int(lines[1])
             data = b"\n(".join(data.split(b"\n(")[1:])
@@ -459,9 +469,8 @@ class OpenFoamFile(object):
                 else:
                     self.faces[i - 1] = {}
                     self.faces[i - 1]["npts"] = int(line.split(b"(")[0])
-                    self.faces[i - 1]["id_pts"] = [
-                        int(s) for s in ((line.split(b"(")[1].split(b")")[0]).split())
-                    ]
+                    self.faces[i - 1]["id_pts"] = [int(s) for s in
+                                                   (line.split(b"(")[1].split(b")")[0]).split()]
 
     def _parse_points(self, precision):
 
@@ -933,7 +942,8 @@ def readmesh(
 
     """
 
-    # hack because in dynamic Mesh cases, no polyMesh directory for initial time
+    # hack
+    # because in dynamic Mesh cases, no polyMesh directory for initial time
     if time_name == "0":
         time_name = None
     if not os.path.exists(os.path.join(path, "constant/polyMesh")):
@@ -943,7 +953,7 @@ def readmesh(
             " Please verify the directory of your case.",
         )
 
-    if boundary != None:
+    if boundary is not None:
         facefile = OpenFoamFile(
             path + "/constant/polyMesh/", name="faces", verbose=verbose
         )
@@ -951,7 +961,7 @@ def readmesh(
             path + "/constant/polyMesh/",
             name="faces",
             verbose=verbose)
-        if time_name != None:
+        if time_name is not None:
             pointfile = OpenFoamFile(
                 path=path,
                 time_name=time_name,
@@ -990,11 +1000,14 @@ def readmesh(
             path + "/constant/polyMesh/", name="owner", verbose=verbose
         )
         nmesh = owner.nb_cell
-        if time_name == None and os.path.exists(os.path.join(path, "constant/C")):
+        if time_name is None and os.path.exists(os.path.join(path,
+                                                             "constant/C")):
             xs, ys, zs = readvector(
                 path, "constant", "C", precision=precision, verbose=verbose
             )
-        elif time_name != None and os.path.exists(_make_path(path, time_name, "C")):
+        elif time_name is not None and os.path.exists(_make_path(path,
+                                                                 time_name,
+                                                                 "C")):
             xs, ys, zs = readvector(
                 path, time_name, "C", precision=precision, verbose=verbose
             )
@@ -1002,7 +1015,7 @@ def readmesh(
             facefile = OpenFoamFile(
                 path + "/constant/polyMesh/", name="faces", verbose=verbose
             )
-            if time_name != None:
+            if time_name is not None:
                 pointfile = OpenFoamFile(
                     path=path,
                     time_name=time_name,
@@ -1069,13 +1082,13 @@ if __name__ == "__main__":
 
     for d in dirs:
         rep = os.path.join(os.path.dirname(__file__), "../output_samples/", d)
-                               
+
         values = readscalar(rep, "0", "alpha")
 
         values = readsymmtensor(rep, "0", "sigma")
-            
+
         values = readtensor(rep, "0", "Taus")
-                                       
+
         values = readvector(rep, "0", "U")
-                
+
         xs, ys, zs = readmesh(rep)

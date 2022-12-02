@@ -135,7 +135,8 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
         time_list.sort(key=float)
         time_list = np.array(time_list)
         for timename in time_list:
-            probes_loc, time_vect, tab = readprobes(path, probes_name, timename, name)
+            probes_loc, time_vect, tab = readprobes(
+                path, probes_name, timename, name)
             if "tab_merge" in locals():
                 for jj in range(np.size(time_vect[:])):
                     if time_vect[jj] > timevect_merge[-1]:
@@ -161,14 +162,15 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
         elif "#".encode() not in line:
             break
     n_probes = j-2
-    probes_loc = np.zeros([n_probes, 3], dtype = float)
+    probes_loc = np.zeros([n_probes, 3], dtype=float)
     j = 0
     header = True
     for dummy, line in enumerate(content):
         if "#".encode() in line:
             if j<n_probes:
                 for k in range(3):
-                    probes_loc[j, k] = (line.split(b"(")[1].split(b")")[0].split()[k])
+                    probes_loc[j, k] = (line.split(
+                        b"(")[1].split(b")")[0].split()[k])
             j += 1
         elif "#".encode() not in line and header:
             header = False
