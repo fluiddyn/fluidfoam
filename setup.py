@@ -33,7 +33,7 @@ setup(
     long_description_content_type="text/markdown",
     long_description = readme(),
     license = 'GPLv2',
-    keywords = ["Openfoam", "postprocessing", "CFD"],
+    keywords = ["Openfoam", "postprocessing", "python", "CFD"],
     url = "http://legi.grenoble-inp.fr",   # project home page, if any
     classifiers=[
         # How mature is this project? Common values are
