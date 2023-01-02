@@ -44,8 +44,7 @@ setup(
         'Intended Audience :: Science/Research',
         'Intended Audience :: Education',
         'Topic :: Scientific/Engineering',
-        'License :: OSI Approved :: GNU General Public License v2 (GPLv2)',
-        # actually CeCILL License (GPL compatible license for French laws)
+        'License :: OSI Approved :: GNU General Public License v3 (GPLv3)',
         #
         # Specify the Python versions you support here. In particular,
         # ensure that you indicate whether you support Python 2,
