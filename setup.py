@@ -24,7 +24,7 @@ setup(
     packages=find_packages(exclude=['tutorials']),
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
-    install_requires=['numpy>=1.11', 'scipy==1.7.3',
+    install_requires=['numpy>=1.11', 'scipy>=1.7.3',
                       'matplotlib>=1.5'],
     # metadata for upload to PyPI
     author = "Cyrille Bonamy",
@@ -33,7 +33,7 @@ setup(
     long_description_content_type="text/markdown",
     long_description = readme(),
     license = 'GPLv2',
-    keywords = ["Openfoam", "postprocessing", "CFD"],
+    keywords = ["Openfoam", "postprocessing", "python", "CFD"],
     url = "http://legi.grenoble-inp.fr",   # project home page, if any
     classifiers=[
         # How mature is this project? Common values are

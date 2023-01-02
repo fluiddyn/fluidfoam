@@ -12,7 +12,7 @@ jobs:
       version_changed: ${{ steps.check_file_changed.outputs.files_changed }}
     steps:
       - run: pip install -U pip pipenv coverage
-      - run: pip install -U numpy==1.21.2 scipy==1.7.3 matplotlib
+      - run: pip install -U numpy scipy matplotlib
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: set -o pipefail
