@@ -12,7 +12,7 @@ jobs:
       version_changed: ${{ steps.check_file_changed.outputs.files_changed }}
     steps:
       - run: pip install -U pip pipenv coverage
-      - run: pip install -U numpy==1.21.2 scipy==1.7.3 matplotlib
+      - run: pip install -U numpy scipy matplotlib
       - name: Check out repository code
         uses: actions/checkout@v2
       - run: set -o pipefail
@@ -35,19 +35,12 @@ jobs:
   Publish-Pypi:
     needs: build
     runs-on: ubuntu-latest
-    if: github.ref == 'refs/heads/master'
+    if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - name: Check out repository code
         uses: actions/checkout@v2
       - uses: actions/setup-python@v2
-#      - uses: dorny/paths-filter@v2
-#        id: changes
-#        with:
-#          filters: |
-#            src:
-#              - 'fluidfoam/_version.py'
       - name: Deploy package
-#        if: steps.changes.outputs.src == 'true'
         uses: casperdcl/deploy-pypi@v2
         with:
           password: ${{ secrets.PYPI_TOKEN }}
