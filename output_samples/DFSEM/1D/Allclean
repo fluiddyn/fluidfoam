@@ -1,0 +1,10 @@
+#!/bin/sh
+
+# Remove the mesh
+foamCleanPolyMesh
+
+# Remove time folders
+foamListTimes -rm -time 0: -withZero
+
+# Remove logs
+rm -rf  gradPOSC.txt log

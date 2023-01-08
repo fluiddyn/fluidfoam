@@ -1,0 +1,17 @@
+FoamFile
+{
+    version         2.0;
+    format          ascii;
+    instance        "system";
+    local           "";
+    class           dictionary;
+    object          funkySetFieldsDict;
+}
+
+expressions (
+    setTau {
+        field           Tau;
+        create          true ;
+        expression      "(1e-6+nut)*dev(grad(U))";
+    }
+);

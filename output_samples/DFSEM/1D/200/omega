@@ -1,0 +1,55 @@
+/*--------------------------------*- C++ -*----------------------------------*\
+| =========                 |                                                 |
+| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
+|  \\    /   O peration     | Version:  v2106                                 |
+|   \\  /    A nd           | Website:  www.openfoam.com                      |
+|    \\/     M anipulation  |                                                 |
+\*---------------------------------------------------------------------------*/
+FoamFile
+{
+    version     2.0;
+    format      binary;
+    arch        "LSB;label=32;scalar=64";
+    class       volScalarField;
+    location    "200";
+    object      omega;
+}
+// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
+
+dimensions      [0 0 -1 0 0 0 0];
+
+internalField   nonuniform List<scalar> 
+32
+(JÙª°ñy|@D€~ØÿÈb@®ˇﬁΩ°≈S@jˇ#ÂåI@Ã®‰“√qB@ﬂ®P4	r<@!´º⁄WÂ6@ùïªç¸2@|%ﬁS40@Îãyπ+@•´˚0(@W∂‘>äR%@éúﬂLÚ"@/^≥*Ú @÷Õ”°¢y@è∂yÖ@ÎóºÎæ@&øÓÌ©@)0J@Å£@[–-Û“@‡˛Qƒ˙/@g[Ñ*h@y®Á∞`¥@N"ªÍ<
+@X(≤°_¸@ç†ãÕçÔ@èS ÿÆ@U<™Y∆p@h∑Ë5$@6–Iæˇ?Ë⁄•`≈˛?(‘–ãP)˝?);
+
+boundaryField
+{
+    inlet
+    {
+        type            cyclic;
+    }
+    outlet
+    {
+        type            cyclic;
+    }
+    top
+    {
+        type            zeroGradient;
+    }
+    walls
+    {
+        blending        binomial2;
+        n               2;
+        beta1           0.075;
+        type            omegaWallFunction;
+        value           uniform 455.599;
+    }
+    frontAndBackPlanes
+    {
+        type            empty;
+    }
+}
+
+
+// ************************************************************************* //
