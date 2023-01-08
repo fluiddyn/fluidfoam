@@ -1,56 +1,0 @@
-/*--------------------------------*- C++ -*----------------------------------*\
-| =========                 |                                                 |
-| \\      /  F ield         | OpenFOAM: The Open Source CFD Toolbox           |
-|  \\    /   O peration     | Version:  v2106                                 |
-|   \\  /    A nd           | Website:  www.openfoam.com                      |
-|    \\/     M anipulation  |                                                 |
-\*---------------------------------------------------------------------------*/
-FoamFile
-{
-    version     2.0;
-    format      binary;
-    arch        "LSB;label=32;scalar=64";
-    class       volScalarField;
-    location    "200";
-    object      nut;
-}
-// * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * * //
-
-dimensions      [0 2 -1 0 0 0 0];
-
-internalField   nonuniform List<scalar> 
-32
-(¬´Š\xY©>¶p^Ò>«}ûåş9â>U•ƒÁ".ì>UAu‰›Kó>ƒÿ\ãŸø>r24µéş>w]Y¸?”®ÈÀm?Q5{¤O?Iw,FÚÉ	?>)8j?!Î9*ı?P³¤¿?ö@Ç|ö?úÖ®0!?ğ¿ÔI®=?ïÜ¿LÁI?iZ™ö
-C?éŸ³Š'?(º+_şò? ï.¤?ü'ûU´7?Êb§K¿ª?:w2¿ú?ò4DVÓ%?ñ*Qq+?×˜P€?æû"@Ò?9«\Í'…?åî=:?‡×tä	?);
-
-boundaryField
-{
-    inlet
-    {
-        type            cyclic;
-    }
-    outlet
-    {
-        type            cyclic;
-    }
-    top
-    {
-        type            zeroGradient;
-    }
-    walls
-    {
-        type            nutkWallFunction;
-        blending        stepwise;
-        Cmu             0.09;
-        kappa           0.41;
-        E               9.8;
-        value           uniform 0;
-    }
-    frontAndBackPlanes
-    {
-        type            empty;
-    }
-}
-
-
-// ************************************************************************* //
