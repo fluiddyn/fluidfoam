@@ -25,7 +25,7 @@ setup(
     # Project uses reStructuredText, so ensure that the docutils get
     # installed or upgraded on the target machine
     install_requires=['numpy>=1.11', 'scipy>=1.7.3',
-                      'matplotlib>=1.5'],
+                      'matplotlib>=1.5', 'netCDF4'],
     # metadata for upload to PyPI
     author = "Cyrille Bonamy",
     author_email = "cyrille.bonamy@univ-grenoble-alpes.fr",

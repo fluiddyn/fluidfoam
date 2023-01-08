@@ -1,3 +1,4 @@
+netCDF4
 numpy>=1.11
 scipy>=1.7.3
 matplotlib>=1.5
