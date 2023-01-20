@@ -236,3 +236,233 @@ def plot1dprofil(pathr, varlist):
         axarr[i].set_title(varlist[i])
     plt.show()
     return
+
+def create1dprofilDFSEM(pathr, pathw, boundaryname, timename, axis, 
+                         Uname,kname,omeganame,Rname,axisW):
+    """
+    This function provides way to read 1D profiles at time timename of pathr
+    and write them in OpenFoam Format in the 1d_profil folder of pathw
+    (for BC imposition in 2D or 3D case for example).
+
+    Args:
+        pathr: str\n
+        pathw: str\n
+        boundaryname: str\n
+        timename: str\n
+        axis: str\n 
+        Uname : str\n
+        kname : str \n
+        omeganame : str \n
+        Rname : str \n
+        axisW : str\n 
+
+    Returns:
+        status: 'create 1D profiles for DFSEM: done' if ok
+
+    A way you might use me is:\n
+        status = fluidfoam.create1dprofil("path_of_case", "pathw", time, 'Y',
+                                           Uname,kname,omeganame,Rname)
+
+    Please note that the boundaryname directory must be existing in the pathw
+    directory
+    """
+
+    X, Y, Z = readmesh(pathr)
+    size1d = Y.shape[0]
+    filename = ""
+ 
+    filename1 = pathw + "/constant/boundaryData/" + boundaryname + "/points"
+    f = open(filename1, "w")
+    f.write("(\n")
+    for cell in range(size1d):
+          if axisW == axis:
+                f.write(
+                 "(" + str(X[cell]) + " " + str(Y[cell]) + " " 
+                     + str(Z[cell]) + ")\n"
+                )
+          elif np.logical_and(axis=='Y' , axisW == 'Z'):
+                f.write(
+                 "(" + str(X[cell]) + " " + str(Z[cell]) + " " 
+                     + str(Y[cell]) + ")\n"
+                )
+    f.write(")\n")
+    f.close()
+    
+    U = readfield(pathr, timename, Uname)
+    k = readfield(pathr, timename, kname)
+    omega = readfield(pathr, timename,omeganame)
+    R = readfield(pathr, timename, Rname)
+    
+    filename1 = pathw + "/constant/boundaryData/" + boundaryname + "/0/L"
+    
+    L = np.sqrt(k)/omega
+    for cell in range(size1d):
+          L[cell] = min(L[cell],0.41*(np.max(Y)-Y[cell]))
+    f = open(filename1, "w")
+    f.write("(\n")
+    for cell in range(size1d):
+          f.write(str(L[cell])+"\n")
+    f.write(")\n")
+    f.close()
+    
+    filename1 = pathw + "/constant/boundaryData/" + boundaryname + "/0/U"
+    #U = varlist[0]
+    f = open(filename1, "w")
+    f.write("(\n")
+    for cell in range(size1d):
+          if axisW == axis:
+                f.write(
+                  "("
+                   + str(U[0, cell])
+                   + " "
+                   + str(U[1, cell])
+                   + " "
+                   + str(U[2, cell])
+                   + ")\n"
+                 )
+          elif np.logical_and(axis=='Y' , axisW == 'Z'):
+                f.write(
+                  "("
+                   + str(U[0, cell])
+                   + " "
+                   + str(U[2, cell])
+                   + " "
+                   + str(U[1, cell])
+                   + ")\n"
+                 )
+          else:
+                print("please implement this option")
+                break
+    f.write(")\n")
+    f.close()
+    
+    filename1 = pathw + "/constant/boundaryData/" + boundaryname + "/0/R"
+    #R = varlist[3]
+    f = open(filename1, "w")
+    f.write("(\n")
+    for cell in range(size1d):
+          if axisW == axis:
+                #0:XX , 1:XY , 2:XZ , 3:YY , 4:YZ , 5:ZZ
+                #0:XX , 1:XY , 2:XZ , 3:YX , 4:YY , 5:YZ , 6:ZX , 7:ZY , 8:ZZ
+                f.write(
+                  "("
+                   + str(R[0, cell])
+                   + " "
+                   + str(R[1, cell])
+                   + " "
+                   + str(R[2, cell])
+                   + " "
+                   + str(R[3, cell])
+                   + " "
+                   + str(R[4, cell])
+                   + " "
+                   + str(R[5, cell])
+                   + ")\n"
+                 )
+          elif np.logical_and(axis=='Y' , axisW == 'Z'):
+                #0:XX , 1:XY , 2:XZ , 3:YY , 4:YZ , 5:ZZ
+                #0:XX , 1:XY , 2:XZ , 3:YX , 4:YY , 5:YZ , 6:ZX , 7:ZY , 8:ZZ
+                f.write(
+                  "("
+                   + str(R[0, cell])
+                   + " "
+                   + str(R[2, cell])
+                   + " "
+                   + str(R[1, cell])
+                   + " "
+                   + str(R[3, cell])
+                   + " "
+                   + str(R[4, cell])
+                   + " "
+                   + str(R[5, cell])
+                   + ")\n"
+                 )
+    f.write(")\n")
+    f.close()
+
+    status = "create 1D profiles DFSEM: done"
+    return status
+
+def read1dprofilDFSEM(file_name, boundary_name, time_name, axis):
+    """This function provides way to read and return 1D profil created by the
+    create1dprofilDFSEM function. file_name can be a complete path.
+
+    Args:
+        file_name: str
+        boundary_name: str
+        time_name: str
+        axis: str
+
+    Returns:
+        coord: 1d mesh corresponding to 1d profil\n
+        U: Velocity field profile (x-component)\n
+        L: Turbulent length scale \n
+        R: Reynolds shear stress \n
+        size1d: size of the 1d profil
+
+    A way you might use me is:\n
+        pos, U, k, omega, R, size1d = fluidfoam.read1dprofilDFSEM("path_of_case","boundaryName")
+    """
+    import os
+    # read points
+    basepath = os.path.join(file_name, 'constant/boundaryData', boundary_name)
+    file_namep = os.path.join(basepath, 'points')
+    if axis == "X":
+        index = 0
+    elif axis == "Y":
+        index = 1
+    elif axis == "Z":
+        index = 2
+        
+    with open(file_namep) as handle:
+
+        size1d = len(handle.readlines()) - 2
+        coord = np.empty(size1d)
+        handle.seek(0)
+        for line_num, line in enumerate(handle):
+            if (line_num != 0) & (line_num != size1d + 1):
+                line = line.replace(")", "")
+                line = line.replace("(", "")
+                cols = line.split()
+                coord[(line_num - 1)] = cols[index]
+    # read U
+    file_nameU = os.path.join(basepath, time_name, 'U')
+    with open(file_nameU) as handle:
+
+        size1d = len(handle.readlines()) - 2
+        U = np.empty(size1d)
+        handle.seek(0)
+        for line_num, line in enumerate(handle):
+            if (line_num != 0) & (line_num != size1d + 1):
+                line = line.replace(")", "")
+                line = line.replace("(", "")
+                cols = line.split()
+                U[(line_num - 1)] = cols[0]
+    # read L
+    file_nameL = os.path.join(basepath, time_name, 'L')
+    with open(file_nameL) as handle:
+
+        size1d = len(handle.readlines()) - 2
+        L = np.empty(size1d)
+        handle.seek(0)
+        for line_num, line in enumerate(handle):
+            if (line_num != 0) & (line_num != size1d + 1):
+                line = line.replace(")", "")
+                line = line.replace("(", "")
+                cols = line.split()
+                L[(line_num - 1)] = cols[0]
+    # read R
+    file_nameR = os.path.join(basepath, time_name, 'R')
+    with open(file_nameR) as handle:
+
+        size1d = len(handle.readlines()) - 2
+        R = np.empty((size1d,6))
+        handle.seek(0)
+        for line_num, line in enumerate(handle):
+            if (line_num != 0) & (line_num != size1d + 1):
+                line = line.replace(")", "")
+                line = line.replace("(", "")
+                cols = line.split()
+                R[(line_num - 1),:] = cols[:]
+    
+    return coord, U, L, R, size1d

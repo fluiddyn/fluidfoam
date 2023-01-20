@@ -18,8 +18,8 @@ from fluidfoam.readpostpro import readprobes
 sol = '../output_samples/ascii/'
 
 # import readprobes function from fluidfoam package
-timeU, u = readprobes(sol, time_name = 'mergeTime', name = 'U')
-timeP, p = readprobes(sol, time_name = 'mergeTime', name = 'p')
+probes_locU, timeU, u = readprobes(sol, time_name = 'mergeTime', name = 'U')
+probes_locP, timeP, p = readprobes(sol, time_name = 'mergeTime', name = 'p')
 
 ###############################################################################
 # Now plots the pressure and y velocity for the first probe
