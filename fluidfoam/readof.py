@@ -534,6 +534,9 @@ class OpenFoamFile(object):
             lines = [line.split(b")")[0] for line in lines]
             data = b" ".join(lines).strip()
             self.values = np.array([int(s) for s in data.split()])
+        if self.values.min() < 0:
+            self.values = self.values[np.where(self.values>=0)[0]]
+            self.nb_faces = self.values.size
         self.nb_cell = np.max(self.values) + 1
 
     def _determine_order(self, boundary, order, precision):
