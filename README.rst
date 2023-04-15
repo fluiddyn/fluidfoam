@@ -2,7 +2,7 @@
 fluidfoam
 ========
 
-|release| |docs| |Travis| |Github-action| |coverage|
+|release| |docs| |Github-action| |coverage|
 
 .. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
    :target: https://pypi.python.org/pypi/fluidfoam/
@@ -11,10 +11,6 @@ fluidfoam
 .. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
    :target: http://fluidfoam.readthedocs.org
    :alt: Documentation status
-
-.. |Travis| image:: https://app.travis-ci.com/fluiddyn/fluidfoam.svg?branch=master
-   :target: https://app.travis-ci.com/github/fluiddyn/fluidfoam 
-   :alt: Build status
 
 .. |Github-action| image:: https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
    :target: https://github.com/fluiddyn/fluidfoam/actions
@@ -30,9 +26,9 @@ What is this repository for?
 ----------------------------
 
 * Openfoam Tools
-* Version : 0.2.3
-* Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2112plus
-* Supported Python Versions : >= 3.7
+* Version : 0.2.4
+* Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2212plus
+* Supported Python Versions : >= 3.8
 
 Documentation and Examples
 --------------------------

@@ -1,0 +1,49 @@
+name: build
+on: [push]
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    strategy:
+      # You can use PyPy versions in python-version.
+      # For example, pypy-2.7 and pypy-3.8
+      matrix:
+        python-version: ["3.8", "3.9", "3.10"]
+    outputs:
+      version_changed: ${{ steps.check_file_changed.outputs.files_changed }}
+    steps:
+      - run: pip install -U pip pipenv coverage
+      - run: pip install -U numpy scipy matplotlib
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - run: set -o pipefail
+      - name: Build and install fluidfoam
+        run: |
+          cd ${{ github.workspace }} && python setup.py develop --user
+      - name: Test fluidfoam
+        run: make tests
+      - name: Test fluidfoam coverage
+        run: make tests_coverage
+      - name: Upload coverage to Codecov
+        uses: codecov/codecov-action@v2
+        with:
+          token: ${{ secrets.codecov }}
+          fail_ci_if_error: true
+          files: ./.coverage/coverage.xml
+          flags: unittests
+          name: codecov-umbrella
+          verbose: true        
+  Publish-Pypi:
+    needs: build
+    runs-on: ubuntu-latest
+    if: startsWith(github.event.ref, 'refs/tags')
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v2
+      - uses: actions/setup-python@v2
+      - name: Deploy package
+        uses: casperdcl/deploy-pypi@v2
+        with:
+          password: ${{ secrets.PYPI_TOKEN }}
+          pip: wheel -w dist/ --no-deps .
+          # only upload if a tag is pushed (otherwise just build & check)
+          upload: ${{ github.event_name == 'push' && startsWith(github.event.ref, 'refs/tags') }}

@@ -2,5 +2,6 @@ Sphinx>=4
 matplotlib
 numpy
 numpydoc
+netCDF4
 sphinx_gallery
 sphinx-favicon
