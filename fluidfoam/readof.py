@@ -70,6 +70,7 @@ class OpenFoamFile(object):
         name=None,
         structured=False,
         boundary=None,
+        region=None,
         order="F",
         precision=15,
         datatype=None,
@@ -79,7 +80,10 @@ class OpenFoamFile(object):
         self.pathcase = path
         if time_name == "latestTime":
             time_name = _find_latesttime(path)
-        self.path = _make_path(path, time_name, name)
+        if region is None:
+            self.path = _make_path(path, time_name, name)
+        else:
+            self.path = _make_path(path, time_name, os.path.join(region, name))
         self.verbose = verbose
         if self.verbose:
             print("Reading file " + self.path)
@@ -129,6 +133,8 @@ class OpenFoamFile(object):
             self._parse_points(precision=precision)
         elif name.endswith("owner") or name.endswith("neighbour"):
             self._parse_owner()
+        elif name.startswith("sets/"):
+            self._parse_sets()
         else:
             self._parse_data(boundary=boundary,
                              precision=precision,
@@ -539,6 +545,35 @@ class OpenFoamFile(object):
             self.nb_faces = self.values.size
         self.nb_cell = np.max(self.values) + 1
 
+    def _parse_sets(self):
+
+        for line in self.lines_stripped:
+            try:
+                int(line)
+                break
+            except ValueError:
+                continue
+            break
+        self.nb_cell = int(line)
+        data = self.content.split(line, 2)[-1]
+
+        self.type_data = self.header[b"class"]
+
+        if not self.is_ascii:
+            nb_numbers = self.nb_cell
+            data = b"\n(".join(data.split(b"\n(")[1:])
+            self.values = np.array(
+                struct.unpack(
+                    "{}i".format(nb_numbers),
+                    data[: nb_numbers * struct.calcsize("i")],
+                )
+            )
+        else:
+            lines = data.split(b"\n(")[1:]
+            lines = [line.split(b")")[0] for line in lines]
+            data = b" ".join(lines).strip()
+            self.values = np.array([int(s) for s in data.split()])
+
     def _determine_order(self, boundary, order, precision):
 
         xs, ys, zs = readmesh(
@@ -591,6 +626,7 @@ def readfield(
     name=None,
     structured=False,
     boundary=None,
+    region=None,
     order="F",
     precision=15,
     datatype=None,
@@ -606,6 +642,7 @@ def readfield(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
         datatype: None (default) or str ("scalar", "vector"...) necessary in
@@ -627,6 +664,7 @@ def readfield(
         name,
         structured=structured,
         boundary=boundary,
+        region=region,
         order=order,
         precision=precision,
         datatype=datatype,
@@ -668,6 +706,7 @@ def readscalar(
     name=None,
     structured=False,
     boundary=None,
+    region=None,
     order="F",
     precision=15,
     mode=None,
@@ -683,6 +722,7 @@ def readscalar(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
         verbose : True or False (default: True).
@@ -704,6 +744,7 @@ def readscalar(
             name,
             structured=structured,
             boundary=boundary,
+            region=region,
             order=order,
             precision=precision,
             datatype="scalar",
@@ -726,6 +767,7 @@ def readvector(
     name=None,
     structured=False,
     boundary=None,
+    region=None,
     order="F",
     precision=15,
     verbose=True,
@@ -740,6 +782,7 @@ def readvector(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
         verbose : True or False (default: True).
@@ -759,6 +802,7 @@ def readvector(
         name,
         structured=structured,
         boundary=boundary,
+        region=region,
         order=order,
         precision=precision,
         datatype="vector",
@@ -788,6 +832,7 @@ def readsymmtensor(
     name=None,
     structured=False,
     boundary=None,
+    region=None,
     order="F",
     precision=15,
     verbose=True,
@@ -802,6 +847,7 @@ def readsymmtensor(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
         verbose : True or False (default: True).
@@ -821,6 +867,7 @@ def readsymmtensor(
         name,
         structured=structured,
         boundary=boundary,
+        region=region,
         order=order,
         precision=precision,
         datatype="symmtensor",
@@ -850,6 +897,7 @@ def readtensor(
     name=None,
     structured=False,
     boundary=None,
+    region=None,
     order="F",
     precision=15,
     verbose=True,
@@ -864,6 +912,7 @@ def readtensor(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
         verbose : True or False (default: True).
@@ -883,6 +932,7 @@ def readtensor(
         name,
         structured=structured,
         boundary=boundary,
+        region=region,
         order=order,
         precision=precision,
         datatype="tensor",
@@ -912,6 +962,7 @@ def readmesh(
     time_name=None,
     structured=False,
     boundary=None,
+    region=None,
     order="F",
     precision=15,
     verbose=True
@@ -924,6 +975,7 @@ def readmesh(
         time_name: str ('latestTime' is supported)\n
         structured: False or True\n
         boundary: None or str\n
+        region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
         verbose : True or False (default: True).
@@ -960,10 +1012,6 @@ def readmesh(
         facefile = OpenFoamFile(
             path + "/constant/polyMesh/", name="faces", verbose=verbose
         )
-        pointfile = OpenFoamFile(
-            path + "/constant/polyMesh/",
-            name="faces",
-            verbose=verbose)
         if time_name is not None:
             pointfile = OpenFoamFile(
                 path=path,
@@ -1075,6 +1123,16 @@ def readmesh(
         xs = xs[ind].reshape(shape, order=order)
         ys = ys[ind].reshape(shape, order=order)
         zs = zs[ind].reshape(shape, order=order)
+    if region is not None:
+        regionfile = OpenFoamFile(
+            path=path + "/constant/polyMesh/",
+            name="sets/"+region,
+            precision=precision,
+            verbose=verbose
+            )
+        xs = xs[regionfile.values]
+        ys = ys[regionfile.values]
+        zs = zs[regionfile.values]
 
     return xs, ys, zs
 
