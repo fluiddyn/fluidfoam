@@ -70,7 +70,7 @@ class OpenFoamFile(object):
         name=None,
         structured=False,
         boundary=None,
-        region=None,
+        sets=None,
         order="F",
         precision=15,
         datatype=None,
@@ -80,10 +80,10 @@ class OpenFoamFile(object):
         self.pathcase = path
         if time_name == "latestTime":
             time_name = _find_latesttime(path)
-        if region is None:
+        if sets is None:
             self.path = _make_path(path, time_name, name)
         else:
-            self.path = _make_path(path, time_name, os.path.join(region, name))
+            self.path = _make_path(path, time_name, os.path.join(sets, name))
         self.verbose = verbose
         if self.verbose:
             print("Reading file " + self.path)
@@ -626,6 +626,7 @@ def readfield(
     name=None,
     structured=False,
     boundary=None,
+    sets=None,
     region=None,
     order="F",
     precision=15,
@@ -642,6 +643,7 @@ def readfield(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        sets: None or str\n
         region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
@@ -658,13 +660,15 @@ def readfield(
         field = fluidfoam.readfield('path_of_OpenFoam_case', '0', 'alpha')
     """
 
+    if region is not None:
+        sets = region
     field = OpenFoamFile(
         path,
         time_name,
         name,
         structured=structured,
         boundary=boundary,
-        region=region,
+        sets=sets,
         order=order,
         precision=precision,
         datatype=datatype,
@@ -706,6 +710,7 @@ def readscalar(
     name=None,
     structured=False,
     boundary=None,
+    sets=None,
     region=None,
     order="F",
     precision=15,
@@ -722,6 +727,7 @@ def readscalar(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        sets: None or str\n
         region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
@@ -735,6 +741,9 @@ def readscalar(
     A way you might use me is:\n
         scalar_a = fluidfoam.readscalar('path_of_OpenFoam_case', '0', 'alpha')
     """
+
+    if region is not None:
+        sets = region
     if mode == "parallel":
         raise ValueError("Not Implemented")
     else:
@@ -744,7 +753,7 @@ def readscalar(
             name,
             structured=structured,
             boundary=boundary,
-            region=region,
+            sets=sets,
             order=order,
             precision=precision,
             datatype="scalar",
@@ -767,6 +776,7 @@ def readvector(
     name=None,
     structured=False,
     boundary=None,
+    sets=None,
     region=None,
     order="F",
     precision=15,
@@ -782,6 +792,7 @@ def readvector(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        sets: None or str\n
         region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
@@ -796,13 +807,15 @@ def readvector(
         U = fluidfoam.readvector('path_of_OpenFoam_case', '0', 'U')
     """
 
+    if region is not None:
+        sets = region
     vector = OpenFoamFile(
         path,
         time_name,
         name,
         structured=structured,
         boundary=boundary,
-        region=region,
+        sets=sets,
         order=order,
         precision=precision,
         datatype="vector",
@@ -832,6 +845,7 @@ def readsymmtensor(
     name=None,
     structured=False,
     boundary=None,
+    sets=None,
     region=None,
     order="F",
     precision=15,
@@ -847,6 +861,7 @@ def readsymmtensor(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        sets: None or str\n
         region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
@@ -861,13 +876,15 @@ def readsymmtensor(
         sigma = fluidfoam.readsymmtensor('path_of_OpenFoam_case', '0', 'sigma')
     """
 
+    if region is not None:
+        sets = region
     scalar = OpenFoamFile(
         path,
         time_name,
         name,
         structured=structured,
         boundary=boundary,
-        region=region,
+        sets=sets,
         order=order,
         precision=precision,
         datatype="symmtensor",
@@ -897,6 +914,7 @@ def readtensor(
     name=None,
     structured=False,
     boundary=None,
+    sets=None,
     region=None,
     order="F",
     precision=15,
@@ -912,6 +930,7 @@ def readtensor(
         name: str\n
         structured: False or True\n
         boundary: None or str\n
+        sets: None or str\n
         region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
@@ -926,13 +945,15 @@ def readtensor(
         tens = fluidfoam.readtensor('path_of_OpenFoam_case', '0', 'tens')
     """
 
+    if region is not None:
+        sets = region
     scalar = OpenFoamFile(
         path,
         time_name,
         name,
         structured=structured,
         boundary=boundary,
-        region=region,
+        sets=sets,
         order=order,
         precision=precision,
         datatype="tensor",
@@ -962,6 +983,7 @@ def readmesh(
     time_name=None,
     structured=False,
     boundary=None,
+    sets=None,
     region=None,
     order="F",
     precision=15,
@@ -975,6 +997,7 @@ def readmesh(
         time_name: str ('latestTime' is supported)\n
         structured: False or True\n
         boundary: None or str\n
+        sets: None or str\n
         region: None or str\n
         order: "F" (default) or "C" \n
         precision : Number of decimal places to round to (default: 15)\n
@@ -1001,16 +1024,20 @@ def readmesh(
     # because in dynamic Mesh cases, no polyMesh directory for initial time
     if time_name == "0":
         time_name = None
-    if not os.path.exists(os.path.join(path, "constant/polyMesh")):
+    if region is None:
+        meshpath = "/constant/polyMesh/"
+    else:
+        meshpath = "/constant/"+region+"/polyMesh/"
+    if not os.path.exists(path+meshpath):
         raise ValueError(
-            "No constant/polyMesh directory in ",
+            "No ", meshpath, " directory in ",
             path,
             " Please verify the directory of your case.",
         )
 
     if boundary is not None:
         facefile = OpenFoamFile(
-            path + "/constant/polyMesh/", name="faces", verbose=verbose
+            path + meshpath, name="faces", verbose=verbose
         )
         if time_name is not None:
             pointfile = OpenFoamFile(
@@ -1022,13 +1049,13 @@ def readmesh(
             )
         else:
             pointfile = OpenFoamFile(
-                path + "/constant/polyMesh/",
+                path + meshpath,
                 name="points",
                 precision=precision,
                 verbose=verbose
             )
         bounfile = OpenFoamFile(
-            path + "/constant/polyMesh/",
+            path + meshpath,
             name="boundary",
             verbose=verbose
         )
@@ -1048,25 +1075,24 @@ def readmesh(
             zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
     else:
         owner = OpenFoamFile(
-            path + "/constant/polyMesh/", name="owner", verbose=verbose
+            path + meshpath, name="owner", verbose=verbose
         )
         nmesh = owner.nb_cell
-        if time_name is None and os.path.exists(os.path.join(path,
-                                                             "constant/C")):
+        if (time_name is None and region is None
+                and os.path.exists(os.path.join(path, "constant/C"))):
             xs, ys, zs = readvector(
                 path, "constant", "C", precision=precision, verbose=verbose
             )
-        elif time_name is not None and os.path.exists(_make_path(path,
-                                                                 time_name,
-                                                                 "C")):
+        elif (time_name is not None and region is None
+              and os.path.exists(_make_path(path, time_name, "C"))):
             xs, ys, zs = readvector(
                 path, time_name, "C", precision=precision, verbose=verbose
             )
         else:
             facefile = OpenFoamFile(
-                path + "/constant/polyMesh/", name="faces", verbose=verbose
+                path + meshpath, name="faces", verbose=verbose
             )
-            if time_name is not None:
+            if time_name is not None and region is None:
                 pointfile = OpenFoamFile(
                     path=path,
                     time_name=time_name,
@@ -1076,13 +1102,13 @@ def readmesh(
                 )
             else:
                 pointfile = OpenFoamFile(
-                    path + "/constant/polyMesh/",
+                    path + meshpath,
                     name="points",
                     precision=precision,
                     verbose=verbose
                 )
             neigh = OpenFoamFile(
-                path + "/constant/polyMesh/", name="neighbour", verbose=verbose
+                path + meshpath, name="neighbour", verbose=verbose
             )
             xs = np.empty(owner.nb_cell, dtype=float)
             ys = np.empty(owner.nb_cell, dtype=float)
@@ -1123,16 +1149,16 @@ def readmesh(
         xs = xs[ind].reshape(shape, order=order)
         ys = ys[ind].reshape(shape, order=order)
         zs = zs[ind].reshape(shape, order=order)
-    if region is not None:
-        regionfile = OpenFoamFile(
-            path=path + "/constant/polyMesh/",
-            name="sets/"+region,
+    if sets is not None:
+        setsfile = OpenFoamFile(
+            path=path+meshpath,
+            name="sets/"+sets,
             precision=precision,
             verbose=verbose
-            )
-        xs = xs[regionfile.values]
-        ys = ys[regionfile.values]
-        zs = zs[regionfile.values]
+        )
+        xs = xs[setsfile.values]
+        ys = ys[setsfile.values]
+        zs = zs[setsfile.values]
 
     return xs, ys, zs
 
