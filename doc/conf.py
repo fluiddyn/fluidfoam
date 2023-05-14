@@ -59,7 +59,7 @@ extensions = [
     'sphinx.ext.viewcode', 'sphinx.ext.autosummary',
     'numpydoc',
     'sphinx_gallery.gen_gallery',
-    'sphinx-favicon',
+    'sphinx_favicon',
     # 'mathmacro',
     # 'breathe'
 ]
