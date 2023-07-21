@@ -1074,21 +1074,23 @@ def readmesh(
             ys[i] = np.mean(pointfile.values_y[id_pts[0:npts]])
             zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
     else:
-        owner = OpenFoamFile(
-            path + meshpath, name="owner", verbose=verbose
-        )
-        nmesh = owner.nb_cell
         if (time_name is None and region is None
                 and os.path.exists(os.path.join(path, "constant/C"))):
             xs, ys, zs = readvector(
                 path, "constant", "C", precision=precision, verbose=verbose
             )
+            nmesh = np.size(xs)
         elif (time_name is not None and region is None
               and os.path.exists(_make_path(path, time_name, "C"))):
             xs, ys, zs = readvector(
                 path, time_name, "C", precision=precision, verbose=verbose
             )
+            nmesh = np.size(xs)
         else:
+            owner = OpenFoamFile(
+                path + meshpath, name="owner", verbose=verbose
+            )
+            nmesh = owner.nb_cell
             facefile = OpenFoamFile(
                 path + meshpath, name="faces", verbose=verbose
             )
