@@ -3,6 +3,7 @@ sphinx_rtd_theme
 matplotlib
 numpy
 numpydoc
+scipy
 netCDF4
 sphinx_gallery
 sphinx-favicon
