@@ -11,7 +11,8 @@
 
 import os, sys
 import subprocess
-from fluidfoam import readmesh, readfield
+import numpy as np
+from fluidfoam import readmesh, readfield, OpenFoamFile
 
 class Error(Exception):
     pass
@@ -37,18 +38,39 @@ class OpenFoamSimu(object):
         structured: bool, true if the mesh is structured
     """
 
-    def __init__(self, path, simu=None, timeStep=None, structured=False):
+    def __init__(self, path, simu=None, timeStep=None, structured=False,
+                precision=10, order='F'):
 
         if simu == None:
             self.directory = self._choose_simulation(path)
             self.simu = self.directory.split("/")[-2]
         else:
             self.simu = simu
-            self.directory = self._find_directory(path, simu)
+            #self.directory = self._find_directory(path, simu)
+            self.directory = path + simu
+            if self.directory.endswith('/') is False: 
+                self.directory += '/'
 
-        self.readopenfoam(timeStep=timeStep, structured=structured)
+        self.readmesh(structured=structured, precision=precision,
+                      order=order)
+        self.readopenfoam(timeStep=timeStep, structured=structured,
+                          precision=precision, order=order)
 
-    def readopenfoam(self, timeStep=None, structured=True):
+    def readmesh(self, structured=False, precision=10, order='F'):
+
+        X, Y, Z = readmesh(self.directory, structured=structured,
+                           precision=precision, order=order)
+        self.x = X
+        self.y = Y
+        self.z = Z
+        if structured:
+            nx = np.unique(X).size
+            ny = np.unique(Y).size
+            nz = np.unique(Z).size
+            self.ind = np.array(range(nx*ny*nz))
+            self.shape = (nx, ny, nz)
+
+    def readopenfoam_old(self, timeStep=None, structured=False, precision=10, order='F'):
         """
         Reading SedFoam results
         Load the last time step saved of the simulation
@@ -57,6 +79,7 @@ class OpenFoamSimu(object):
             timeStep : str or int, timeStep to load. If None, load the last time step\n
             structured : bool, true if the mesh is structured
         """
+
         if timeStep is None:
             dir_list = os.listdir(self.directory)
             time_list = []
@@ -76,11 +99,54 @@ class OpenFoamSimu(object):
 
         self.timeStep = timeStep
 
-        #Read Mesh
-        X, Y, Z = readmesh(self.directory, structured=structured)
-        self.x = X
-        self.y = Y
-        self.z = Z
+        #List all variables saved at the required time step removing potential
+        #directory that cannot be loaded
+        self.variables = []
+        basepath = self.directory+self.timeStep+'/'
+        for fname in os.listdir(basepath):
+            path = os.path.join(basepath, fname)
+            if os.path.isdir(path):
+                # skip directories
+                continue
+            else:
+                self.variables.append(fname)
+
+
+        for var in self.variables:
+            #Load all variables and assign them as a variable of the object
+            values = readfield(path=self.directory, time_name=self.timeStep,
+                                 name = var, structured=structured, precision=precision,
+                                 order=order)
+            self.__setattr__(var.replace('.', '_'), values)
+
+    def readopenfoam(self, timeStep=None, structured=False, precision=10, order='F'):
+        """
+        Reading SedFoam results
+        Load the last time step saved of the simulation
+
+        Args:
+            timeStep : str or int, timeStep to load. If None, load the last time step\n
+            structured : bool, true if the mesh is structured
+        """
+
+        if timeStep is None:
+            dir_list = os.listdir(self.directory)
+            time_list = []
+
+            for directory in dir_list:
+                try:
+                    float(directory)
+                    time_list.append(directory)
+                except:
+                    pass
+            time_list.sort(key=float)
+            timeStep = time_list[-1]
+
+        elif type(timeStep) is int:
+            #timeStep should be in a str format
+            timeStep = str(timeStep)
+
+        self.timeStep = timeStep
 
         #List all variables saved at the required time step removing potential
         #directory that cannot be loaded
@@ -97,8 +163,56 @@ class OpenFoamSimu(object):
 
         for var in self.variables:
             #Load all variables and assign them as a variable of the object
-            self.__setattr__(var.replace('.', '_'), readfield(path=self.directory,
-                time_name=self.timeStep, name=var, structured=structured))
+            field = OpenFoamFile(path=self.directory, time_name=self.timeStep,
+                                 name = var, structured=False, precision=precision,
+                                 order=order)
+            values = field.values
+
+            if field.type_data == "scalar":
+                if structured and not field.uniform:
+                    try:
+                        values = np.reshape(values[self.ind], self.shape, order=order)
+                    except:
+                        print("Variable {} could not be loaded".format(var))
+                        self.variables.remove(var)
+                        continue
+            elif field.type_data == "vector":
+                shape = (3, values.size // 3)
+                values = np.reshape(values, shape, order=order)
+                if structured and not field.uniform:
+                    try:
+                        values[0:3, :] = values[0:3, self.ind]
+                        shape = (3,) + tuple(self.shape)
+                        values = np.reshape(values, shape, order=order)
+                    except:
+                        print("Variable {} could not be loaded".format(var))
+                        self.variables.remove(var)
+                        continue
+            elif field.type_data == "symmtensor":
+                shape = (6, values.size // 6)
+                values = np.reshape(values, shape, order=order)
+                if structured and not field.uniform:
+                    try:
+                        values[0:6, :] = values[0:6, self.ind]
+                        shape = (6,) + tuple(self.shape)
+                        values = np.reshape(values, shape, order=order)
+                    except:
+                        print("Variable {} could not be loaded".format(var))
+                        self.variables.remove(var)
+                        continue
+            elif field.type_data == "tensor":
+                shape = (9, values.size // 9)
+                values = np.reshape(values, shape, order=order)
+                if structured and not field.uniform:
+                    try:
+                        values[0:9, :] = values[0:9, self.ind]
+                        shape = (9,) + tuple(self.shape)
+                        values = np.reshape(values, shape, order=order)
+                    except:
+                        print("Variable {} could not be loaded".format(var))
+                        self.variables.remove(var)
+                        continue
+            self.__setattr__(var.replace('.', '_'), values)
 
     def keys(self):
         """
