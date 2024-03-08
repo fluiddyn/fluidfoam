@@ -1,7 +1,7 @@
 import warnings
 
 from fluidfoam.readof import readscalar, readvector, readtensor
-from fluidfoam.readof import readsymmtensor, readfield, readmesh
+from fluidfoam.readof import readsymmtensor, readfield, readmesh, getVolumes
 from fluidfoam.readof import typefield, OpenFoamFile
 from fluidfoam.processing1d import create1dprofil, read1dprofil
 from fluidfoam.processing1d import create1dprofil_spe, plot1dprofil

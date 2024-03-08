@@ -23,6 +23,7 @@ import os
 import gzip
 import struct
 import numpy as np
+import scipy.spatial as ss
 
 # define color
 W = '\033[0m'  # white (normal)
@@ -1163,6 +1164,196 @@ def readmesh(
         zs = zs[setsfile.values]
 
     return xs, ys, zs
+
+
+
+
+
+def getVolumes(
+    path,
+    time_name=None,
+    structured=False,
+    boundary=None,
+    sets=None,
+    region=None,
+    order="F",
+    precision=15,
+    verbose=True,
+    box=None
+):
+    """
+    Read OpenFoam mesh and reshape if necessary (in cartesian structured mesh).
+
+    Args:
+        path: str\n
+        time_name: str ('latestTime' is supported)\n
+        structured: False or True\n
+        boundary: None or str\n
+        sets: None or str\n
+        region: None or str\n
+        order: "F" (default) or "C" \n
+        precision : Number of decimal places to round to (default: 15)\n
+        verbose : True or False (default: True)
+        box : tuple of box's dimension: ((xmin, ymin, zmin), (xmax, ymax, zmax))\n
+               (if None, includes the whole mesh)\n
+
+    Returns:
+        array: array of vector (Mesh X, Y, Z); size of the array is the size of
+        the interior domain (or of the size of the boundary in case of not None
+        boundary)
+
+    A way you might use me is:\n
+        X, Y, Z = fluidfoam.readmesh('path_of_OpenFoam_case')
+        So X, Y and Z are 1D numpy array with size = nb_cell
+
+    If you play with structured mesh you can shape the X, Y and Z output :\n
+        X, Y, Z = fluidfoam.readmesh('path_of_OpenFoam_case', structured=True)
+        So X, Y and Z are 3D numpy array with shape = (nx, ny, nz)
+
+    And if you play with dynamic mesh the time_name option is for you
+
+    """
+
+    if time_name == "0":
+        time_name = None
+    if region is None:
+        meshpath = "/constant/polyMesh/"
+    else:
+        meshpath = "/constant/"+region+"/polyMesh/"
+    if not os.path.exists(path+meshpath):
+        raise ValueError(
+            "No ", meshpath, " directory in ",
+            path,
+            " Please verify the directory of your case.",
+        )
+
+    if boundary is not None:
+        facefile = OpenFoamFile(
+            path + meshpath, name="faces", verbose=verbose
+        )
+        if time_name is not None:
+            pointfile = OpenFoamFile(
+                path=path,
+                time_name=time_name,
+                name="polyMesh/points",
+                precision=precision,
+                verbose=verbose
+            )
+        else:
+            pointfile = OpenFoamFile(
+                path + meshpath,
+                name="points",
+                precision=precision,
+                verbose=verbose
+            )
+        bounfile = OpenFoamFile(
+            path + meshpath,
+            name="boundary",
+            verbose=verbose
+        )
+        id0 = int(bounfile.boundaryface[str.encode(boundary)][b"startFace"])
+        nmesh = int(bounfile.boundaryface[str.encode(boundary)][b"nFaces"])
+
+        xs = np.empty(nmesh, dtype=float)
+        ys = np.empty(nmesh, dtype=float)
+        zs = np.empty(nmesh, dtype=float)
+
+        for i in range(nmesh):
+            npts = int(facefile.faces[id0 + i]["npts"])
+            id_pts = np.zeros(npts, dtype=int)
+            id_pts[0:npts] = facefile.faces[id0 + i]["id_pts"][0:npts]
+            xs[i] = np.mean(pointfile.values_x[id_pts[0:npts]])
+            ys[i] = np.mean(pointfile.values_y[id_pts[0:npts]])
+            zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
+    else:
+        if (time_name is None and region is None
+                and os.path.exists(os.path.join(path, "constant/C"))):
+            xs, ys, zs = readvector(
+                path, "constant", "C", precision=precision, verbose=verbose
+            )
+            nmesh = np.size(xs)
+        elif (time_name is not None and region is None
+              and os.path.exists(_make_path(path, time_name, "C"))):
+            xs, ys, zs = readvector(
+                path, time_name, "C", precision=precision, verbose=verbose
+            )
+            nmesh = np.size(xs)
+        else:
+            owner = OpenFoamFile(
+                path + meshpath, name="owner", verbose=verbose
+            )
+            nmesh = owner.nb_cell
+            facefile = OpenFoamFile(
+                path + meshpath, name="faces", verbose=verbose
+            )
+            if time_name is not None and region is None:
+                pointfile = OpenFoamFile(
+                    path=path,
+                    time_name=time_name,
+                    name="polyMesh/points",
+                    precision=precision,
+                    verbose=verbose
+                )
+            else:
+                pointfile = OpenFoamFile(
+                    path + meshpath,
+                    name="points",
+                    precision=precision,
+                    verbose=verbose
+                )
+            neigh = OpenFoamFile(
+                path + meshpath, name="neighbour", verbose=verbose
+            )
+            xs = np.empty(owner.nb_cell, dtype=float)
+            ys = np.empty(owner.nb_cell, dtype=float)
+            zs = np.empty(owner.nb_cell, dtype=float)
+            face = {}
+            for i in range(neigh.nb_faces):
+                if not neigh.values[i] in face:
+                    face[neigh.values[i]] = list()
+                face[neigh.values[i]].append(facefile.faces[i]["id_pts"][:])
+            for i in range(owner.nb_faces):
+                if not owner.values[i] in face:
+                    face[owner.values[i]] = list()
+                face[owner.values[i]].append(facefile.faces[i]["id_pts"][:])
+
+            if box != None:
+               # box = ((xmin, ymin, zmin), (xmax, ymax, zmax))
+                if len(box[0]) != 3 or len(box[1]) != 3:
+                    raise ValueError("box mins and maxs must be float tuples of lenght 3")
+            else:
+                minx = np.min(pointfile.values_x)
+                miny = np.min(pointfile.values_y)
+                minz = np.min(pointfile.values_z)
+                maxx = np.max(pointfile.values_x)
+                maxy = np.max(pointfile.values_y)
+                maxz = np.max(pointfile.values_z)
+                box = ((minx, miny, minz), (maxx, maxy, maxz))
+
+            centroidCell=[]
+            VolCell=[]
+            for i in range(owner.nb_cell):
+                xs[i] = np.mean(
+                    pointfile.values_x[np.unique(np.concatenate(face[i])[:])]
+                )
+                ys[i] = np.mean(
+                    pointfile.values_y[np.unique(np.concatenate(face[i])[:])]
+                )
+                zs[i] = np.mean(
+                    pointfile.values_z[np.unique(np.concatenate(face[i])[:])]
+                )
+
+                if box[0][0] < xs[i] < box[1][0] and box[0][1] < ys[i] < box[1][1] and box[0][2] < zs[i] < box[1][2]:
+                    centroidCell.append([xs[i],ys[i],zs[i]])
+                    pointsCell=[]
+
+                    for k in zip(np.unique(np.concatenate(face[i])[:])):
+                        pointsCell.append([pointfile.values_x[k],pointfile.values_y[k],pointfile.values_z[k]])
+
+                    VolCell.append(ss.ConvexHull(pointsCell).volume)
+    return centroidCell,VolCell
+
+
 
 
 if __name__ == "__main__":
