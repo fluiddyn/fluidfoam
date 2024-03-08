@@ -14,6 +14,8 @@ This module provides functions to read OpenFoam Files:
 
 .. autofunction:: readtensor
 
+.. autofunction:: getVolumes
+
 .. autofunction:: typefield
 
 """
@@ -1198,19 +1200,13 @@ def getVolumes(
                (if None, includes the whole mesh)\n
 
     Returns:
-        array: array of vector (Mesh X, Y, Z); size of the array is the size of
-        the interior domain (or of the size of the boundary in case of not None
-        boundary)
+        two lists: list of cell centroids and list of cell volumes
 
     A way you might use me is:\n
+        centroidList,vol = fluidfoam.getVolumes('path_of_OpenFoam_case')
         X, Y, Z = fluidfoam.readmesh('path_of_OpenFoam_case')
-        So X, Y and Z are 1D numpy array with size = nb_cell
+        So centroidList and vol are the cell centroid and cell volume lists.
 
-    If you play with structured mesh you can shape the X, Y and Z output :\n
-        X, Y, Z = fluidfoam.readmesh('path_of_OpenFoam_case', structured=True)
-        So X, Y and Z are 3D numpy array with shape = (nx, ny, nz)
-
-    And if you play with dynamic mesh the time_name option is for you
 
     """
 
