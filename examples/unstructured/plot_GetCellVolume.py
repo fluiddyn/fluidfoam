@@ -74,7 +74,6 @@ ax.set_aspect('equal')
 ax.axis('off')
 
 # to save the figure in pdf or svg format, uncomment one of the following two lines:
-plt.savefig('./myCylinderZomm.pdf', dpi=fig.dpi, transparent = True, bbox_inches = 'tight')
+plt.savefig('./myCylinderCellVolumes.pdf', dpi=fig.dpi, transparent = True, bbox_inches = 'tight')
 # plt.savefig('./myCylinderZomm.svg', dpi=fig.dpi, transparent = True, bbox_inches = 'tight')
 ###############################################################################
-

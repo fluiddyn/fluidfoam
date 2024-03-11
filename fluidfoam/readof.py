@@ -1204,7 +1204,6 @@ def getVolumes(
 
     A way you might use me is:\n
         centroidList,vol = fluidfoam.getVolumes('path_of_OpenFoam_case')
-        X, Y, Z = fluidfoam.readmesh('path_of_OpenFoam_case')
         So centroidList and vol are the cell centroid and cell volume lists.
 
 
@@ -1342,10 +1341,8 @@ def getVolumes(
                 if box[0][0] < xs[i] < box[1][0] and box[0][1] < ys[i] < box[1][1] and box[0][2] < zs[i] < box[1][2]:
                     centroidCell.append([xs[i],ys[i],zs[i]])
                     pointsCell=[]
-
                     for k in zip(np.unique(np.concatenate(face[i])[:])):
                         pointsCell.append([pointfile.values_x[k],pointfile.values_y[k],pointfile.values_z[k]])
-
                     VolCell.append(ss.ConvexHull(pointsCell).volume)
     return centroidCell,VolCell
 
