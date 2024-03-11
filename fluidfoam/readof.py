@@ -1200,11 +1200,11 @@ def getVolumes(
                (if None, includes the whole mesh)\n
 
     Returns:
-        two lists: list of cell centroids and list of cell volumes
+        array: two arrays that contain the cell centroids and list of cell volumes
 
     A way you might use me is:\n
         centroidList,vol = fluidfoam.getVolumes('path_of_OpenFoam_case')
-        So centroidList and vol are the cell centroid and cell volume lists.
+        So centroidList and vol are the cell centroid and cell volume arrays.
 
 
     """
@@ -1325,8 +1325,10 @@ def getVolumes(
                 maxz = np.max(pointfile.values_z)
                 box = ((minx, miny, minz), (maxx, maxy, maxz))
 
-            centroidCell=[]
-            VolCell=[]
+            centroidCell = np.empty((0,3), dtype=float)
+            VolCell_all = np.empty(owner.nb_cell, dtype=float)
+
+
             for i in range(owner.nb_cell):
                 xs[i] = np.mean(
                     pointfile.values_x[np.unique(np.concatenate(face[i])[:])]
@@ -1339,11 +1341,18 @@ def getVolumes(
                 )
 
                 if box[0][0] < xs[i] < box[1][0] and box[0][1] < ys[i] < box[1][1] and box[0][2] < zs[i] < box[1][2]:
-                    centroidCell.append([xs[i],ys[i],zs[i]])
                     pointsCell=[]
                     for k in zip(np.unique(np.concatenate(face[i])[:])):
                         pointsCell.append([pointfile.values_x[k],pointfile.values_y[k],pointfile.values_z[k]])
-                    VolCell.append(ss.ConvexHull(pointsCell).volume)
+
+                    # Add 3D elements into the empty array
+                    element = np.array([xs[i], ys[i], zs[i]])
+                    centroidCell = np.append(centroidCell, [element], axis=0)
+                    VolCell_all[i]=ss.ConvexHull(pointsCell).volume
+
+            # Exclude null values from the array
+            VolCell = VolCell_all[VolCell_all != 0]
+
     return centroidCell,VolCell
 
 

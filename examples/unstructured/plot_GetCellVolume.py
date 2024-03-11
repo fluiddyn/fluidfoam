@@ -10,7 +10,7 @@ This example shows how to extract a list of cell volumes inside a given box
 
 from fluidfoam import MeshVisu
 from fluidfoam.readof import getVolumes
-
+import numpy as np
 # path to the simulation to load
 path = '../../output_samples/pipeline'
 
@@ -33,11 +33,11 @@ mybox_B = ((0.022, 0.0221, -1), (0.0274, 0.0275, 1))
 centroidList_box_A,vol_box_A = getVolumes( path =  path, box = mybox_A) #getting the cell volumes inside box A
 centroidList_box_B,vol_box_B = getVolumes( path =  path, box = mybox_B) #getting the cell volumes inside box B
 
+
 vol_box_A_total = sum(vol_box_A)
 vol_box_B_total = sum(vol_box_B)
 print("Total cell volume inside the box A:", vol_box_A_total)
 print("Total cell volume  inside the box B:", vol_box_B_total)
-
 
 ###############################################################################
 # We are displaying the two boxes:
