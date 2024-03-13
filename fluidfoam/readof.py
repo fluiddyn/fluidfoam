@@ -1184,7 +1184,8 @@ def getVolumes(
     box=None
 ):
     """
-    Read OpenFoam mesh and reshape if necessary (in cartesian structured mesh).
+    Reads OpenFoam mesh and returns the cell centroids and cell volumes
+    of a given box.
 
     Args:
         path: str\n
@@ -1200,7 +1201,7 @@ def getVolumes(
                (if None, includes the whole mesh)\n
 
     Returns:
-        array: two arrays that contain the cell centroids and list of cell volumes
+        array: two arrays that contain the cell centroids and cell volumes
 
     A way you might use me is:\n
         centroidList,vol = fluidfoam.getVolumes('path_of_OpenFoam_case')
@@ -1327,7 +1328,6 @@ def getVolumes(
 
             centroidCell = np.empty((0,3), dtype=float)
             VolCell_all = np.empty(owner.nb_cell, dtype=float)
-
 
             for i in range(owner.nb_cell):
                 xs[i] = np.mean(
