@@ -112,12 +112,14 @@ class OpenFoamFile(object):
 
         try:
             self.is_ascii = self.header[b"format"] == b"ascii"
-            self.is_SP    = b"scalar=32" in self.header[b"arch"]
             self.noheader = False
         except KeyError:
             self.is_ascii = True
-            self.is_SP    = False
             self.noheader = True
+        try:
+            self.is_SP    = b"scalar=32" in self.header[b"arch"]
+        except KeyError:
+            self.is_SP    = False
 
         for line in self.lines_stripped:
             if line.startswith(b"dimensions"):
