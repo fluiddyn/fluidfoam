@@ -112,9 +112,11 @@ class OpenFoamFile(object):
 
         try:
             self.is_ascii = self.header[b"format"] == b"ascii"
+            self.is_SP    = b"scalar=32" in self.header[b"arch"]
             self.noheader = False
         except KeyError:
             self.is_ascii = True
+            self.is_SP    = False
             self.noheader = True
 
         for line in self.lines_stripped:
@@ -289,12 +291,20 @@ class OpenFoamFile(object):
                 nb_numbers = 6 * nb_pts
             elif self.type_data == "tensor":
                 nb_numbers = 9 * nb_pts
-            self.values = np.array(
-                struct.unpack(
-                    "{}d".format(nb_numbers),
-                    data[: nb_numbers * struct.calcsize("d")],
+            if self.is_SP:
+                self.values = np.array(
+                    struct.unpack(
+                        "{}f".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("f")],
+                    )
                 )
-            )
+            else:
+                self.values = np.array(
+                    struct.unpack(
+                        "{}d".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("d")],
+                    )
+                )
         else:
             if self.type_data == "scalar":
                 self.values = np.array(
@@ -386,12 +396,20 @@ class OpenFoamFile(object):
                 nb_numbers = 6 * nb_pts
             elif self.type_data == "tensor":
                 nb_numbers = 9 * nb_pts
-            values = np.array(
-                struct.unpack(
-                    "{}d".format(nb_numbers),
-                    data[: nb_numbers * struct.calcsize("d")],
+            if self.is_SP:
+                values = np.array(
+                    struct.unpack(
+                        "{}f".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("f")],
+                    )
                 )
-            )
+            else:
+                values = np.array(
+                    struct.unpack(
+                        "{}d".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("d")],
+                    )
+                )
         else:
             if self.type_data == "scalar":
                 values = np.array(
@@ -498,12 +516,20 @@ class OpenFoamFile(object):
         if not self.is_ascii:
             nb_numbers = 3 * self.nb_pts
             data = b"\n(".join(data.split(b"\n(")[1:])
-            self.values = np.array(
-                struct.unpack(
-                    "{}d".format(nb_numbers),
-                    data[: nb_numbers * struct.calcsize("d")],
+            if self.is_SP:
+                self.values = np.array(
+                    struct.unpack(
+                        "{}f".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("f")],
+                    )
                 )
-            )
+            else:
+                self.values = np.array(
+                    struct.unpack(
+                        "{}d".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("d")],
+                    )
+                )
         else:
             lines = data.split(b"\n(")
             lines = [line.split(b")")[0] for line in lines]
