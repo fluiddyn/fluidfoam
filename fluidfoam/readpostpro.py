@@ -59,7 +59,14 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
         time_list.sort(key=float)
         time_list = np.array(time_list)
         for timename in time_list:
-            tab = readforce(path, namepatch, timename, name)
+            try:
+                tab = readforce(path, namepatch, timename, name+"_"+timename)
+                print("Pass")
+            except:
+                try:
+                    tab = readforce(path, namepatch, timename, name)
+                except:
+                    print("An exception occurred")
             if "tab_merge" in locals():
                 for jj in range(np.size(tab[:, 0])):
                     if tab[jj, 0] > tab_merge[-1, 0]:
