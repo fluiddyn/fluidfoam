@@ -7,7 +7,7 @@ This module provides functions to list and read OpenFoam PostProcessing Files:
 """
 import os
 import numpy as np
-from glob import glob
+#from glob import glob
 
 
 def _find_latesttime(path):
@@ -44,7 +44,11 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
 
     """
 
-    path_namepatch = glob(f'{path}/**/'+namepatch, recursive=True)[0]
+    #path_namepatch = glob(f'{path}/**/'+namepatch, recursive=True)[0]
+    if os.path.exists(path+namepatch):
+        path_namepatch = path+namepatch
+    else:
+        path_namepatch = path+'/postProcessing/'+namepatch
     if time_name is "latestTime":
         time_name = _find_latesttime(path_namepatch)
     elif time_name is "mergeTime":
@@ -127,7 +131,11 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
     jj = 0
     probes_loc = None
 
-    path_probes_name = glob(f'{path}/**/'+probes_name, recursive=True)[0]
+    #path_probes_name = glob(f'{path}/**/'+probes_name, recursive=True)[0]
+    if os.path.exists(path+probes_name):
+        path_probes_name = path+probes_name
+    else:
+        path_probes_name = path+'/postProcessing/'+probes_name
     if time_name is "latestTime":
         time_name = _find_latesttime(path_probes_name)
     elif time_name is "mergeTime":
