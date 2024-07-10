@@ -14,6 +14,8 @@ This module provides functions to read OpenFoam Files:
 
 .. autofunction:: readtensor
 
+.. autofunction:: getVolumes
+
 .. autofunction:: typefield
 
 """
@@ -23,6 +25,7 @@ import os
 import gzip
 import struct
 import numpy as np
+import scipy.spatial as ss
 
 # define color
 W = '\033[0m'  # white (normal)
@@ -113,6 +116,10 @@ class OpenFoamFile(object):
         except KeyError:
             self.is_ascii = True
             self.noheader = True
+        try:
+            self.is_SP    = b"scalar=32" in self.header[b"arch"]
+        except KeyError:
+            self.is_SP    = False
 
         for line in self.lines_stripped:
             if line.startswith(b"dimensions"):
@@ -286,12 +293,20 @@ class OpenFoamFile(object):
                 nb_numbers = 6 * nb_pts
             elif self.type_data == "tensor":
                 nb_numbers = 9 * nb_pts
-            self.values = np.array(
-                struct.unpack(
-                    "{}d".format(nb_numbers),
-                    data[: nb_numbers * struct.calcsize("d")],
+            if self.is_SP:
+                self.values = np.array(
+                    struct.unpack(
+                        "{}f".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("f")],
+                    )
                 )
-            )
+            else:
+                self.values = np.array(
+                    struct.unpack(
+                        "{}d".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("d")],
+                    )
+                )
         else:
             if self.type_data == "scalar":
                 self.values = np.array(
@@ -383,12 +398,20 @@ class OpenFoamFile(object):
                 nb_numbers = 6 * nb_pts
             elif self.type_data == "tensor":
                 nb_numbers = 9 * nb_pts
-            values = np.array(
-                struct.unpack(
-                    "{}d".format(nb_numbers),
-                    data[: nb_numbers * struct.calcsize("d")],
+            if self.is_SP:
+                values = np.array(
+                    struct.unpack(
+                        "{}f".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("f")],
+                    )
                 )
-            )
+            else:
+                values = np.array(
+                    struct.unpack(
+                        "{}d".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("d")],
+                    )
+                )
         else:
             if self.type_data == "scalar":
                 values = np.array(
@@ -495,12 +518,20 @@ class OpenFoamFile(object):
         if not self.is_ascii:
             nb_numbers = 3 * self.nb_pts
             data = b"\n(".join(data.split(b"\n(")[1:])
-            self.values = np.array(
-                struct.unpack(
-                    "{}d".format(nb_numbers),
-                    data[: nb_numbers * struct.calcsize("d")],
+            if self.is_SP:
+                self.values = np.array(
+                    struct.unpack(
+                        "{}f".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("f")],
+                    )
                 )
-            )
+            else:
+                self.values = np.array(
+                    struct.unpack(
+                        "{}d".format(nb_numbers),
+                        data[: nb_numbers * struct.calcsize("d")],
+                    )
+                )
         else:
             lines = data.split(b"\n(")
             lines = [line.split(b")")[0] for line in lines]
@@ -1163,6 +1194,152 @@ def readmesh(
         zs = zs[setsfile.values]
 
     return xs, ys, zs
+
+
+
+
+
+def getVolumes(
+    path,
+    time_name=None,
+    structured=False,
+    sets=None,
+    region=None,
+    order="F",
+    precision=15,
+    verbose=True,
+    box=None
+):
+    """
+    Reads OpenFoam mesh and returns the cell centroids and cell volumes
+    of a given box.
+
+    Args:
+        path: str\n
+        time_name: str ('latestTime' is supported)\n
+        structured: False or True\n
+        sets: None or str\n
+        region: None or str\n
+        order: "F" (default) or "C" \n
+        precision : Number of decimal places to round to (default: 15)\n
+        verbose : True or False (default: True)
+        box : tuple of box's dimension: ((xmin, ymin, zmin), (xmax, ymax, zmax))\n
+               (if None, includes the whole mesh)\n
+
+    Returns:
+        array: two arrays that contain the cell centroids and cell volumes
+
+    A way you might use me is:\n
+        centroidList,vol = fluidfoam.getVolumes('path_of_OpenFoam_case')
+        So centroidList and vol are the cell centroid and cell volume arrays.
+
+
+    """
+
+    if time_name == "0":
+        time_name = None
+    if region is None:
+        meshpath = "/constant/polyMesh/"
+    else:
+        meshpath = "/constant/"+region+"/polyMesh/"
+    if not os.path.exists(path+meshpath):
+        raise ValueError(
+            "No ", meshpath, " directory in ",
+            path,
+            " Please verify the directory of your case.",
+        )
+
+    owner = OpenFoamFile(
+        path + meshpath, name="owner", verbose=verbose
+    )
+    nmesh = owner.nb_cell
+    facefile = OpenFoamFile(
+        path + meshpath, name="faces", verbose=verbose
+    )
+    if time_name is not None and region is None:
+        pointfile = OpenFoamFile(
+            path=path,
+            time_name=time_name,
+            name="polyMesh/points",
+            precision=precision,
+            verbose=verbose
+        )
+    else:
+        pointfile = OpenFoamFile(
+            path + meshpath,
+            name="points",
+            precision=precision,
+            verbose=verbose
+        )
+    neigh = OpenFoamFile(
+        path + meshpath, name="neighbour", verbose=verbose
+    )
+    xs = np.empty(owner.nb_cell, dtype=float)
+    ys = np.empty(owner.nb_cell, dtype=float)
+    zs = np.empty(owner.nb_cell, dtype=float)
+    face = {}
+    for i in range(neigh.nb_faces):
+        if not neigh.values[i] in face:
+            face[neigh.values[i]] = list()
+        face[neigh.values[i]].append(facefile.faces[i]["id_pts"][:])
+    for i in range(owner.nb_faces):
+        if not owner.values[i] in face:
+            face[owner.values[i]] = list()
+        face[owner.values[i]].append(facefile.faces[i]["id_pts"][:])
+
+    if box != None:
+        # box = ((xmin, ymin, zmin), (xmax, ymax, zmax))
+        if len(box[0]) != 3 or len(box[1]) != 3:
+            raise ValueError("box mins and maxs must be float tuples of lenght 3")
+    else:
+        minx = np.min(pointfile.values_x)
+        miny = np.min(pointfile.values_y)
+        minz = np.min(pointfile.values_z)
+        maxx = np.max(pointfile.values_x)
+        maxy = np.max(pointfile.values_y)
+        maxz = np.max(pointfile.values_z)
+        box = ((minx, miny, minz), (maxx, maxy, maxz))
+
+    centroidCell = np.empty((0,3), dtype=float)
+    VolCell_all = np.empty(owner.nb_cell, dtype=float)
+
+    for i in range(owner.nb_cell):
+        xs[i] = np.mean(
+            pointfile.values_x[np.unique(np.concatenate(face[i])[:])]
+        )
+        ys[i] = np.mean(
+            pointfile.values_y[np.unique(np.concatenate(face[i])[:])]
+        )
+        zs[i] = np.mean(
+            pointfile.values_z[np.unique(np.concatenate(face[i])[:])]
+        )
+
+        if box[0][0] < xs[i] < box[1][0] and box[0][1] < ys[i] < box[1][1] and box[0][2] < zs[i] < box[1][2]:
+            pointsCell=[]
+            for k in zip(np.unique(np.concatenate(face[i])[:])):
+                pointsCell.append([pointfile.values_x[k],pointfile.values_y[k],pointfile.values_z[k]])
+
+            # Add 3D elements into the empty array
+            element = np.array([xs[i], ys[i], zs[i]])
+            centroidCell = np.append(centroidCell, [element], axis=0)
+            VolCell_all[i]=ss.ConvexHull(pointsCell).volume
+    VolCell = VolCell_all[VolCell_all != 0]
+    if structured:
+        nx = np.unique(xs).size
+        ny = np.unique(ys).size
+        nz = np.unique(zs).size
+        if nx * ny * nz != nmesh:
+            raise ValueError(
+                "nx.ny.nz not equal to number of cells."
+                "Are you sure that your mesh is cartesian?"
+                "Maybe try to use precision option"
+                "For example : "
+                "fluidfoam.readmesh(case, True, precision=13)"
+            )
+        ind = np.lexsort((xs, ys, zs))
+        shape = (nx, ny, nz)
+        VolCell = VolCell[ind].reshape(shape, order=order)
+    return centroidCell,VolCell
 
 
 if __name__ == "__main__":
