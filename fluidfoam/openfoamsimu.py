@@ -38,15 +38,23 @@ class OpenFoamSimu(object):
         structured: bool, true if the mesh is structured
     """
 
-    def __init__(self, path, simu=None, timeStep=None, structured=False,
+    def __init__(self, path=None, simu=None, timeStep=None, structured=False,
                 precision=10, order='F'):
-
-        if simu == None:
+        
+        if path == None and simu == None:
+            # If nothing if given, consider the current directory as the 
+            # simulation to load
+            self.directory = os.getcwd()+'/'
+            self.simu = os.getcwd().split('/')[-1]
+        elif simu == None:
+            # If only path is provided, consider all subfolders as possible
+            # simulations to load
             self.directory = self._choose_simulation(path)
             self.simu = self.directory.split("/")[-2]
         else:
+            # If path and simu are provided, consider the given directory
+            # as the simulation to load
             self.simu = simu
-            # self.directory = self._find_directory(path, simu)
             if path.endswith('/') is False:
                 path += '/'
             self.directory = path + simu
@@ -71,55 +79,6 @@ class OpenFoamSimu(object):
             nz = np.unique(Z).size
             self.ind = np.array(range(nx*ny*nz))
             self.shape = (nx, ny, nz)
-
-    def readopenfoam_old(self, timeStep=None, structured=False, precision=10, order='F'):
-        """
-        Reading SedFoam results
-        Load the last time step saved of the simulation
-
-        Args:
-            timeStep : str or int, timeStep to load. If None, load the last time step\n
-            structured : bool, true if the mesh is structured
-        """
-
-        if timeStep is None:
-            dir_list = os.listdir(self.directory)
-            time_list = []
-
-            for directory in dir_list:
-                try:
-                    float(directory)
-                    time_list.append(directory)
-                except:
-                    pass
-            time_list.sort(key=float)
-            timeStep = time_list[-1]
-
-        elif type(timeStep) is int:
-            #timeStep should be in a str format
-            timeStep = str(timeStep)
-
-        self.timeStep = timeStep
-
-        #List all variables saved at the required time step removing potential
-        #directory that cannot be loaded
-        self.variables = []
-        basepath = self.directory+self.timeStep+'/'
-        for fname in os.listdir(basepath):
-            path = os.path.join(basepath, fname)
-            if os.path.isdir(path):
-                # skip directories
-                continue
-            else:
-                self.variables.append(fname)
-
-
-        for var in self.variables:
-            #Load all variables and assign them as a variable of the object
-            values = readfield(path=self.directory, time_name=self.timeStep,
-                                 name = var, structured=structured, precision=precision,
-                                 order=order)
-            self.__setattr__(var.replace('.', '_'), values)
 
     def readopenfoam(self, timeStep=None, structured=False, precision=10, order='F'):
         """
@@ -161,7 +120,6 @@ class OpenFoamSimu(object):
                 continue
             else:
                 self.variables.append(fname)
-
 
         for var in self.variables:
             #Load all variables and assign them as a variable of the object
