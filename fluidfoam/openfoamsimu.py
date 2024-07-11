@@ -46,7 +46,9 @@ class OpenFoamSimu(object):
             self.simu = self.directory.split("/")[-2]
         else:
             self.simu = simu
-            #self.directory = self._find_directory(path, simu)
+            # self.directory = self._find_directory(path, simu)
+            if path.endswith('/') is False:
+                path += '/'
             self.directory = path + simu
             if self.directory.endswith('/') is False: 
                 self.directory += '/'
