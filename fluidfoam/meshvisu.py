@@ -220,7 +220,7 @@ class MeshVisu(object):
                 x0, z0 = self.__pointfile.values_x[i],  self.__pointfile.values_z[i]
                 x1, z1 = self.__pointfile.values_x[j],  self.__pointfile.values_z[j]
                 self.__edgesInBox.append(((x0, z0), (x1, z1)))
-        elif plane == 'xz':
+        elif plane == 'yz':
             for (i, j) in tmp_id_edges:
                 y0, z0 = self.__pointfile.values_y[i],  self.__pointfile.values_z[i]
                 y1, z1 = self.__pointfile.values_y[j],  self.__pointfile.values_z[j]
