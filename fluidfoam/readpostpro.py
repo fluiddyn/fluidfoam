@@ -65,7 +65,6 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
         for timename in time_list:
             try:
                 tab = readforce(path, namepatch, timename, name+"_"+timename)
-                print("Pass")
             except:
                 try:
                     tab = readforce(path, namepatch, timename, name)
