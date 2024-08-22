@@ -35,11 +35,13 @@ class OpenFoamSimu(object):
             If simu=None, it will lists all existing simulation names in path
             and ask you to choose.\n
         timeStep: str, timeStep to load. If None, load the last time step\n
-        structured: bool, true if the mesh is structured
+        structured: bool, true if the mesh is structured\n
+        dataToLoad: list of str, list containing the name of the varaibles 
+            to read and load. If None, read and load all saved variables.
     """
 
     def __init__(self, path=None, simu=None, timeStep=None, structured=False,
-                precision=10, order='F'):
+                dataToLoad=None, precision=10, order='F'):
         
         if path == None and simu == None:
             # If nothing if given, consider the current directory as the 
@@ -63,8 +65,9 @@ class OpenFoamSimu(object):
 
         self.readmesh(structured=structured, precision=precision,
                       order=order)
-        self.readopenfoam(timeStep=timeStep, structured=structured,
-                          precision=precision, order=order)
+        self.readopenfoam(timeStep=timeStep, structured=structured, 
+                          dataToLoad=dataToLoad, precision=precision,
+                          order=order)
 
     def readmesh(self, structured=False, precision=10, order='F'):
 
@@ -80,7 +83,8 @@ class OpenFoamSimu(object):
             self.ind = np.array(range(nx*ny*nz))
             self.shape = (nx, ny, nz)
 
-    def readopenfoam(self, timeStep=None, structured=False, precision=10, order='F'):
+    def readopenfoam(self, timeStep=None, structured=False, dataToLoad=None,
+                     precision=10, order='F'):
         """
         Reading SedFoam results
         Load the last time step saved of the simulation
@@ -111,15 +115,18 @@ class OpenFoamSimu(object):
 
         #List all variables saved at the required time step removing potential
         #directory that cannot be loaded
-        self.variables = []
-        basepath = self.directory+self.timeStep+'/'
-        for fname in os.listdir(basepath):
-            path = os.path.join(basepath, fname)
-            if os.path.isdir(path):
-                # skip directories
-                continue
-            else:
-                self.variables.append(fname)
+        if dataToLoad is None:
+            self.variables = []
+            basepath = self.directory+self.timeStep+'/'
+            for fname in os.listdir(basepath):
+                path = os.path.join(basepath, fname)
+                if os.path.isdir(path):
+                    # skip directories
+                    continue
+                else:
+                    self.variables.append(fname)
+        else:
+            self.variables = dataToLoad
 
         for var in self.variables:
             #Load all variables and assign them as a variable of the object
