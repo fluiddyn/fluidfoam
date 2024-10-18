@@ -552,8 +552,21 @@ class OpenFoamFile(object):
             except ValueError:
                 continue
             break
-        self.nb_faces = int(line)
-        data = self.content.split(line, 2)[-1]
+        try:
+            self.nb_faces = int(line)
+            data = self.content.split(line, 2)[-1]
+        # for mesh with number of cells <= 10 
+        except ValueError:
+            for line in self.lines_stripped:
+                try:
+                    line.split(b"(")
+                    int(line.split(b"(")[0])
+                    break
+                except ValueError or TypeError:
+                    continue
+                break
+            self.nb_faces = int(line.split(b"(")[0])
+            data = b"\n(" + line.split(b"(", 2)[-1]
 
         self.type_data = self.header[b"class"]
 
