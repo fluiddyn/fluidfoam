@@ -511,8 +511,8 @@ class OpenFoamFile(object):
                 continue
             break
         self.nb_pts = int(line)
-        data = self.content.split(line, 1)[1]
-
+        data = self.content.split(b'}', 1)[1]
+        data = data.split(line, 1)[1]
         self.type_data = self.header[b"class"]
 
         if not self.is_ascii:
