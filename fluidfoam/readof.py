@@ -205,7 +205,10 @@ class OpenFoamFile(object):
                         elif level == 2:
                             if previous_line not in dict_session:
                                 dict_session[previous_line] = {}
-                            dict_session[previous_line][tmp[0]] = tmp[1]
+                            try:
+                                dict_session[previous_line][tmp[0]] = tmp[1]
+                            except TypeError:
+                                pass
                 if level == 0:
                     break
                 previous_line = line
@@ -214,10 +217,26 @@ class OpenFoamFile(object):
 
     def _parse_data(self, boundary, datatype, precision=15):
 
+        import sys
         if boundary is not None:
             boun = str.encode(boundary)
-            if b"value" in self.content.split(boun)[1].split(b"}")[0]:
-                data = self.content.split(boun)[1].split(b"value")[1]
+            if (np.size(self.content.split(boun))<=2):
+                iboun =1
+            else:
+                lines = self.content.split(b"\n")
+                iboun = 0
+                for line in lines:
+                    if boun in line.strip():
+                        iboun += 1
+                    if boun == line.strip():
+                        break
+
+            if iboun >= np.size(self.content.split(boun)):
+                print(R+"Error : No boundary/patch "+str(boun)+W)
+                sys.exit(1)
+
+            elif b"value" in self.content.split(boun)[iboun].split(b"}")[0]:
+                data = self.content.split(boun)[iboun].split(b"value")[1]
             else:
                 if self.verbose:
                     print(R+"Warning : No data on boundary/patch")

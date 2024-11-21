@@ -49,9 +49,9 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
         path_namepatch = path+namepatch
     else:
         path_namepatch = path+'/postProcessing/'+namepatch
-    if time_name is "latestTime":
+    if time_name == "latestTime":
         time_name = _find_latesttime(path_namepatch)
-    elif time_name is "mergeTime":
+    elif time_name == "mergeTime":
         time_list = []
         dir_list = os.listdir(path_namepatch)
         for directory in dir_list:
@@ -135,9 +135,9 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
         path_probes_name = path+probes_name
     else:
         path_probes_name = path+'/postProcessing/'+probes_name
-    if time_name is "latestTime":
+    if time_name == "latestTime":
         time_name = _find_latesttime(path_probes_name)
-    elif time_name is "mergeTime":
+    elif time_name == "mergeTime":
         time_list = []
         dir_list = os.listdir(path_probes_name)
         for directory in dir_list:
