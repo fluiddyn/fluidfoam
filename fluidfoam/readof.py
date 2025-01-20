@@ -205,7 +205,10 @@ class OpenFoamFile(object):
                         elif level == 2:
                             if previous_line not in dict_session:
                                 dict_session[previous_line] = {}
-                            dict_session[previous_line][tmp[0]] = tmp[1]
+                            try:
+                                dict_session[previous_line][tmp[0]] = tmp[1]
+                            except TypeError:
+                                pass
                 if level == 0:
                     break
                 previous_line = line
@@ -214,10 +217,26 @@ class OpenFoamFile(object):
 
     def _parse_data(self, boundary, datatype, precision=15):
 
+        import sys
         if boundary is not None:
             boun = str.encode(boundary)
-            if b"value" in self.content.split(boun)[1].split(b"}")[0]:
-                data = self.content.split(boun)[1].split(b"value")[1]
+            if (np.size(self.content.split(boun))<=2):
+                iboun =1
+            else:
+                lines = self.content.split(b"\n")
+                iboun = 0
+                for line in lines:
+                    if boun in line.strip():
+                        iboun += 1
+                    if boun == line.strip():
+                        break
+
+            if iboun >= np.size(self.content.split(boun)):
+                print(R+"Error : No boundary/patch "+str(boun)+W)
+                sys.exit(1)
+
+            elif b"value" in self.content.split(boun)[iboun].split(b"}")[0]:
+                data = self.content.split(boun)[iboun].split(b"value")[1]
             else:
                 if self.verbose:
                     print(R+"Warning : No data on boundary/patch")
@@ -511,8 +530,8 @@ class OpenFoamFile(object):
                 continue
             break
         self.nb_pts = int(line)
-        data = self.content.split(line, 1)[1]
-
+        data = self.content.split(b'}', 1)[1]
+        data = data.split(line, 1)[1]
         self.type_data = self.header[b"class"]
 
         if not self.is_ascii:
@@ -552,8 +571,21 @@ class OpenFoamFile(object):
             except ValueError:
                 continue
             break
-        self.nb_faces = int(line)
-        data = self.content.split(line, 2)[-1]
+        try:
+            self.nb_faces = int(line)
+            data = self.content.split(line, 2)[-1]
+        # for mesh with number of cells <= 10 
+        except ValueError:
+            for line in self.lines_stripped:
+                try:
+                    line.split(b"(")
+                    int(line.split(b"(")[0])
+                    break
+                except ValueError or TypeError:
+                    continue
+                break
+            self.nb_faces = int(line.split(b"(")[0])
+            data = b"\n(" + line.split(b"(", 2)[-1]
 
         self.type_data = self.header[b"class"]
 

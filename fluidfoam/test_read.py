@@ -65,6 +65,7 @@ class SimpleTestCase(unittest.TestCase):
         alphauniform = readscalar("output_samples/ascii", "0", "alphauniform")
         readvector("output_samples/ascii", "0", "Uuniform")
         alphauniform = readscalar("output_samples/bin", "0", "alphauniform")
+        x, y, z = readmesh("output_samples/ascii/vsmall")
         x, y, z = readmesh("output_samples/ascii", boundary="bottom")
         x, y, z = readmesh("output_samples/ascii", sets="testSet")
         x, y, z = readmesh("output_samples/bin", boundary="bottom")

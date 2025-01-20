@@ -14,7 +14,7 @@ jobs:
       - run: pip install -U pip pipenv coverage
       - run: pip install -U numpy scipy matplotlib
       - name: Check out repository code
-        uses: actions/checkout@v2
+        uses: actions/checkout@v4
       - run: set -o pipefail
       - name: Build and install fluidfoam
         run: |
@@ -38,8 +38,8 @@ jobs:
     if: startsWith(github.event.ref, 'refs/tags')
     steps:
       - name: Check out repository code
-        uses: actions/checkout@v2
-      - uses: actions/setup-python@v2
+        uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
       - name: Deploy package
         uses: casperdcl/deploy-pypi@v2
         with:
