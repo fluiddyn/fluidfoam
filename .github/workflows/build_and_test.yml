@@ -11,7 +11,7 @@ jobs:
     outputs:
       version_changed: ${{ steps.check_file_changed.outputs.files_changed }}
     steps:
-      - run: pip install -U pip pipenv coverage
+      - run: pip install -U pip pipenv coverage twine
       - run: pip install -U numpy scipy matplotlib
       - name: Check out repository code
         uses: actions/checkout@v4
