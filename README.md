@@ -1,12 +1,9 @@
-========
 fluidfoam
-========
+=========
 
 |release| |docs| |Github-action| |coverage|
 
-.. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
-   :target: https://pypi.python.org/pypi/fluidfoam/
-   :alt: Latest version
+[![release](https://img.shields.io/pypi/v/fluidfoam.svg)](https://pypi.python.org/pypi/fluidfoam/)
 
 .. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
    :target: http://fluidfoam.readthedocs.org
