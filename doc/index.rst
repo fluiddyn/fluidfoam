@@ -13,8 +13,8 @@ What is this repository for?
 ----------------------------
 
 * Openfoam Tools
-* Version : 0.2.8
-* Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to v2406plus
+* Version : 0.2.9
+* Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to latest
 * Supported Python Versions : >= 3.8
 
 Deployment instructions
@@ -156,9 +156,6 @@ More
 .. |Github-action| image:: https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
    :target: https://github.com/fluiddyn/fluidfoam/actions
    :alt: CI status
-
-.. |AppVeyor| image:: https://ci.appveyor.com/api/projects/status/ipwdnr1an8su429q?svg=true
-.. _AppVeyor: https://ci.appveyor.com/project/CyrilleBonamy/fluidfoam/history
 
 .. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/graph/badge.svg
    :target: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/

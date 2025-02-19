@@ -23,7 +23,6 @@ RUN /bin/bash -c "git clone https://github.com/fluiddyn/fluidfoam"
 WORKDIR /home/openfoam/fluidfoam
 RUN /bin/bash -c "make"
 RUN /bin/bash -c "make clean"
-RUN /bin/bash -c "python3 setup.py develop"
 
 USER openfoam:openfoam
 # Set the default entry point & arguments
