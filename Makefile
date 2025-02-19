@@ -1,14 +1,12 @@
 
-.PHONY: clean clean_all develop build_ext_inplace
+.PHONY: clean clean_all develop
 
 develop:
-	python setup.py develop
-
-build_ext_inplace:
-	python setup.py build_ext --inplace
+	python -m build
+	pip install dist/fluidfoam*.whl --user
 
 clean:
-	rm -rf build
+	rm -rf dist
 
 tests:
 	python -m unittest discover
@@ -17,7 +15,6 @@ black:
 	black -l 82 fluidfoam
 
 tests_coverage:
-	mkdir -p .coverage
 	coverage run -p -m unittest discover
 	coverage combine
 	coverage report
