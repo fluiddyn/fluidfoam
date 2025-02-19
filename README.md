@@ -1,24 +1,10 @@
-========
 fluidfoam
-========
+=========
 
-|release| |docs| |Github-action| |coverage|
-
-.. |release| image:: https://img.shields.io/pypi/v/fluidfoam.svg
-   :target: https://pypi.python.org/pypi/fluidfoam/
-   :alt: Latest version
-
-.. |docs| image:: https://readthedocs.org/projects/fluidfoam/badge/?version=latest
-   :target: http://fluidfoam.readthedocs.org
-   :alt: Documentation status
-
-.. |Github-action| image:: https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg
-   :target: https://github.com/fluiddyn/fluidfoam/actions
-   :alt: CI status
-
-.. |coverage| image:: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/graph/badge.svg
-   :target: https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/
-   :alt: Code coverage
+[![release](https://img.shields.io/pypi/v/fluidfoam.svg)](https://pypi.python.org/pypi/fluidfoam/)
+[![docs](https://readthedocs.org/projects/fluidfoam/badge/?version=latest)](http://fluidfoam.readthedocs.org)
+[![Github-action](https://github.com/fluiddyn/fluidfoam/actions/workflows/build_and_test.yml/badge.svg)](https://github.com/fluiddyn/fluidfoam/actions)
+[![coverage](https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/graph/badge.svg)](https://codecov.io/gh/fluiddyn/fluidfoam/branch/master/)
 
 The fluidfoam package provides Python classes useful to perform some plot with OpenFoam data.
 
