@@ -7,10 +7,16 @@ inlet boundary condition. In addition, the script also plots the
 profiles for verification. 
 """
 
+###############################################################################
+# First create a 1dprofilDFSEM with create1dprofilDFSEM
+# -----------------------------------------------------
+#
+#
+
 from fluidfoam import create1dprofilDFSEM, read1dprofilDFSEM
 import os
 
-basepath = "../../output_samples//DFSEM/"
+basepath = "../../output_samples/DFSEM/"
 
 case3d = "3D/"
 case1d = "1D/"
@@ -29,11 +35,16 @@ create1dprofilDFSEM(sol1d, sol3d, boundary_name, "200", axis,
 
 Y, U, L, R, ny = read1dprofilDFSEM(sol3d, boundary_name, "0", axis)
 
+
+###############################################################################
+# Now plot the profiles of the fields
+# -----------------------------------
+#
+
 import matplotlib.pyplot as plt
 
-dummy, axarr = plt.subplots(1, 3, sharey=True)
+fig, axarr = plt.subplots(figsize = (1, 3), sharey=True)
 axarr[0].set_ylabel("Y (m)")
-
 axarr[0].plot(U[:], Y)
 axarr[0].set_title("U")
 axarr[0].set_xlabel("U (m/s)")
