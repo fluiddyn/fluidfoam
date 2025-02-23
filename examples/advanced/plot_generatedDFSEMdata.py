@@ -1,6 +1,6 @@
 """
 Create and plot boundaryData for DFSEM from a 1D RANS simulation
-=======================================
+================================================================
 
 This example shows how to create a boundary data for turbulentDFSEM 
 inlet boundary condition. In addition, the script also plots the 
@@ -36,14 +36,14 @@ create1dprofilDFSEM(sol1d, sol3d, boundary_name, "200", axis,
 Y, U, L, R, ny = read1dprofilDFSEM(sol3d, boundary_name, "0", axis)
 
 
-###############################################################################
+#######################################################################
 # Now plot the profiles of the fields
 # -----------------------------------
 #
 
 import matplotlib.pyplot as plt
 
-fig, axarr = plt.subplots(figsize = (1, 3), sharey=True)
+fig, axarr = plt.subplots(1, 3, sharey=True)
 axarr[0].set_ylabel("Y (m)")
 axarr[0].plot(U[:], Y)
 axarr[0].set_title("U")
