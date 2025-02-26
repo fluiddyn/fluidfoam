@@ -65,6 +65,7 @@ extensions = [
 ]
 
 sphinx_gallery_conf = {
+    'filename_pattern': '/',
     # path to your examples scripts
     'examples_dirs': '../examples',
     # path where to save gallery generated examples
