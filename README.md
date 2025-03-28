@@ -35,8 +35,11 @@ You can get the source code from `github
 
 The development mode is often useful. From the root directory, run::
 
-  python setup.py develop --user
+  python3 -m pip install --editable . --user
+  
+Or if you are using a virtual environment, run::
 
+  python3 -m pip install --editable .
 
 Committing instructions (in development mode)
 ---------------------------------------------
