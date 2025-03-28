@@ -19,54 +19,52 @@ What is this repository for?
 Documentation and Examples
 --------------------------
 
-`http://fluidfoam.readthedocs.org
-<http://fluidfoam.readthedocs.org>`_
+[http://fluidfoam.readthedocs.org](http://fluidfoam.readthedocs.org>)
 
 Deployment instructions
 -----------------------
 
 The simplest way to install fluidfoam is by using pip::
 
-  pip install fluidfoam --user
+  `pip install fluidfoam --user`
 
-You can get the source code from `github
-<https://github.com/fluiddyn/fluidfoam>`_ or from `the Python Package Index
-<https://pypi.python.org/pypi/fluidfoam/>`_.
+You can get the source code from [github](https://github.com/fluiddyn/fluidfoam>)
+or from [the Python Package Index](https://pypi.python.org/pypi/fluidfoam/).
 
 The development mode is often useful. From the fluidfoam directory, run::
 
-  python3 -m pip install --editable . --user
+  `python3 -m pip install --editable . --user`
   
 Or if you are using a virtual environment, run::
 
-  python3 -m pip install --editable .
+  `python3 -m pip install --editable .`
 
 Committing instructions (in development mode)
 ---------------------------------------------
 
-A good starting point is to follow this `forking tutorial <https://guides.github.com/activities/forking/>`_.
+A good starting point is to follow this [forking tutorial](https://guides.github.com/activities/forking/).
 
 To clone your fork of fluidfoam repository::
 
-  git clone https://github.com/your_username/fluidfoam
+  `git clone https://github.com/your_username/fluidfoam`
   
 To get the status of the repository::
 
-  git status
+  `git status`
 
 In case of new/modified file(s)::
 
-  git add new_file
+  `git add new_file`
 
 To commit a revision on the local repository::
 
-  git commit -m "comment on the revision"
+  `git commit -m "comment on the revision"`
 
 To push the revision on your github fluidfoam repository::
 
-  git push
+  `git push`
 
-To propose your changes into the main fluidfoam project, follow again the `forking tutorial <https://guides.github.com/activities/forking/>`_.
+To propose your changes into the main fluidfoam project, follow again the [forking tutorial](https://guides.github.com/activities/forking/).
 
 Example Usage
 -------------
