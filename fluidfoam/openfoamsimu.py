@@ -63,8 +63,9 @@ class OpenFoamSimu(object):
             if self.directory.endswith('/') is False: 
                 self.directory += '/'
 
-        self.readmesh(structured=structured, precision=precision,
-                      order=order, timeStep=timeStep)
+        self.readmesh(timeStep=timeStep, structured=structured, 
+                      precision=precision, order=order)
+
         self.readopenfoam(timeStep=timeStep, structured=structured, 
                           dataToLoad=dataToLoad, precision=precision,
                           order=order)
@@ -162,7 +163,7 @@ class OpenFoamSimu(object):
                     continue
                 else:
                     self.variables.append(fname)
-
+                    
             #Remove C, Cx, Cy and Cz if present
             var_to_remove = ['C', 'Cx', 'Cy', 'Cz']
             for var in var_to_remove:
@@ -223,33 +224,6 @@ class OpenFoamSimu(object):
                         self.variables.remove(var)
                         continue
             self.__setattr__(var.replace('.', '_'), values)
-    
-    def extract_profile(self, var, dir, x0=None, y0=None, z0=None, drmin=0.0):
-        """
-        Extract a the closest vertical profile from 3D simulation
-        Assume that vettical axis is the z axis
-        var : variable to extract profile
-        dir : 0 (x profile), 1 (y profile) or 2 (z profile)
-        """
-        if dir == 0:
-            closestCell = np.sqrt((self.y-y0)**2+(self.z-z0)**2).argmin()
-            y0 = self.y[closestCell] # x coordinate of the closest cell
-            z0 = self.z[closestCell] # y coordinate of the closest cell
-            I = np.where((np.abs(self.y-y0)<=drmin)&(np.abs(self.z-z0)<=drmin))[0]
-            return self.x[I], var[I]
-        elif dir == 1:
-            closestCell = np.sqrt((self.x-x0)**2+(self.z-z0)**2).argmin()
-            x0 = self.x[closestCell] # x coordinate of the closest cell
-            z0 = self.z[closestCell] # y coordinate of the closest cell
-            I = np.where((np.abs(self.x-x0)<=drmin)&(np.abs(self.z-z0)<=drmin))[0]
-            return self.y[I], var[I]
-        if dir == 2:
-            closestCell = np.sqrt((self.x-x0)**2+(self.y-y0)**2).argmin()
-            x0 = self.x[closestCell] # x coordinate of the closest cell
-            y0 = self.y[closestCell] # y coordinate of the closest cell
-            I = np.where((np.abs(self.x-x0)<=drmin)&(np.abs(self.y-y0)<=drmin))[0]
-            return self.z[I], var[I]
-
 
     def keys(self):
         """

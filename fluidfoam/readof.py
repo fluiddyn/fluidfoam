@@ -177,7 +177,8 @@ class OpenFoamFile(object):
                         continue
                 if level == 0:
                     break
-                previous_line = line
+                if line:
+                    previous_line = line
 
         return dict_bounfile
 

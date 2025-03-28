@@ -7,18 +7,18 @@ jobs:
       # You can use PyPy versions in python-version.
       # For example, pypy-2.7 and pypy-3.8
       matrix:
-        python-version: ["3.8", "3.9", "3.10"]
+        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
     outputs:
       version_changed: ${{ steps.check_file_changed.outputs.files_changed }}
     steps:
-      - run: pip install -U pip pipenv coverage
+      - run: pip install -U pip pipenv coverage build
       - run: pip install -U numpy scipy matplotlib
       - name: Check out repository code
         uses: actions/checkout@v4
       - run: set -o pipefail
       - name: Build and install fluidfoam
         run: |
-          cd ${{ github.workspace }} && python setup.py develop --user
+          cd ${{ github.workspace }} && python -m build && pip install dist/fluidfoam*.whl --user
       - name: Test fluidfoam
         run: make tests
       - name: Test fluidfoam coverage

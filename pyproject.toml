@@ -1,0 +1,36 @@
+[build-system]
+requires = ["setuptools>=61.0"]
+build-backend = "setuptools.build_meta"
+[tool.setuptools]
+packages = ["fluidfoam"]
+[project]
+name = "fluidfoam"
+version = "0.2.9"
+license = {text = "GPL-3.0-or-later"}
+keywords = ["Openfoam", "postprocessing", "python", "CFD"]
+authors = [
+  { name="Cyrille Bonamy", email="cyrille.bonamy@univ-grenoble-alpes.fr" },
+]
+description = "Openfoam PostProcessing Python Tools"
+readme = "README.rst"
+requires-python = ">=3.8"
+dependencies = [
+    "numpy>=1.11",
+    "matplotlib>=1.5",
+    "scipy>=1.7.4",
+    "netCDF4",
+]
+classifiers = [
+    "Development Status :: 5 - Production/Stable",
+    "Intended Audience :: Education",
+    "Intended Audience :: Science/Research",
+    "Programming Language :: Python :: 3",
+    "Operating System :: OS Independent",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+]
+
+[project.urls]
+Homepage = "https://github.com/fluiddyn/fluidfoam"
+Issues = "https://github.com/fluiddyn/fluidfoam/issues"
+Documentation = "https://fluidfoam.readthedocs.io"
+
