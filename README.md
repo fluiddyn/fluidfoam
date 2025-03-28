@@ -33,9 +33,9 @@ You can get the source code from `github
 <https://github.com/fluiddyn/fluidfoam>`_ or from `the Python Package Index
 <https://pypi.python.org/pypi/fluidfoam/>`_.
 
-The development mode is often useful. From the root directory, run::
+The development mode is often useful. From the fluidfoam directory, run::
 
-  python setup.py develop --user
+  python -m build && pip install dist/fluidfoam*.whl --user
 
 
 Committing instructions (in development mode)
