@@ -63,16 +63,54 @@ class OpenFoamSimu(object):
             if self.directory.endswith('/') is False: 
                 self.directory += '/'
 
-        self.readmesh(structured=structured, precision=precision,
-                      order=order)
+        self.readmesh(timeStep=timeStep, structured=structured, 
+                      precision=precision, order=order)
+
         self.readopenfoam(timeStep=timeStep, structured=structured, 
                           dataToLoad=dataToLoad, precision=precision,
                           order=order)
 
-    def readmesh(self, structured=False, precision=10, order='F'):
+    def readmesh(self, timeStep=None, structured=False, precision=10, order='F'):
+        
+        if timeStep is None:
+            dir_list = os.listdir(self.directory)
+            time_list = []
 
-        X, Y, Z = readmesh(self.directory, structured=structured,
-                           precision=precision, order=order)
+            for directory in dir_list:
+                try:
+                    float(directory)
+                    time_list.append(directory)
+                except:
+                    pass
+            time_list.sort(key=float)
+            timeStep = time_list[-1]
+
+        elif type(timeStep) is int:
+            #timeStep should be in a str format
+            timeStep = str(timeStep)
+
+        self.timeStep = timeStep
+
+        # Check if cell center position is written in the output directory
+        try:
+            field = OpenFoamFile(path=self.directory, time_name=self.timeStep,
+                                 name='C', structured=False, precision=precision,
+                                 order=order)
+            values = field.values
+            shape = (3, values.size // 3)
+            values = np.reshape(values, shape, order=order)
+            if structured and not field.uniform:
+                try:
+                    values[0:3, :] = values[0:3, self.ind]
+                    shape = (3,) + tuple(self.shape)
+                    values = np.reshape(values, shape, order=order)
+                except:
+                    print("Variable {} could not be loaded".format(var))
+                    self.variables.remove(var)
+            X, Y, Z = values[0], values[1], values[2]
+        except FileNotFoundError:
+            X, Y, Z = readmesh(self.directory, structured=structured,
+                            precision=precision, order=order)
         self.x = X
         self.y = Y
         self.z = Z
@@ -125,6 +163,12 @@ class OpenFoamSimu(object):
                     continue
                 else:
                     self.variables.append(fname)
+                    
+            #Remove C, Cx, Cy and Cz if present
+            var_to_remove = ['C', 'Cx', 'Cy', 'Cz']
+            for var in var_to_remove:
+                if var in self.variables:
+                    self.variables.remove(var)
         else:
             self.variables = dataToLoad
 
