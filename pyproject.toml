@@ -37,3 +37,6 @@ Documentation = "https://fluidfoam.readthedocs.io"
 [dependency-groups]
 dev = []
 
+[tool.uv]
+link-mode = "copy"  # Force la copie au lieu des hardlinks
+
