@@ -178,17 +178,20 @@ def readprobes(path, probes_name="probes", time_name="0", name="U"):
             j += 1
         elif "#".encode() not in line:
             break
-    n_probes = j - 2
+    # probe lines are the header lines holding the coordinates "(x y z)"
+    n_probes = sum(1 for line in content[:j] if b"(" in line)
     probes_loc = np.zeros([n_probes, 3], dtype=float)
     j = 0
+    ip = 0
     header = True
     for dummy, line in enumerate(content):
         if "#".encode() in line:
-            if j < n_probes:
+            if b"(" in line:
                 for k in range(3):
-                    probes_loc[j, k] = (
+                    probes_loc[ip, k] = (
                         line.split(b"(")[1].split(b")")[0].split()[k]
                     )
+                ip += 1
             j += 1
         elif "#".encode() not in line and header:
             header = False
