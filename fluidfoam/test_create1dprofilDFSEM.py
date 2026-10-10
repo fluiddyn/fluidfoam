@@ -15,9 +15,17 @@ boundary_name = "inlet/"
 axis = "Y"
 
 
-
 class SimpleTestCase(unittest.TestCase):
     def test_functions(self):
-        create1dprofilDFSEM(sol1d, sol3d, boundary_name, "200", axis, 
-                    "U","k","omega","turbulenceProperties:R","Y")
-
+        create1dprofilDFSEM(
+            sol1d,
+            sol3d,
+            boundary_name,
+            "200",
+            axis,
+            "U",
+            "k",
+            "omega",
+            "turbulenceProperties:R",
+            "Y",
+        )

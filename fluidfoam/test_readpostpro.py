@@ -17,8 +17,14 @@ class SimpleTestCase(unittest.TestCase):
     def test_read_probes(self):
         probes_loc, time_vect, dummy = fluidfoam.readprobes(case)
         self.assertEqual(10, len(time_vect))
-        probes_loc, time_vect, dummy = fluidfoam.readprobes(case, time_name="latestTime")
+        probes_loc, time_vect, dummy = fluidfoam.readprobes(
+            case, time_name="latestTime"
+        )
         self.assertEqual(6, len(time_vect))
-        probes_loc, time_vect, dummy = fluidfoam.readprobes(case, time_name="mergeTime")
+        probes_loc, time_vect, dummy = fluidfoam.readprobes(
+            case, time_name="mergeTime"
+        )
         self.assertEqual(13, len(time_vect))
-        probes_loc, time_vect, dummy = fluidfoam.readprobes(case, time_name="0", name="p")
+        probes_loc, time_vect, dummy = fluidfoam.readprobes(
+            case, time_name="0", name="p"
+        )

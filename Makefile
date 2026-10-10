@@ -1,24 +1,26 @@
 
-.PHONY: clean clean_all develop
+.PHONY: clean develop build tests black tests_coverage
 
 develop:
-	python -m build
-	pip install dist/fluidfoam*.whl --user
+	uv sync --active
+
+build:
+	uv build
 
 clean:
 	rm -rf dist
 
 tests:
-	python -m unittest discover
+	uv run --with pytest pytest
 
 black:
-	black -l 82 fluidfoam
+	uv run --with black black -l 82 fluidfoam
 
 tests_coverage:
-	coverage run -p -m unittest discover
-	coverage combine
-	coverage report
-	coverage html
-	coverage xml
+	uv run --with coverage coverage run -p -m unittest discover
+	uv run --with coverage coverage combine
+	uv run --with coverage coverage report
+	uv run --with coverage coverage html
+	uv run --with coverage coverage xml
 	@echo "Code coverage analysis complete. View detailed report:"
 	@echo "file://${PWD}/.coverage/index.html"

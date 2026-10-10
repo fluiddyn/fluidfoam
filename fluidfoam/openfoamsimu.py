@@ -14,13 +14,17 @@ import subprocess
 import numpy as np
 from fluidfoam import readmesh, readfield, OpenFoamFile
 
+
 class Error(Exception):
     pass
 
+
 class DirectorySimuError(Error):
     def __init__(self, simu):
-        super(DirectorySimuError,self).__init__(
-                "No directory found for simulation named {}".format(simu))
+        super(DirectorySimuError, self).__init__(
+            "No directory found for simulation named {}".format(simu)
+        )
+
 
 class OpenFoamSimu(object):
     """
@@ -36,18 +40,26 @@ class OpenFoamSimu(object):
             and ask you to choose.\n
         timeStep: str, timeStep to load. If None, load the last time step\n
         structured: bool, true if the mesh is structured\n
-        dataToLoad: list of str, list containing the name of the varaibles 
+        dataToLoad: list of str, list containing the name of the varaibles
             to read and load. If None, read and load all saved variables.
     """
 
-    def __init__(self, path=None, simu=None, timeStep=None, structured=False,
-                dataToLoad=None, precision=10, order='F'):
-        
+    def __init__(
+        self,
+        path=None,
+        simu=None,
+        timeStep=None,
+        structured=False,
+        dataToLoad=None,
+        precision=10,
+        order="F",
+    ):
+
         if path == None and simu == None:
-            # If nothing if given, consider the current directory as the 
+            # If nothing if given, consider the current directory as the
             # simulation to load
-            self.directory = os.getcwd()+'/'
-            self.simu = os.getcwd().split('/')[-1]
+            self.directory = os.getcwd() + "/"
+            self.simu = os.getcwd().split("/")[-1]
         elif simu == None:
             # If only path is provided, consider all subfolders as possible
             # simulations to load
@@ -57,21 +69,29 @@ class OpenFoamSimu(object):
             # If path and simu are provided, consider the given directory
             # as the simulation to load
             self.simu = simu
-            if path.endswith('/') is False:
-                path += '/'
+            if path.endswith("/") is False:
+                path += "/"
             self.directory = path + simu
-            if self.directory.endswith('/') is False: 
-                self.directory += '/'
+            if self.directory.endswith("/") is False:
+                self.directory += "/"
 
-        self.readmesh(timeStep=timeStep, structured=structured, 
-                      precision=precision, order=order)
+        self.readmesh(
+            timeStep=timeStep,
+            structured=structured,
+            precision=precision,
+            order=order,
+        )
 
-        self.readopenfoam(timeStep=timeStep, structured=structured, 
-                          dataToLoad=dataToLoad, precision=precision,
-                          order=order)
+        self.readopenfoam(
+            timeStep=timeStep,
+            structured=structured,
+            dataToLoad=dataToLoad,
+            precision=precision,
+            order=order,
+        )
 
-    def readmesh(self, timeStep=None, structured=False, precision=10, order='F'):
-        
+    def readmesh(self, timeStep=None, structured=False, precision=10, order="F"):
+
         if timeStep is None:
             dir_list = os.listdir(self.directory)
             time_list = []
@@ -86,16 +106,21 @@ class OpenFoamSimu(object):
             timeStep = time_list[-1]
 
         elif type(timeStep) is int:
-            #timeStep should be in a str format
+            # timeStep should be in a str format
             timeStep = str(timeStep)
 
         self.timeStep = timeStep
 
         # Check if cell center position is written in the output directory
         try:
-            field = OpenFoamFile(path=self.directory, time_name=self.timeStep,
-                                 name='C', structured=False, precision=precision,
-                                 order=order)
+            field = OpenFoamFile(
+                path=self.directory,
+                time_name=self.timeStep,
+                name="C",
+                structured=False,
+                precision=precision,
+                order=order,
+            )
             values = field.values
             shape = (3, values.size // 3)
             values = np.reshape(values, shape, order=order)
@@ -109,8 +134,12 @@ class OpenFoamSimu(object):
                     self.variables.remove(var)
             X, Y, Z = values[0], values[1], values[2]
         except FileNotFoundError:
-            X, Y, Z = readmesh(self.directory, structured=structured,
-                            precision=precision, order=order)
+            X, Y, Z = readmesh(
+                self.directory,
+                structured=structured,
+                precision=precision,
+                order=order,
+            )
         self.x = X
         self.y = Y
         self.z = Z
@@ -118,11 +147,17 @@ class OpenFoamSimu(object):
             nx = np.unique(X).size
             ny = np.unique(Y).size
             nz = np.unique(Z).size
-            self.ind = np.array(range(nx*ny*nz))
+            self.ind = np.array(range(nx * ny * nz))
             self.shape = (nx, ny, nz)
 
-    def readopenfoam(self, timeStep=None, structured=False, dataToLoad=None,
-                     precision=10, order='F'):
+    def readopenfoam(
+        self,
+        timeStep=None,
+        structured=False,
+        dataToLoad=None,
+        precision=10,
+        order="F",
+    ):
         """
         Reading SedFoam results
         Load the last time step saved of the simulation
@@ -146,16 +181,16 @@ class OpenFoamSimu(object):
             timeStep = time_list[-1]
 
         elif type(timeStep) is int:
-            #timeStep should be in a str format
+            # timeStep should be in a str format
             timeStep = str(timeStep)
 
         self.timeStep = timeStep
 
-        #List all variables saved at the required time step removing potential
-        #directory that cannot be loaded
+        # List all variables saved at the required time step removing potential
+        # directory that cannot be loaded
         if dataToLoad is None:
             self.variables = []
-            basepath = self.directory+self.timeStep+'/'
+            basepath = self.directory + self.timeStep + "/"
             for fname in os.listdir(basepath):
                 path = os.path.join(basepath, fname)
                 if os.path.isdir(path):
@@ -163,9 +198,9 @@ class OpenFoamSimu(object):
                     continue
                 else:
                     self.variables.append(fname)
-                    
-            #Remove C, Cx, Cy and Cz if present
-            var_to_remove = ['C', 'Cx', 'Cy', 'Cz']
+
+            # Remove C, Cx, Cy and Cz if present
+            var_to_remove = ["C", "Cx", "Cy", "Cz"]
             for var in var_to_remove:
                 if var in self.variables:
                     self.variables.remove(var)
@@ -173,16 +208,23 @@ class OpenFoamSimu(object):
             self.variables = dataToLoad
 
         for var in self.variables:
-            #Load all variables and assign them as a variable of the object
-            field = OpenFoamFile(path=self.directory, time_name=self.timeStep,
-                                 name = var, structured=False, precision=precision,
-                                 order=order)
+            # Load all variables and assign them as a variable of the object
+            field = OpenFoamFile(
+                path=self.directory,
+                time_name=self.timeStep,
+                name=var,
+                structured=False,
+                precision=precision,
+                order=order,
+            )
             values = field.values
 
             if field.type_data == "scalar":
                 if structured and not field.uniform:
                     try:
-                        values = np.reshape(values[self.ind], self.shape, order=order)
+                        values = np.reshape(
+                            values[self.ind], self.shape, order=order
+                        )
                     except:
                         print("Variable {} could not be loaded".format(var))
                         self.variables.remove(var)
@@ -223,7 +265,7 @@ class OpenFoamSimu(object):
                         print("Variable {} could not be loaded".format(var))
                         self.variables.remove(var)
                         continue
-            self.__setattr__(var.replace('.', '_'), values)
+            self.__setattr__(var.replace(".", "_"), values)
 
     def keys(self):
         """
@@ -244,7 +286,7 @@ class OpenFoamSimu(object):
         subDirectories = [x[0] for x in os.walk(path)]
 
         for f in subDirectories:
-            #A directory is detected to be a simulation if it contains a 0_org/ folder
+            # A directory is detected to be a simulation if it contains a 0_org/ folder
             if f + "/constant" in subDirectories:
                 directories.append(f)
 
@@ -256,10 +298,14 @@ class OpenFoamSimu(object):
             print("{} : {}".format(i, directories[i]))
         chosenSimulation = -1
         while type(chosenSimulation) is not int or (
-                chosenSimulation < 0 or chosenSimulation > len(directories) - 1):
-            chosenSimulation = int( input(
-                "Please, choose one simulation ! (integer between {} and {})".format(
-                    0, len(directories) - 1))
+            chosenSimulation < 0 or chosenSimulation > len(directories) - 1
+        ):
+            chosenSimulation = int(
+                input(
+                    "Please, choose one simulation ! (integer between {} and {})".format(
+                        0, len(directories) - 1
+                    )
+                )
             )
         directory = directories[chosenSimulation]
 
@@ -293,10 +339,13 @@ class OpenFoamSimu(object):
                 print("{} : {}".format(i, directories[i]))
             chosenSimulation = -1
             while type(chosenSimulation) is not int or (
-                    chosenSimulation < 0 or chosenSimulation > len(directories) - 1):
-                chosenSimulation = int(input(
-                    "Please, choose one simulation ! (integer between {} and {})".format(
-                        0, len(directories) - 1)
+                chosenSimulation < 0 or chosenSimulation > len(directories) - 1
+            ):
+                chosenSimulation = int(
+                    input(
+                        "Please, choose one simulation ! (integer between {} and {})".format(
+                            0, len(directories) - 1
+                        )
                     )
                 )
             directory = directories[chosenSimulation]
@@ -315,9 +364,10 @@ if __name__ == "__main__":
     for d in dirs:
         rep = os.path.join(os.path.dirname(__file__), "../output_samples")
 
-        mySimu = OpenFoamSimu(path=rep, simu=simu, timeStep=timeStep, structured=True)
+        mySimu = OpenFoamSimu(
+            path=rep, simu=simu, timeStep=timeStep, structured=True
+        )
 
         mySimu.keys()
 
         mySimu.U
-

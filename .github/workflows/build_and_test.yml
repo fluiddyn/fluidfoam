@@ -11,14 +11,16 @@ jobs:
     outputs:
       version_changed: ${{ steps.check_file_changed.outputs.files_changed }}
     steps:
-      - run: pip install -U pip pipenv coverage build
-      - run: pip install -U numpy scipy matplotlib
       - name: Check out repository code
         uses: actions/checkout@v4
       - run: set -o pipefail
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Set up Python
+        run: uv python install
       - name: Build and install fluidfoam
         run: |
-          cd ${{ github.workspace }} && python -m build && pip install dist/fluidfoam*.whl --user
+          cd ${{ github.workspace }} && make
       - name: Test fluidfoam
         run: make tests
       - name: Test fluidfoam coverage

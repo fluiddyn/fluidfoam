@@ -18,22 +18,32 @@ This module provides functions to read OpenFoam Files:
 
 .. autofunction:: typefield
 
+Decomposed cases (``processor0``, ``processor1``... or collated
+``processors<N>`` directories) are read transparently by the functions
+above when the requested file is not available in the reconstructed case
+(see ``_decomposed_fallback``).
+Not supported for decomposed cases: ``boundary``, ``sets``, ``region``
+and ``getVolumes``.
+
 """
 
-
 import os
+import re
 import gzip
 import struct
+import inspect
+import tempfile
+import functools
 import numpy as np
 import scipy.spatial as ss
 
 # define color
-W = '\033[0m'  # white (normal)
-R = '\033[31m'  # red
-G = '\033[32m'  # green
-O = '\033[33m'  # orange
-B = '\033[34m'  # blue
-P = '\033[35m'  # purple
+W = "\033[0m"  # white (normal)
+R = "\033[31m"  # red
+G = "\033[32m"  # green
+O = "\033[33m"  # orange
+B = "\033[34m"  # blue
+P = "\033[35m"  # purple
 
 
 def _make_path(path, time_name=None, name=None):
@@ -61,6 +71,356 @@ def _find_latesttime(path):
             pass
     time_list.sort(key=float)
     return time_list[-1]
+
+
+# --------------------------------------------------------------------------
+# Decomposed cases: processor0, processor1, ... (uncollated) and
+# processors<N> (collated: one decomposedBlockData file per field with one
+# block per processor; also processors<N>_<first>-<last> with ioRanks)
+# --------------------------------------------------------------------------
+_COLLATED_RE = re.compile(r"processors\d+(_\d+-\d+)?")
+_BLOCK_RE = re.compile(rb"// processor(\d+)\r?\n(\d+)\r?\n\(")
+
+
+def _processor_dirs(path):
+    """Sorted list of the processorN directories of a decomposed case."""
+    try:
+        entries = os.listdir(path)
+    except OSError:
+        return []
+    procs = [
+        d
+        for d in entries
+        if re.fullmatch(r"processor\d+", d)
+        and os.path.isdir(os.path.join(path, d))
+    ]
+    procs.sort(key=lambda d: int(d[len("processor") :]))
+    return [os.path.join(path, d) for d in procs]
+
+
+def _collated_dirs(path):
+    """Sorted list of the processors<N>[_a-b] directories (collated case)."""
+    try:
+        entries = os.listdir(path)
+    except OSError:
+        return []
+    dirs = [
+        d
+        for d in entries
+        if _COLLATED_RE.fullmatch(d) and os.path.isdir(os.path.join(path, d))
+    ]
+    dirs.sort()
+    return [os.path.join(path, d) for d in dirs]
+
+
+def _decomposition(path, time_name=None, name=None):
+    """Return (layout, dirs); layout is "uncollated", "collated" or None."""
+    procs = _processor_dirs(path)
+    coll = _collated_dirs(path)
+    if (
+        procs
+        and coll
+        and time_name not in (None, "latestTime")
+        and name is not None
+    ):
+        # both layouts present: take the one holding the requested file
+        in_procs = any(
+            os.path.exists(_make_path(d, time_name, name)) for d in procs
+        )
+        in_coll = any(
+            os.path.exists(_make_path(d, time_name, name)) for d in coll
+        )
+        if in_coll and not in_procs:
+            return "collated", coll
+    if procs:
+        return "uncollated", procs
+    if coll:
+        return "collated", coll
+    return None, []
+
+
+def _latest_time_or_none(path):
+    try:
+        return _find_latesttime(path)
+    except (OSError, IndexError):
+        return None
+
+
+def _parse_label_list(content, name="labelList"):
+    """Parse the bytes of an OpenFOAM labelList file (ascii or binary).
+
+    Used for ``constant/polyMesh/cellProcAddressing`` of the processor
+    directories: entry i is the global index of the local cell i.
+    """
+    m = re.search(rb"FoamFile\s*\{(.*?)\}", content, re.S)
+    header = m.group(1) if m else b""
+    body = content[m.end() :] if m else content
+
+    fmt = re.search(rb"format\s+(\w+)\s*;", header)
+    is_ascii = fmt is None or fmt.group(1) == b"ascii"
+    label = re.search(rb"label=(\d+)", header)
+    label_bytes = int(label.group(1)) // 8 if label else 4
+
+    m = re.search(rb"^[ \t]*(\d+)\s*\(", body, re.M)
+    if m is None:
+        raise ValueError("Cannot parse labelList in " + name)
+    nb_values = int(m.group(1))
+    if is_ascii:
+        end = body.index(b")", m.end())
+        values = np.array(body[m.end() : end].split(), dtype=np.int64)
+    else:
+        values = np.frombuffer(
+            body,
+            dtype="<i%d" % label_bytes,
+            count=nb_values,
+            offset=m.end(),
+        ).astype(np.int64)
+    if values.size != nb_values:
+        raise ValueError("Corrupted labelList in " + name)
+    return values
+
+
+def _read_file_bytes(filename):
+    if not os.path.exists(filename) and os.path.exists(filename + ".gz"):
+        filename += ".gz"
+    opener = gzip.open if filename.endswith(".gz") else open
+    with opener(filename, "rb") as f:
+        return f.read()
+
+
+def _read_label_list(filename):
+    """Read an OpenFOAM labelList file (ascii or binary, optionally gzipped)."""
+    return _parse_label_list(_read_file_bytes(filename), filename)
+
+
+def _read_collated_blocks(filename):
+    """Blocks of a collated (decomposedBlockData) file.
+
+    Returns {processor rank: bytes of the block}. A block is the content of
+    the file written by an uncollated run in processorN/; only the block of
+    the first rank carries the FoamFile header (see _extract_collated).
+    """
+    content = _read_file_bytes(filename)
+    blocks = {}
+    pos = 0
+    while True:
+        m = _BLOCK_RE.search(content, pos)
+        if m is None:
+            break
+        size = int(m.group(2))
+        start = m.end()
+        block = content[start : start + size]
+        if len(block) != size or content[start + size : start + size + 1] != b")":
+            raise ValueError("Corrupted decomposedBlockData file " + filename)
+        blocks[int(m.group(1))] = block
+        pos = start + size + 1
+    if not blocks:
+        raise ValueError("No processor block found in " + filename)
+    return blocks
+
+
+def _extract_collated(dirs, tmp, required, optional=()):
+    """Write the blocks of collated files as tmp/processorN/<relative path>.
+
+    required / optional: lists of paths relative to the processors<N>
+    directories (e.g. "0.5/alpha", "constant/polyMesh/cellProcAddressing").
+    """
+    for rels, must in ((required, True), (optional, False)):
+        for rel in rels:
+            found = False
+            for d in dirs:
+                filename = _make_path(d, rel)
+                if not os.path.exists(filename):
+                    continue
+                blocks = _read_collated_blocks(filename)
+                # only the first block carries the FoamFile header
+                h = re.match(
+                    rb"\s*FoamFile\s*\{.*?\}\n", blocks[min(blocks)], re.S
+                )
+                header = h.group(0) if h else b""
+                for rank, block in blocks.items():
+                    if not block.lstrip().startswith(b"FoamFile"):
+                        block = header + block
+                    out = os.path.join(tmp, "processor%d" % rank, rel)
+                    os.makedirs(os.path.dirname(out), exist_ok=True)
+                    with open(out, "wb") as f:
+                        f.write(block)
+                found = True
+            if must and not found:
+                raise FileNotFoundError(
+                    "%s not found in %s" % (rel, ", ".join(dirs))
+                )
+
+
+def _use_processors(path, time_name, name, kind):
+    """Tell whether the data must be read from a decomposed case.
+
+    Returns (layout, time_name): layout is None (read the case directly),
+    "uncollated" (processorN) or "collated" (processors<N>); time_name is the
+    resolved time when "latestTime" has been requested and found in the
+    decomposed directories.
+    """
+    layout, dirs = _decomposition(path, time_name, name)
+    if layout is None:
+        return None, time_name
+
+    if time_name == "latestTime":
+        t_dec = _latest_time_or_none(dirs[0])
+        t_root = _latest_time_or_none(path)
+        if t_dec is not None and (t_root is None or float(t_dec) > float(t_root)):
+            return layout, t_dec
+        return None, time_name
+
+    if kind == "mesh":
+        if not os.path.exists(os.path.join(path, "constant", "polyMesh")):
+            return layout, time_name
+        if (
+            time_name is not None
+            and time_name != "0"
+            and not os.path.exists(
+                _make_path(path, time_name, os.path.join("polyMesh", "points"))
+            )
+        ):
+            return layout, time_name  # dynamic mesh: points per processor
+        return None, time_name
+
+    if time_name is None or name is None:
+        return None, time_name
+    if os.path.exists(_make_path(path, time_name, name)):
+        return None, time_name
+    return layout, time_name
+
+
+def _scatter_to_global(parts, ncells):
+    """Put the processor arrays (last axis = cells) in global cell order."""
+    out = np.empty(np.shape(parts[0][1])[:-1] + (ncells,), dtype=float)
+    for addr, arr in parts:
+        arr = np.asarray(arr, dtype=float)
+        if arr.shape[-1] != addr.size:
+            if arr.shape[-1] == 1:  # uniform field on this processor
+                arr = np.broadcast_to(arr, arr.shape[:-1] + (addr.size,))
+            else:
+                raise ValueError(
+                    "Field size (%d) differs from the number of cells (%d) "
+                    "of the processor" % (arr.shape[-1], addr.size)
+                )
+        out[..., addr] = arr
+    return out
+
+
+def _structured_index(xs, ys, zs):
+    nx = np.unique(xs).size
+    ny = np.unique(ys).size
+    nz = np.unique(zs).size
+    if nx * ny * nz != xs.size:
+        raise ValueError(
+            "nx.ny.nz not equal to number of cells."
+            "Are you sure that your mesh is cartesian?"
+        )
+    return np.lexsort((xs, ys, zs)), (nx, ny, nz)
+
+
+def _reconstruct(func, kind, args, time_name, data_path, layout):
+    """Read each processorN of data_path and rebuild the global array(s)."""
+    path = args["path"]
+    procs = _processor_dirs(data_path)
+    structured = args.get("structured", False)
+    order = args.get("order", "F")
+    verbose = args.get("verbose", True)
+    if verbose:
+        print("Reading %s decomposed case (%d processors)" % (layout, len(procs)))
+
+    sub = dict(args)
+    sub.update(structured=False, verbose=False, time_name=time_name)
+    parts = []
+    for procdir in procs:
+        addr = _read_label_list(
+            os.path.join(procdir, "constant", "polyMesh", "cellProcAddressing")
+        )
+        sub["path"] = procdir
+        result = func(**sub)
+        if kind == "mesh":
+            result = np.vstack(result)
+        parts.append((addr, result))
+
+    ncells = sum(addr.size for addr, _ in parts)
+    if max(addr.max() for addr, _ in parts) + 1 != ncells:
+        raise ValueError("Inconsistent cellProcAddressing in " + path)
+    values = _scatter_to_global(parts, ncells)
+
+    if kind == "mesh":
+        if structured:
+            ind, shape = _structured_index(*values)
+            return tuple(v[ind].reshape(shape, order=order) for v in values)
+        return values[0], values[1], values[2]
+
+    if structured:
+        xs, ys, zs = readmesh(
+            path, precision=args.get("precision", 15), verbose=False
+        )
+        ind, shape = _structured_index(xs, ys, zs)
+        values = values[..., ind]
+        values = values.reshape(values.shape[:-1] + shape, order=order)
+    return values
+
+
+def _read_decomposed(func, kind, args, time_name, layout):
+    """Read a field or the mesh of a decomposed case and reconstruct it."""
+    path = args["path"]
+    for key in ("boundary", "sets", "region"):
+        if args.get(key) is not None:
+            raise NotImplementedError(
+                "Option '%s' is not supported for decomposed cases "
+                "(reconstruct the case with reconstructPar)." % key
+            )
+    if layout == "uncollated":
+        return _reconstruct(func, kind, args, time_name, path, layout)
+
+    # collated: extract the blocks in a temporary processorN/ tree
+    mesh = os.path.join("constant", "polyMesh")
+    required = [os.path.join(mesh, "cellProcAddressing")]
+    optional = []
+    if kind == "field":
+        required.append(os.path.join(time_name, args["name"]))
+    else:
+        required += [
+            os.path.join(mesh, f) for f in ("faces", "owner", "neighbour")
+        ]
+        points = os.path.join(mesh, "points")
+        if time_name in (None, "0"):
+            required.append(points)
+        else:
+            optional.append(points)
+            required.append(os.path.join(time_name, "polyMesh", "points"))
+    with tempfile.TemporaryDirectory(prefix="fluidfoam_") as tmp:
+        _extract_collated(_collated_dirs(path), tmp, required, optional)
+        return _reconstruct(func, kind, args, time_name, tmp, layout)
+
+
+def _decomposed_fallback(kind):
+    """Decorator: read from processor* / processors<N> if not reconstructed.
+
+    kind is "field" (readfield, readscalar...) or "mesh" (readmesh).
+    """
+
+    def decorator(func):
+        sig = inspect.signature(func)
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            bound = sig.bind(*args, **kwargs)
+            bound.apply_defaults()
+            a = dict(bound.arguments)
+            layout, time_name = _use_processors(
+                a["path"], a.get("time_name"), a.get("name"), kind
+            )
+            if layout is not None:
+                return _read_decomposed(func, kind, a, time_name, layout)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class OpenFoamFile(object):
@@ -117,9 +477,9 @@ class OpenFoamFile(object):
             self.is_ascii = True
             self.noheader = True
         try:
-            self.is_SP    = b"scalar=32" in self.header[b"arch"]
+            self.is_SP = b"scalar=32" in self.header[b"arch"]
         except KeyError:
-            self.is_SP    = False
+            self.is_SP = False
 
         for line in self.lines_stripped:
             if line.startswith(b"dimensions"):
@@ -129,9 +489,9 @@ class OpenFoamFile(object):
         self.boundary = self._parse_session(b"boundaryField")
 
         if name is None:
-            self._parse_data(boundary=boundary,
-                             precision=precision,
-                             datatype=datatype)
+            self._parse_data(
+                boundary=boundary, precision=precision, datatype=datatype
+            )
         elif name.endswith("boundary"):
             self.boundaryface = self._parse_boundaryfile()
         elif name.endswith("faces"):
@@ -143,13 +503,13 @@ class OpenFoamFile(object):
         elif name.startswith("sets/"):
             self._parse_sets()
         else:
-            self._parse_data(boundary=boundary,
-                             precision=precision,
-                             datatype=datatype)
+            self._parse_data(
+                boundary=boundary, precision=precision, datatype=datatype
+            )
         if structured:
-            self._determine_order(boundary=boundary,
-                                  order=order,
-                                  precision=precision)
+            self._determine_order(
+                boundary=boundary, order=order, precision=precision
+            )
 
     def _parse_boundaryfile(self):
 
@@ -219,10 +579,11 @@ class OpenFoamFile(object):
     def _parse_data(self, boundary, datatype, precision=15):
 
         import sys
+
         if boundary is not None:
             boun = str.encode(boundary)
-            if (np.size(self.content.split(boun))<=2):
-                iboun =1
+            if np.size(self.content.split(boun)) <= 2:
+                iboun = 1
             else:
                 lines = self.content.split(b"\n")
                 iboun = 0
@@ -233,15 +594,15 @@ class OpenFoamFile(object):
                         break
 
             if iboun >= np.size(self.content.split(boun)):
-                print(R+"Error : No boundary/patch "+str(boun)+W)
+                print(R + "Error : No boundary/patch " + str(boun) + W)
                 sys.exit(1)
 
             elif b"value" in self.content.split(boun)[iboun].split(b"}")[0]:
                 data = self.content.split(boun)[iboun].split(b"value")[1]
             else:
                 if self.verbose:
-                    print(R+"Warning : No data on boundary/patch")
-                    print("Using the values of the nearest cells"+W)
+                    print(R + "Warning : No data on boundary/patch")
+                    print("Using the values of the nearest cells" + W)
                 self._nearest_data(boundary=boundary, precision=precision)
                 return
         else:
@@ -287,9 +648,13 @@ class OpenFoamFile(object):
             else:
                 data = words[1].split(b";")[0]
             if self.verbose:
-                print(R+"Warning : uniform field  of type "
-                        + self.type_data + "!\n")
-                print("Only constant field in output\n"+W)
+                print(
+                    R
+                    + "Warning : uniform field  of type "
+                    + self.type_data
+                    + "!\n"
+                )
+                print("Only constant field in output\n" + W)
         elif shortline.count(b";") >= 1:
             nb_pts = int(shortline.split(b"(")[0])
             data = shortline.split(b"(")[1]
@@ -298,8 +663,12 @@ class OpenFoamFile(object):
         elif self.codestream:
             nb_pts = 0
             if self.verbose:
-                print(R+"Warning : codeStream field! "
-                        + "I can not read the source code!\n"+W)
+                print(
+                    R
+                    + "Warning : codeStream field! "
+                    + "I can not read the source code!\n"
+                    + W
+                )
         else:
             nb_pts = int(lines[1])
             data = b"\n(".join(data.split(b"\n(")[1:])
@@ -349,12 +718,12 @@ class OpenFoamFile(object):
         bounfile = OpenFoamFile(
             self.pathcase + "/constant/polyMesh/",
             name="boundary",
-            verbose=self.verbose
+            verbose=self.verbose,
         )
         ownerfile = OpenFoamFile(
             self.pathcase + "/constant/polyMesh/",
             name="owner",
-            verbose=self.verbose
+            verbose=self.verbose,
         )
         id0 = int(bounfile.boundaryface[str.encode(boundary)][b"startFace"])
         nfaces = int(bounfile.boundaryface[str.encode(boundary)][b"nFaces"])
@@ -392,9 +761,13 @@ class OpenFoamFile(object):
             else:
                 data = words[1].split(b";")[0]
             if self.verbose:
-                print(R+"Warning : uniform field  of type "
-                        + self.type_data + "!\n")
-                print("Only constant field in output\n"+W)
+                print(
+                    R
+                    + "Warning : uniform field  of type "
+                    + self.type_data
+                    + "!\n"
+                )
+                print("Only constant field in output\n" + W)
         elif shortline.count(b";") >= 1:
             nb_pts = int(shortline.split(b"(")[0])
             data = shortline.split(b"(")[1]
@@ -403,8 +776,12 @@ class OpenFoamFile(object):
         elif self.codestream:
             nb_pts = 0
             if self.verbose:
-                print(R+"Warning : codeStream field! "
-                        + "I can not read the source code!\n"+W)
+                print(
+                    R
+                    + "Warning : codeStream field! "
+                    + "I can not read the source code!\n"
+                    + W
+                )
         else:
             nb_pts = int(lines[1])
             data = b"\n(".join(data.split(b"\n(")[1:])
@@ -456,8 +833,8 @@ class OpenFoamFile(object):
                 nv = 9
             valuesbou = np.empty(nv * nfaces, dtype=float)
             for i in range(nfaces):
-                valuesbou[i * nv: (i + 1) * nv] = values[
-                    nv * cell[i]: nv * (cell[i] + 1)
+                valuesbou[i * nv : (i + 1) * nv] = values[
+                    nv * cell[i] : nv * (cell[i] + 1)
                 ]
             self.values = valuesbou
         if self.type_data == "vector":
@@ -489,22 +866,22 @@ class OpenFoamFile(object):
             nb_numbers = self.nfaces + 1
             self.pointsbyface = struct.unpack(
                 "{}i".format(nb_numbers),
-                data[0: nb_numbers * struct.calcsize("i")],
+                data[0 : nb_numbers * struct.calcsize("i")],
             )
-            data = self.content.split(
-                str.encode(str(self.pointsbyface[-1])))[1]
+            data = self.content.split(str.encode(str(self.pointsbyface[-1])))[1]
             data = b"\n(".join(data.split(b"\n(")[1:])
 
             for i in range(self.nfaces):
                 self.faces[i] = {}
-                self.faces[i]["npts"] = self.pointsbyface[i + 1] - \
-                    self.pointsbyface[i]
+                self.faces[i]["npts"] = (
+                    self.pointsbyface[i + 1] - self.pointsbyface[i]
+                )
                 self.faces[i]["id_pts"] = np.array(
                     struct.unpack(
                         "{}i".format(self.faces[i]["npts"]),
                         data[
                             self.pointsbyface[i]
-                            * struct.calcsize("i"): self.pointsbyface[i + 1]
+                            * struct.calcsize("i") : self.pointsbyface[i + 1]
                             * struct.calcsize("i")
                         ],
                     )
@@ -518,8 +895,10 @@ class OpenFoamFile(object):
                 else:
                     self.faces[i - 1] = {}
                     self.faces[i - 1]["npts"] = int(line.split(b"(")[0])
-                    self.faces[i - 1]["id_pts"] = [int(s) for s in
-                                                   (line.split(b"(")[1].split(b")")[0]).split()]
+                    self.faces[i - 1]["id_pts"] = [
+                        int(s)
+                        for s in (line.split(b"(")[1].split(b")")[0]).split()
+                    ]
 
     def _parse_points(self, precision):
 
@@ -531,7 +910,7 @@ class OpenFoamFile(object):
                 continue
             break
         self.nb_pts = int(line)
-        data = self.content.split(b'}', 1)[1]
+        data = self.content.split(b"}", 1)[1]
         data = data.split(line, 1)[1]
         self.type_data = self.header[b"class"]
 
@@ -574,8 +953,11 @@ class OpenFoamFile(object):
             break
         try:
             self.nb_faces = int(line)
-            data = self.content.split(line, 2)[-1]
-        # for mesh with number of cells <= 10 
+            # data starts after the first count line following the header
+            # (the count may also appear in the header note or in the data)
+            start = self.content.find(b"}") + 1
+            data = self.content[self.content.find(line, start) + len(line) :]
+        # for mesh with number of cells <= 10
         except ValueError:
             for line in self.lines_stripped:
                 try:
@@ -605,7 +987,7 @@ class OpenFoamFile(object):
             data = b" ".join(lines).strip()
             self.values = np.array([int(s) for s in data.split()])
         if self.values.min() < 0:
-            self.values = self.values[np.where(self.values>=0)[0]]
+            self.values = self.values[np.where(self.values >= 0)[0]]
             self.nb_faces = self.values.size
         self.nb_cell = np.max(self.values) + 1
 
@@ -644,7 +1026,7 @@ class OpenFoamFile(object):
             self.pathcase,
             boundary=boundary,
             precision=precision,
-            verbose=self.verbose
+            verbose=self.verbose,
         )
         nb_cell = xs.size
         nx = np.unique(xs).size
@@ -677,6 +1059,20 @@ def typefield(path, time_name=None, name=None, verbose=True):
 
     """
 
+    layout, time_name = _use_processors(path, time_name, name, "field")
+    if layout == "collated":
+        with tempfile.TemporaryDirectory(prefix="fluidfoam_") as tmp:
+            _extract_collated(
+                _collated_dirs(path), tmp, [os.path.join(time_name, name)]
+            )
+            field = OpenFoamFile(
+                _make_path(os.path.join(tmp, "processor0"), time_name, name),
+                verbose=verbose,
+            )
+            return field.type_data
+    if layout == "uncollated":
+        path = _processor_dirs(path)[0]
+
     path = _make_path(path, time_name, name)
 
     field = OpenFoamFile(path, verbose=verbose)
@@ -684,6 +1080,7 @@ def typefield(path, time_name=None, name=None, verbose=True):
     return field.type_data
 
 
+@_decomposed_fallback("field")
 def readfield(
     path,
     time_name=None,
@@ -768,6 +1165,7 @@ def readfield(
     return values
 
 
+@_decomposed_fallback("field")
 def readscalar(
     path,
     time_name=None,
@@ -834,6 +1232,7 @@ def readscalar(
     return values
 
 
+@_decomposed_fallback("field")
 def readvector(
     path,
     time_name=None,
@@ -903,6 +1302,7 @@ def readvector(
     return values
 
 
+@_decomposed_fallback("field")
 def readsymmtensor(
     path,
     time_name=None,
@@ -972,6 +1372,7 @@ def readsymmtensor(
     return values
 
 
+@_decomposed_fallback("field")
 def readtensor(
     path,
     time_name=None,
@@ -1042,6 +1443,7 @@ def readtensor(
     return values
 
 
+@_decomposed_fallback("mesh")
 def readmesh(
     path,
     time_name=None,
@@ -1051,7 +1453,7 @@ def readmesh(
     region=None,
     order="F",
     precision=15,
-    verbose=True
+    verbose=True,
 ):
     """
     Read OpenFoam mesh and reshape if necessary (in cartesian structured mesh).
@@ -1091,38 +1493,34 @@ def readmesh(
     if region is None:
         meshpath = "/constant/polyMesh/"
     else:
-        meshpath = "/constant/"+region+"/polyMesh/"
-    if not os.path.exists(path+meshpath):
+        meshpath = "/constant/" + region + "/polyMesh/"
+    if not os.path.exists(path + meshpath):
         raise ValueError(
-            "No ", meshpath, " directory in ",
+            "No ",
+            meshpath,
+            " directory in ",
             path,
             " Please verify the directory of your case.",
         )
 
     if boundary is not None:
-        facefile = OpenFoamFile(
-            path + meshpath, name="faces", verbose=verbose
-        )
+        facefile = OpenFoamFile(path + meshpath, name="faces", verbose=verbose)
         if time_name is not None:
             pointfile = OpenFoamFile(
                 path=path,
                 time_name=time_name,
                 name="polyMesh/points",
                 precision=precision,
-                verbose=verbose
+                verbose=verbose,
             )
         else:
             pointfile = OpenFoamFile(
                 path + meshpath,
                 name="points",
                 precision=precision,
-                verbose=verbose
+                verbose=verbose,
             )
-        bounfile = OpenFoamFile(
-            path + meshpath,
-            name="boundary",
-            verbose=verbose
-        )
+        bounfile = OpenFoamFile(path + meshpath, name="boundary", verbose=verbose)
         id0 = int(bounfile.boundaryface[str.encode(boundary)][b"startFace"])
         nmesh = int(bounfile.boundaryface[str.encode(boundary)][b"nFaces"])
 
@@ -1138,22 +1536,26 @@ def readmesh(
             ys[i] = np.mean(pointfile.values_y[id_pts[0:npts]])
             zs[i] = np.mean(pointfile.values_z[id_pts[0:npts]])
     else:
-        if (time_name is None and region is None
-                and os.path.exists(os.path.join(path, "constant/C"))):
+        if (
+            time_name is None
+            and region is None
+            and os.path.exists(os.path.join(path, "constant/C"))
+        ):
             xs, ys, zs = readvector(
                 path, "constant", "C", precision=precision, verbose=verbose
             )
             nmesh = np.size(xs)
-        elif (time_name is not None and region is None
-              and os.path.exists(_make_path(path, time_name, "C"))):
+        elif (
+            time_name is not None
+            and region is None
+            and os.path.exists(_make_path(path, time_name, "C"))
+        ):
             xs, ys, zs = readvector(
                 path, time_name, "C", precision=precision, verbose=verbose
             )
             nmesh = np.size(xs)
         else:
-            owner = OpenFoamFile(
-                path + meshpath, name="owner", verbose=verbose
-            )
+            owner = OpenFoamFile(path + meshpath, name="owner", verbose=verbose)
             nmesh = owner.nb_cell
             facefile = OpenFoamFile(
                 path + meshpath, name="faces", verbose=verbose
@@ -1164,14 +1566,14 @@ def readmesh(
                     time_name=time_name,
                     name="polyMesh/points",
                     precision=precision,
-                    verbose=verbose
+                    verbose=verbose,
                 )
             else:
                 pointfile = OpenFoamFile(
                     path + meshpath,
                     name="points",
                     precision=precision,
-                    verbose=verbose
+                    verbose=verbose,
                 )
             neigh = OpenFoamFile(
                 path + meshpath, name="neighbour", verbose=verbose
@@ -1217,19 +1619,16 @@ def readmesh(
         zs = zs[ind].reshape(shape, order=order)
     if sets is not None:
         setsfile = OpenFoamFile(
-            path=path+meshpath,
-            name="sets/"+sets,
+            path=path + meshpath,
+            name="sets/" + sets,
             precision=precision,
-            verbose=verbose
+            verbose=verbose,
         )
         xs = xs[setsfile.values]
         ys = ys[setsfile.values]
         zs = zs[setsfile.values]
 
     return xs, ys, zs
-
-
-
 
 
 def getVolumes(
@@ -1241,7 +1640,7 @@ def getVolumes(
     order="F",
     precision=15,
     verbose=True,
-    box=None
+    box=None,
 ):
     """
     Reads OpenFoam mesh and returns the cell centroids and cell volumes
@@ -1274,39 +1673,32 @@ def getVolumes(
     if region is None:
         meshpath = "/constant/polyMesh/"
     else:
-        meshpath = "/constant/"+region+"/polyMesh/"
-    if not os.path.exists(path+meshpath):
+        meshpath = "/constant/" + region + "/polyMesh/"
+    if not os.path.exists(path + meshpath):
         raise ValueError(
-            "No ", meshpath, " directory in ",
+            "No ",
+            meshpath,
+            " directory in ",
             path,
             " Please verify the directory of your case.",
         )
 
-    owner = OpenFoamFile(
-        path + meshpath, name="owner", verbose=verbose
-    )
+    owner = OpenFoamFile(path + meshpath, name="owner", verbose=verbose)
     nmesh = owner.nb_cell
-    facefile = OpenFoamFile(
-        path + meshpath, name="faces", verbose=verbose
-    )
+    facefile = OpenFoamFile(path + meshpath, name="faces", verbose=verbose)
     if time_name is not None and region is None:
         pointfile = OpenFoamFile(
             path=path,
             time_name=time_name,
             name="polyMesh/points",
             precision=precision,
-            verbose=verbose
+            verbose=verbose,
         )
     else:
         pointfile = OpenFoamFile(
-            path + meshpath,
-            name="points",
-            precision=precision,
-            verbose=verbose
+            path + meshpath, name="points", precision=precision, verbose=verbose
         )
-    neigh = OpenFoamFile(
-        path + meshpath, name="neighbour", verbose=verbose
-    )
+    neigh = OpenFoamFile(path + meshpath, name="neighbour", verbose=verbose)
     xs = np.empty(owner.nb_cell, dtype=float)
     ys = np.empty(owner.nb_cell, dtype=float)
     zs = np.empty(owner.nb_cell, dtype=float)
@@ -1333,29 +1725,33 @@ def getVolumes(
         maxz = np.max(pointfile.values_z)
         box = ((minx, miny, minz), (maxx, maxy, maxz))
 
-    centroidCell = np.empty((0,3), dtype=float)
+    centroidCell = np.empty((0, 3), dtype=float)
     VolCell_all = np.empty(owner.nb_cell, dtype=float)
 
     for i in range(owner.nb_cell):
-        xs[i] = np.mean(
-            pointfile.values_x[np.unique(np.concatenate(face[i])[:])]
-        )
-        ys[i] = np.mean(
-            pointfile.values_y[np.unique(np.concatenate(face[i])[:])]
-        )
-        zs[i] = np.mean(
-            pointfile.values_z[np.unique(np.concatenate(face[i])[:])]
-        )
+        xs[i] = np.mean(pointfile.values_x[np.unique(np.concatenate(face[i])[:])])
+        ys[i] = np.mean(pointfile.values_y[np.unique(np.concatenate(face[i])[:])])
+        zs[i] = np.mean(pointfile.values_z[np.unique(np.concatenate(face[i])[:])])
 
-        if box[0][0] < xs[i] < box[1][0] and box[0][1] < ys[i] < box[1][1] and box[0][2] < zs[i] < box[1][2]:
-            pointsCell=[]
+        if (
+            box[0][0] < xs[i] < box[1][0]
+            and box[0][1] < ys[i] < box[1][1]
+            and box[0][2] < zs[i] < box[1][2]
+        ):
+            pointsCell = []
             for k in zip(np.unique(np.concatenate(face[i])[:])):
-                pointsCell.append([pointfile.values_x[k],pointfile.values_y[k],pointfile.values_z[k]])
+                pointsCell.append(
+                    [
+                        pointfile.values_x[k],
+                        pointfile.values_y[k],
+                        pointfile.values_z[k],
+                    ]
+                )
 
             # Add 3D elements into the empty array
             element = np.array([xs[i], ys[i], zs[i]])
             centroidCell = np.append(centroidCell, [element], axis=0)
-            VolCell_all[i]=ss.ConvexHull(pointsCell).volume
+            VolCell_all[i] = ss.ConvexHull(pointsCell).volume
     VolCell = VolCell_all[VolCell_all != 0]
     if structured:
         nx = np.unique(xs).size
@@ -1372,7 +1768,7 @@ def getVolumes(
         ind = np.lexsort((xs, ys, zs))
         shape = (nx, ny, nz)
         VolCell = VolCell[ind].reshape(shape, order=order)
-    return centroidCell,VolCell
+    return centroidCell, VolCell
 
 
 if __name__ == "__main__":

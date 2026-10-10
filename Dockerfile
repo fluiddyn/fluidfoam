@@ -1,4 +1,4 @@
-FROM cbonamy/openfoam5-paraview54-swak4foam-without-nvidia
+FROM opencfd/openfoam-default:2512
 LABEL maintainer "cyrille.bonamy@univ-grenoble-alpes.fr"
 # Ensure a sane environment
 ENV LANG=C.UTF-8 \
@@ -10,21 +10,21 @@ ENV LANG=C.UTF-8 \
 RUN apt-get update --fix-missing && \
     apt-get -y dist-upgrade && \
     apt-get install -y --no-install-recommends \
-        python3 python-dev python-pip python-numpy python-scipy \
-        python3-dev python3-pip python3-numpy python3-scipy \
-        python3-matplotlib python3-psutil python-matplotlib \
-        python3-setuptools python-psutil vera++ git && \
+        python3 python3-dev python3-pip python3-numpy \
+        python3-matplotlib python3-psutil python3-scipy \
+        python3-setuptools vera++ git doxygen && \
     rm -rf /var/lib/apt/lists/ && rm -rf /usr/share/doc/ && \
     rm -rf /usr/share/man/ && rm -rf /usr/share/locale/ && \
     apt-get clean
 
-WORKDIR /home/openfoam
+USER sudofoam:sudofoam
+WORKDIR /home/sudofoam
+RUN wget -qO- https://astral.sh/uv/install.sh | sh
 RUN /bin/bash -c "git clone https://github.com/fluiddyn/fluidfoam"
-WORKDIR /home/openfoam/fluidfoam
-RUN /bin/bash -c "make"
-RUN /bin/bash -c "make clean"
+WORKDIR /home/sudofoam/fluidfoam
+RUN /bin/bash -c "export PATH=$PATH:/home/sudofoam/bin; make"
+RUN /bin/bash -c "source /home/sudofoam/fluidfoam/.venv/bin/activate"
 
-USER openfoam:openfoam
 # Set the default entry point & arguments
 ENTRYPOINT ["/bin/bash"]
 
