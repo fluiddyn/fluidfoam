@@ -31,7 +31,7 @@ NLOC = 12
 ADDR = [np.arange(NLOC), np.arange(NCELLS - 1, NLOC - 1, -1)]
 HEADER = (
     "FoamFile\n{{\n    version     2.0;\n    format      {fmt};\n"
-    "    arch        \"LSB;label=32;scalar=64\";\n"
+    '    arch        "LSB;label=32;scalar=64";\n'
     "    class       {cls};\n{note}    object      {obj};\n}}\n\n"
 )
 
@@ -58,16 +58,16 @@ def column_mesh(zs):
     for i in range(n):
         for j in range(4):
             a, b = j, (j + 1) % 4
-            faces.append(
-                [4 * i + a, 4 * i + b, 4 * (i + 1) + b, 4 * (i + 1) + a]
-            )
+            faces.append([4 * i + a, 4 * i + b, 4 * (i + 1) + b, 4 * (i + 1) + a])
             owner.append(i)
     return pts, faces, owner, neigh, nint
 
 
 def write_mesh(meshdir, zs):
     pts, faces, owner, neigh, nint = column_mesh(zs)
-    note = '    note        "nPoints:%d  nCells:%d  nFaces:%d  nInternalFaces:%d";\n'
+    note = (
+        '    note        "nPoints:%d  nCells:%d  nFaces:%d  nInternalFaces:%d";\n'
+    )
     note = note % (len(pts), len(zs) - 1, len(faces), nint)
     h = lambda cls, obj: HEADER.format(fmt="ascii", cls=cls, obj=obj, note=note)
     _write(
@@ -106,7 +106,9 @@ def write_field(path, cls, name, values=None, uniform=None):
     head += "dimensions      [0 0 0 0 0 0 0];\n\n"
     if uniform is not None:
         if isinstance(uniform, tuple):
-            internal = "internalField   uniform (%s);\n" % " ".join(map(str, uniform))
+            internal = "internalField   uniform (%s);\n" % " ".join(
+                map(str, uniform)
+            )
         else:
             internal = "internalField   uniform %s;\n" % uniform
     elif values.ndim == 1:
@@ -130,19 +132,27 @@ def write_addressing(meshdir, addr, binary=False):
     if not binary:
         _write(
             path,
-            HEADER.format(fmt="ascii", cls="labelList", obj="cellProcAddressing", note="")
+            HEADER.format(
+                fmt="ascii", cls="labelList", obj="cellProcAddressing", note=""
+            )
             + "%d\n(\n" % len(addr)
             + "".join("%d\n" % a for a in addr)
             + ")\n",
         )
     else:
-        head = HEADER.format(fmt="binary", cls="labelList", obj="cellProcAddressing", note="")
-        body = b"%d\n(" % len(addr) + struct.pack("<%di" % len(addr), *addr) + b")\n"
+        head = HEADER.format(
+            fmt="binary", cls="labelList", obj="cellProcAddressing", note=""
+        )
+        body = (
+            b"%d\n(" % len(addr) + struct.pack("<%di" % len(addr), *addr) + b")\n"
+        )
         _write(path, "", binary=head.encode() + body)
 
 
 def write_binary_scalar(path, values):
-    head = HEADER.format(fmt="binary", cls="volScalarField", obj="alphab", note="")
+    head = HEADER.format(
+        fmt="binary", cls="volScalarField", obj="alphab", note=""
+    )
     head += "dimensions      [0 0 0 0 0 0 0];\n\n"
     body = (
         b"internalField   nonuniform List<scalar> \n%d\n(" % len(values)
@@ -155,7 +165,9 @@ def write_binary_scalar(path, values):
 # global reference data ----------------------------------------------------
 ZC = np.arange(NCELLS) + 0.5
 ALPHA = 10.0 + np.arange(NCELLS)
-U = np.stack([np.arange(NCELLS), 2.0 * np.arange(NCELLS), -1.0 * np.arange(NCELLS)])
+U = np.stack(
+    [np.arange(NCELLS), 2.0 * np.arange(NCELLS), -1.0 * np.arange(NCELLS)]
+)
 BETA = np.concatenate([np.arange(1, NLOC + 1), np.full(NLOC, 7.0)])
 DZ = 0.1  # mesh motion at time 0.5
 
@@ -164,36 +176,72 @@ DZ = 0.1  # mesh motion at time 0.5
 def _case():
     root = tempfile.mkdtemp(prefix="ffdecomp_")
     # root: global mesh (decomposePar keeps it) and a time 0
-    write_mesh(os.path.join(root, "constant", "polyMesh"), np.arange(NCELLS + 1.0))
-    write_field(os.path.join(root, "0", "alpha"), "volScalarField", "alpha",
-                values=np.full(NCELLS, 99.0))
+    write_mesh(
+        os.path.join(root, "constant", "polyMesh"), np.arange(NCELLS + 1.0)
+    )
+    write_field(
+        os.path.join(root, "0", "alpha"),
+        "volScalarField",
+        "alpha",
+        values=np.full(NCELLS, 99.0),
+    )
     # a case without any root mesh, same processors
     for p in range(2):
         pdir = os.path.join(root, "processor%d" % p)
-        zs = (np.arange(NLOC + 1.0) + p * NLOC) if p == 0 else (NCELLS - np.arange(NLOC + 1.0))
+        zs = (
+            (np.arange(NLOC + 1.0) + p * NLOC)
+            if p == 0
+            else (NCELLS - np.arange(NLOC + 1.0))
+        )
         write_mesh(os.path.join(pdir, "constant", "polyMesh"), zs)
-        write_addressing(os.path.join(pdir, "constant", "polyMesh"), ADDR[p], binary=(p == 1))
+        write_addressing(
+            os.path.join(pdir, "constant", "polyMesh"), ADDR[p], binary=(p == 1)
+        )
         # moved points at time 0.5 (dynamic mesh)
         pts_dir = os.path.join(pdir, "0.5", "polyMesh")
         write_mesh(pts_dir, zs + DZ)
         for f in ("faces", "owner", "neighbour"):
             os.remove(os.path.join(pts_dir, f))
-        write_field(os.path.join(pdir, "0.5", "alpha"), "volScalarField", "alpha",
-                    values=ALPHA[ADDR[p]])
-        write_field(os.path.join(pdir, "0.5", "U"), "volVectorField", "U",
-                    values=U[:, ADDR[p]].T)
+        write_field(
+            os.path.join(pdir, "0.5", "alpha"),
+            "volScalarField",
+            "alpha",
+            values=ALPHA[ADDR[p]],
+        )
+        write_field(
+            os.path.join(pdir, "0.5", "U"),
+            "volVectorField",
+            "U",
+            values=U[:, ADDR[p]].T,
+        )
         write_binary_scalar(os.path.join(pdir, "0.5", "alphab"), ALPHA[ADDR[p]])
         if p == 0:
-            write_field(os.path.join(pdir, "0.5", "beta"), "volScalarField", "beta",
-                        values=BETA[ADDR[p]])
+            write_field(
+                os.path.join(pdir, "0.5", "beta"),
+                "volScalarField",
+                "beta",
+                values=BETA[ADDR[p]],
+            )
         else:
-            write_field(os.path.join(pdir, "0.5", "beta"), "volScalarField", "beta",
-                        uniform=7)
-            write_field(os.path.join(pdir, "0.5", "Uu"), "volVectorField", "Uu",
-                        uniform=(1, 2, 3))
+            write_field(
+                os.path.join(pdir, "0.5", "beta"),
+                "volScalarField",
+                "beta",
+                uniform=7,
+            )
+            write_field(
+                os.path.join(pdir, "0.5", "Uu"),
+                "volVectorField",
+                "Uu",
+                uniform=(1, 2, 3),
+            )
         if p == 0:
-            write_field(os.path.join(pdir, "0.5", "Uu"), "volVectorField", "Uu",
-                        values=np.tile([1.0, 2.0, 3.0], (NLOC, 1)))
+            write_field(
+                os.path.join(pdir, "0.5", "Uu"),
+                "volVectorField",
+                "Uu",
+                values=np.tile([1.0, 2.0, 3.0], (NLOC, 1)),
+            )
     # copy without root mesh
     nomesh = root + "_nomesh"
     shutil.copytree(root, nomesh)
@@ -207,15 +255,24 @@ def _case():
 # carries the FoamFile header.
 # --------------------------------------------------------------------------
 _HDR = re.compile(rb"\s*FoamFile\s*\{.*?\}\n", re.S)
-MESH_FILES = ["constant/polyMesh/" + f
-              for f in ("cellProcAddressing", "points", "faces", "owner", "neighbour")]
+MESH_FILES = [
+    "constant/polyMesh/" + f
+    for f in ("cellProcAddressing", "points", "faces", "owner", "neighbour")
+]
 FIELD_FILES = ["0.5/" + f for f in ("alpha", "U", "beta", "Uu", "alphab")]
 POINTS_T = ["0.5/polyMesh/points"]
 
 
 def _addr_binary(addr):
-    head = HEADER.format(fmt="binary", cls="labelList", obj="cellProcAddressing", note="")
-    return head.encode() + b"%d\n(" % len(addr) + struct.pack("<%di" % len(addr), *addr) + b")\n"
+    head = HEADER.format(
+        fmt="binary", cls="labelList", obj="cellProcAddressing", note=""
+    )
+    return (
+        head.encode()
+        + b"%d\n(" % len(addr)
+        + struct.pack("<%di" % len(addr), *addr)
+        + b")\n"
+    )
 
 
 def _collate(src_root, dst_root, rels, dirname="processors2"):
@@ -230,7 +287,7 @@ def _collate(src_root, dst_root, rels, dirname="processors2"):
         header = _HDR.match(blocks[0]).group(0)
         # drop the per-processor note: counts differ from one processor to another
         header = re.sub(rb"    note .*\n", b"", header)
-        blocks[0] = header + blocks[0][_HDR.match(blocks[0]).end():]
+        blocks[0] = header + blocks[0][_HDR.match(blocks[0]).end() :]
         blocks[1:] = [_HDR.sub(b"", b, count=1) for b in blocks[1:]]
         cls = re.search(rb"class\s+(\w+);", header).group(1).decode()
         head = (
@@ -245,8 +302,11 @@ def _collate(src_root, dst_root, rels, dirname="processors2"):
             b"// processor%d\n%d\n(" % (r, len(b)) + b + b")\n\n"
             for r, b in enumerate(blocks)
         )
-        _write(os.path.join(dst_root, dirname, rel), "",
-               binary=head.encode() + body[:-1])
+        _write(
+            os.path.join(dst_root, dirname, rel),
+            "",
+            binary=head.encode() + body[:-1],
+        )
 
 
 @functools.lru_cache(maxsize=None)
@@ -289,13 +349,17 @@ class TestDecomposedCases(unittest.TestCase):
         beta = readof.readscalar(root, "0.5", "beta", verbose=False)
         np.testing.assert_allclose(beta, BETA)
         uu = readof.readvector(root, "0.5", "Uu", verbose=False)
-        np.testing.assert_allclose(uu, np.tile([[1.0], [2.0], [3.0]], (1, NCELLS)))
+        np.testing.assert_allclose(
+            uu, np.tile([[1.0], [2.0], [3.0]], (1, NCELLS))
+        )
 
     def test_readfield_and_structured(self):
         root, _ = _case()
         alpha = readof.readfield(root, "0.5", "alpha", verbose=False)
         np.testing.assert_allclose(alpha, ALPHA)
-        a_s = readof.readscalar(root, "0.5", "alpha", structured=True, verbose=False)
+        a_s = readof.readscalar(
+            root, "0.5", "alpha", structured=True, verbose=False
+        )
         assert a_s.shape == (1, 1, NCELLS)
         np.testing.assert_allclose(a_s.ravel(), ALPHA)
         u_s = readof.readvector(root, "0.5", "U", structured=True, verbose=False)
@@ -338,23 +402,45 @@ class TestDecomposedCases(unittest.TestCase):
 
     def test_binary_uncollated(self):
         root, _ = _case()
-        np.testing.assert_allclose(readof.readscalar(root, "0.5", "alphab", verbose=False), ALPHA)
+        np.testing.assert_allclose(
+            readof.readscalar(root, "0.5", "alphab", verbose=False), ALPHA
+        )
 
     def test_collated_fields(self):
         root, _ = _collated_case()
-        assert not [d for d in os.listdir(root) if d.startswith("processor") and d[9:10] != "s"]
-        np.testing.assert_allclose(readof.readscalar(root, "0.5", "alpha", verbose=False), ALPHA)
-        np.testing.assert_allclose(readof.readscalar(root, "0.5", "alphab", verbose=False), ALPHA)  # binary
-        np.testing.assert_allclose(readof.readvector(root, "0.5", "U", verbose=False), U)
-        np.testing.assert_allclose(readof.readscalar(root, "0.5", "beta", verbose=False), BETA)  # uniform on 1 proc
-        np.testing.assert_allclose(readof.readfield(root, "0.5", "alpha", verbose=False), ALPHA)
-        a_s = readof.readscalar(root, "0.5", "alpha", structured=True, verbose=False)
+        assert not [
+            d
+            for d in os.listdir(root)
+            if d.startswith("processor") and d[9:10] != "s"
+        ]
+        np.testing.assert_allclose(
+            readof.readscalar(root, "0.5", "alpha", verbose=False), ALPHA
+        )
+        np.testing.assert_allclose(
+            readof.readscalar(root, "0.5", "alphab", verbose=False), ALPHA
+        )  # binary
+        np.testing.assert_allclose(
+            readof.readvector(root, "0.5", "U", verbose=False), U
+        )
+        np.testing.assert_allclose(
+            readof.readscalar(root, "0.5", "beta", verbose=False), BETA
+        )  # uniform on 1 proc
+        np.testing.assert_allclose(
+            readof.readfield(root, "0.5", "alpha", verbose=False), ALPHA
+        )
+        a_s = readof.readscalar(
+            root, "0.5", "alpha", structured=True, verbose=False
+        )
         assert a_s.shape == (1, 1, NCELLS)
 
     def test_collated_latest_time_priority_typefield(self):
         root, _ = _collated_case()
-        np.testing.assert_allclose(readof.readscalar(root, "latestTime", "alpha", verbose=False), ALPHA)
-        np.testing.assert_allclose(readof.readscalar(root, "0", "alpha", verbose=False), 99.0)
+        np.testing.assert_allclose(
+            readof.readscalar(root, "latestTime", "alpha", verbose=False), ALPHA
+        )
+        np.testing.assert_allclose(
+            readof.readscalar(root, "0", "alpha", verbose=False), 99.0
+        )
         assert readof.typefield(root, "0.5", "U", verbose=False) == "vector"
 
     def test_collated_mesh_without_root_mesh(self):

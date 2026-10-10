@@ -234,7 +234,9 @@ def _extract_collated(dirs, tmp, required, optional=()):
                     continue
                 blocks = _read_collated_blocks(filename)
                 # only the first block carries the FoamFile header
-                h = re.match(rb"\s*FoamFile\s*\{.*?\}\n", blocks[min(blocks)], re.S)
+                h = re.match(
+                    rb"\s*FoamFile\s*\{.*?\}\n", blocks[min(blocks)], re.S
+                )
                 header = h.group(0) if h else b""
                 for rank, block in blocks.items():
                     if not block.lstrip().startswith(b"FoamFile"):
@@ -265,9 +267,7 @@ def _use_processors(path, time_name, name, kind):
     if time_name == "latestTime":
         t_dec = _latest_time_or_none(dirs[0])
         t_root = _latest_time_or_none(path)
-        if t_dec is not None and (
-            t_root is None or float(t_dec) > float(t_root)
-        ):
+        if t_dec is not None and (t_root is None or float(t_dec) > float(t_root)):
             return layout, t_dec
         return None, time_name
 
@@ -383,7 +383,9 @@ def _read_decomposed(func, kind, args, time_name, layout):
     if kind == "field":
         required.append(os.path.join(time_name, args["name"]))
     else:
-        required += [os.path.join(mesh, f) for f in ("faces", "owner", "neighbour")]
+        required += [
+            os.path.join(mesh, f) for f in ("faces", "owner", "neighbour")
+        ]
         points = os.path.join(mesh, "points")
         if time_name in (None, "0"):
             required.append(points)
