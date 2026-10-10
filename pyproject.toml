@@ -5,7 +5,7 @@ build-backend = "setuptools.build_meta"
 packages = ["fluidfoam"]
 [project]
 name = "fluidfoam"
-version = "0.3.0"
+version = "0.3.1"
 license = "GPL-3.0-or-later"
 license-files = [ "LICENSE" ]
 keywords = ["Openfoam", "postprocessing", "python", "CFD"]
@@ -36,4 +36,7 @@ Documentation = "https://fluidfoam.readthedocs.io"
 
 [dependency-groups]
 dev = []
+
+[tool.uv]
+link-mode = "copy"  # Force la copie au lieu des hardlinks
 

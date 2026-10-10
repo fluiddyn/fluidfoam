@@ -400,6 +400,22 @@ class TestDecomposedCases(unittest.TestCase):
         else:
             raise AssertionError("NotImplementedError expected")
 
+    def test_openfoamfile_public_attributes(self):
+        # lines_stripped and boundary are computed on demand but stay available
+        root, _ = _case()
+        f = readof.OpenFoamFile(
+            os.path.join(root, "processor0"), "0.5", "alpha", verbose=False
+        )
+        assert (
+            f._lines_stripped is None and f._boundary is None
+        )  # not computed yet
+        assert f.header[b"format"] == b"ascii"
+        assert f.dimensions == (0, 0, 0, 0, 0, 0, 0)
+        assert f.lines_stripped[0] == b"FoamFile"
+        assert b"top" in f.boundary
+        f.boundary = {"custom": 1}  # still assignable
+        assert f.boundary == {"custom": 1}
+
     def test_binary_uncollated(self):
         root, _ = _case()
         np.testing.assert_allclose(

@@ -32,8 +32,10 @@ class MeshVisu(object):
 
     Args:
         path: str\n
+
         box:  tuple of box's dimension: ((xmin, ymin, zmin), (xmax, ymax, zmax))\n
                (if None, includes the whole mesh)\n
+
         plane: str  plane in which the mesh is contained, either:\n
                'xy': the xy-plane of outgoing normal z (default value)\n
                'xz': the xz-plane of outgoing normal -y\n
@@ -42,15 +44,18 @@ class MeshVisu(object):
         verbose : True or False (default: True)\n
 
     A way you might use me is:
-        MyMesh = fluidfoam.MeshVisu(path = 'path_of_OpenFoam_case')\n
+        MyMesh = fluidfoam.MeshVisu(path = 'path_of_OpenFoam_case')
 
     Then a minimal example to generate and save vectorial mesh figure could be:
         import matplotlib.pyplot as plt\n
         from  matplotlib.collections import LineCollection\n
-        fig, ax = plt.subplots()\n
-        ln_coll = LineCollection(MyMesh.get_all_edgesInBox())\n
+        fig, ax = plt.subplots()
+
+        ln_coll = LineCollection(MyMesh.get_all_edgesInBox())
+
         ax.add_collection(ln_coll, autolim=True)\n
-        plt.savefig('./myMesh.svg', dpi=fig.dpi, transparent = True, bbox_inches = 'tight')\n
+        plt.savefig('./myMesh.svg', dpi=fig.dpi, transparent = True, bbox_inches = 'tight')
+
     """
 
     def __init__(
@@ -96,7 +101,7 @@ class MeshVisu(object):
             self.__box = box
         else:
             # if no box is given, the default size is the whole mesh
-            self.set_box_to_mesh_size(verbose=verbose)
+            self._set_box_to_mesh_size(verbose=verbose)
 
         # Step 3: list edges in box
         self.__plane = plane
@@ -150,7 +155,14 @@ class MeshVisu(object):
         return (self.__box[0][2], self.__box[1][2])
 
     def set_box_to_mesh_size(self, verbose=False):
-        """Set the mesh visualization box to mesh size."""
+        """Set the mesh visualization box to mesh size and update the edges
+        in the box."""
+        self._set_box_to_mesh_size(verbose=verbose)
+        self._set_edges_in_box(verbose=verbose)
+
+    def _set_box_to_mesh_size(self, verbose=False):
+        """Set the mesh visualization box to mesh size (the edges in the box
+        are not updated)."""
         minx = np.min(self.__pointfile.values_x)
         miny = np.min(self.__pointfile.values_y)
         minz = np.min(self.__pointfile.values_z)
@@ -167,14 +179,16 @@ class MeshVisu(object):
     def _set_edges_in_box(self, verbose=False):
         """
         create edgesInBox, a list of edges.
-        Eatch edge is in the form ((x0, y0), (x1, y1)) (if mesh contain in 'xy' plane)
+        Each edge is in the form ((x0, y0), (x1, y1)) (if mesh contain in 'xy' plane)
+
+        Optimized version with pre-computed masks for better performance.
         """
         nfaces = self.__facefile.nfaces
         plane = self.__plane
 
         # It is assumed that the mesh is 2D-planar.
         # So there is just 1 cell in the third direction,
-        # therefore only 2 possibles values for the points coordonates
+        # therefore only 2 possible values for the points coordinates
         # in this 3rd dimension.
         # example: if plane == 'xy', the  3rd dimension is z.
         #          the points have 2 possible coordinates according to z,
@@ -185,74 +199,90 @@ class MeshVisu(object):
         self._set_plane_coord(plane=plane)
         plane_coord = self._get_plane_coord()
         tmp_id_edges = set()  # set that will contain tuples of int which are
-        # index of points in __pointfile.values_z array
+        # index of points in __pointfile.values arrays
 
         # Read box:
         box = self.get_box()
 
+        # Optimization 1: Pre-compute point_in_box mask for all points
+        x = self.__pointfile.values_x
+        y = self.__pointfile.values_y
+        z = self.__pointfile.values_z
+        box_min, box_max = box
+        point_in_box = (
+            (x >= box_min[0])
+            & (x <= box_max[0])
+            & (y >= box_min[1])
+            & (y <= box_max[1])
+            & (z >= box_min[2])
+            & (z <= box_max[2])
+        )
+
+        # Optimization 1: Pre-compute point_in_plane mask for all points
+        if plane == "xy":
+            point_in_plane = z == plane_coord
+        elif plane == "xz":
+            point_in_plane = y == plane_coord
+        elif plane == "yz":
+            point_in_plane = x == plane_coord
+
         for i in range(nfaces):
             face = self._get_face(i)
-            # First, we check if the face belong to z0 plane:
-            if self._is_face_in_plane(face, plane, plane_coord):
-                # A face is defined by a list of point indice.
-                # two successive points is such a list are connected by an edge,
-                # as well as the last and the first point:
-                for j, k in zip(
-                    face["id_pts"],
-                    np.concatenate((face["id_pts"][1:], [face["id_pts"][0]])),
-                ):
-                    # inside the domain, eatch edges belongs to 2 z0-plane's faces.
-                    # we don't want to add 2 times the same edge in __edgesInBox.
-                    # tmp_id_edges is a set, so if you try to add an element that
-                    # it already contains, that element will not be added
-                    if self._is_point_in_box(j, box) or self._is_point_in_box(
-                        k, box
-                    ):
-                        # we add tuple of index in ascending order
-                        if j < k:
-                            tmp_id_edges.add((j, k))
-                        else:
-                            tmp_id_edges.add((k, j))
+            # First, we check if the face belong to the plane:
+            # Optimization: use pre-computed point_in_plane mask
+            face_in_plane = all(point_in_plane[j] for j in face["id_pts"])
+            if not face_in_plane:
+                continue
+
+            # A face is defined by a list of point indices.
+            # Two successive points in such a list are connected by an edge,
+            # as well as the last and the first point:
+            # Optimization 2: use circular indexing instead of np.concatenate
+            id_pts = face["id_pts"]
+            npts = len(id_pts)
+            for idx in range(npts):
+                j = id_pts[idx]
+                k = id_pts[(idx + 1) % npts]  # Circular indexing
+
+                # Optimization 1: use pre-computed point_in_box mask
+                if point_in_box[j] or point_in_box[k]:
+                    # we add tuple of index in ascending order
+                    if j < k:
+                        tmp_id_edges.add((j, k))
+                    else:
+                        tmp_id_edges.add((k, j))
 
         # we transform set into list to make __edgesInBox a subscriptable object
         tmp_id_edges = list(tmp_id_edges)
 
-        # __edgesInBox will be a list of edges.
-        # Eatch edge is in the form ((x0, y0), (x1, y1))
-        self.__edgesInBox = []
+        # Optimization 3: Factored edge building
+        self._build_edges(tmp_id_edges, plane)
+
+    def _build_edges(self, id_edges, plane):
+        """
+        Build edges from point indices according to plane.
+
+        Args:
+            id_edges: List of tuples (i, j) representing point indices
+            plane: str ('xy', 'xz', or 'yz')
+        """
+        # Select coordinates based on plane
         if plane == "xy":
-            for i, j in tmp_id_edges:
-                x0, y0 = (
-                    self.__pointfile.values_x[i],
-                    self.__pointfile.values_y[i],
-                )
-                x1, y1 = (
-                    self.__pointfile.values_x[j],
-                    self.__pointfile.values_y[j],
-                )
-                self.__edgesInBox.append(((x0, y0), (x1, y1)))
+            coords = (self.__pointfile.values_x, self.__pointfile.values_y)
         elif plane == "xz":
-            for i, j in tmp_id_edges:
-                x0, z0 = (
-                    self.__pointfile.values_x[i],
-                    self.__pointfile.values_z[i],
-                )
-                x1, z1 = (
-                    self.__pointfile.values_x[j],
-                    self.__pointfile.values_z[j],
-                )
-                self.__edgesInBox.append(((x0, z0), (x1, z1)))
+            coords = (self.__pointfile.values_x, self.__pointfile.values_z)
         elif plane == "yz":
-            for i, j in tmp_id_edges:
-                y0, z0 = (
-                    self.__pointfile.values_y[i],
-                    self.__pointfile.values_z[i],
-                )
-                y1, z1 = (
-                    self.__pointfile.values_y[j],
-                    self.__pointfile.values_z[j],
-                )
-                self.__edgesInBox.append(((y0, z0), (y1, z1)))
+            coords = (self.__pointfile.values_y, self.__pointfile.values_z)
+        else:
+            raise ValueError(
+                f"Unknown plane: {plane}. Must be 'xy', 'xz', or 'yz'."
+            )
+
+        # Build all edges in a single list comprehension
+        self.__edgesInBox = [
+            ((coords[0][i], coords[1][i]), (coords[0][j], coords[1][j]))
+            for i, j in id_edges
+        ]
 
     def get_all_edgesInBox(self):
         """
@@ -272,8 +302,9 @@ class MeshVisu(object):
         """we assume mesh is 2D planar. Therefore there is only
         one cell in the third direction (normal to mesh), so the 3rd coordinates
         of the mesh points have only two possible values. We choose one of them
-        arbitrarily, named it __plane_coord. \n
+        arbitrarily, named it __plane_coord.
         We will only draw the segments belonging to the plane at __plane_coord.
+
         """
         if plane == "xy":
             self.__plane_coord = self.__pointfile.values_z[0]
@@ -314,20 +345,26 @@ class MeshVisu(object):
     def _is_face_in_plane(self, face, plane, plane_coord):
         """
         check if all points of the face belong to the plane
+
+        Note: This method is kept for backward compatibility but is now
+        less used due to optimization in _set_edges_in_box().
         """
         if plane == "xy":
-            for j in range(face["npts"]):
-                if self.__pointfile.values_z[j] != plane_coord:
+            z = self.__pointfile.values_z
+            for j in face["id_pts"]:
+                if z[j] != plane_coord:
                     return False
 
         elif plane == "xz":
-            for j in range(face["npts"]):
-                if self.__pointfile.values_y[j] != plane_coord:
+            y = self.__pointfile.values_y
+            for j in face["id_pts"]:
+                if y[j] != plane_coord:
                     return False
 
         elif plane == "yz":
-            for j in range(face["npts"]):
-                if self.__pointfile.values_x[j] != plane_coord:
+            x = self.__pointfile.values_x
+            for j in face["id_pts"]:
+                if x[j] != plane_coord:
                     return False
 
         return True

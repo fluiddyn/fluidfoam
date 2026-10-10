@@ -423,6 +423,31 @@ def _decomposed_fallback(kind):
     return decorator
 
 
+def _iter_lines(content):
+    """Lazy equivalent of ``content.split(b"\\n")``."""
+    pos = 0
+    while True:
+        end = content.find(b"\n", pos)
+        if end == -1:
+            yield content[pos:]
+            return
+        yield content[pos:end]
+        pos = end + 1
+
+
+def _iter_dimensions_lines(content):
+    """Lines starting with "dimensions" (stripped, without quotes and ";")."""
+    pos = content.find(b"dimensions")
+    while pos != -1:
+        start = content.rfind(b"\n", 0, pos) + 1
+        if not content[start:pos].strip():
+            end = content.find(b"\n", pos)
+            if end == -1:
+                end = len(content)
+            yield content[pos:end].strip().replace(b'"', b"").replace(b";", b"")
+        pos = content.find(b"dimensions", pos + 1)
+
+
 class OpenFoamFile(object):
     """OpenFoam file parser."""
 
@@ -463,10 +488,9 @@ class OpenFoamFile(object):
         with self._open(self.path, "rb") as f:
             self.content = f.read()
 
-        self.lines_stripped = [
-            line.strip().replace(b'"', b"").replace(b";", b"")
-            for line in self.content.split(b"\n")
-        ]
+        # computed on demand (see the lines_stripped and boundary properties)
+        self._lines_stripped = None
+        self._boundary = None
 
         self.header = self._parse_session(b"FoamFile")
 
@@ -481,12 +505,9 @@ class OpenFoamFile(object):
         except KeyError:
             self.is_SP = False
 
-        for line in self.lines_stripped:
-            if line.startswith(b"dimensions"):
-                tmp = (line.split(b"[")[1]).split(b"]")[0]
-                self.dimensions = eval(b", ".join(tmp.split()))
-
-        self.boundary = self._parse_session(b"boundaryField")
+        for line in _iter_dimensions_lines(self.content):
+            tmp = (line.split(b"[")[1]).split(b"]")[0]
+            self.dimensions = eval(b", ".join(tmp.split()))
 
         if name is None:
             self._parse_data(
@@ -511,13 +532,48 @@ class OpenFoamFile(object):
                 boundary=boundary, order=order, precision=precision
             )
 
+    @property
+    def lines_stripped(self):
+        """All the lines of the file, stripped (computed on first access)."""
+        if self._lines_stripped is None:
+            self._lines_stripped = [
+                line.strip().replace(b'"', b"").replace(b";", b"")
+                for line in self.content.split(b"\n")
+            ]
+        return self._lines_stripped
+
+    @lines_stripped.setter
+    def lines_stripped(self, value):
+        self._lines_stripped = value
+
+    @property
+    def boundary(self):
+        """Content of the boundaryField section (computed on first access)."""
+        if self._boundary is None:
+            self._boundary = self._parse_session(b"boundaryField")
+        return self._boundary
+
+    @boundary.setter
+    def boundary(self, value):
+        self._boundary = value
+
+    def _iter_lines_stripped(self):
+        """Stripped lines, lazily: parsers that stop early do not pay for
+        the whole file."""
+        if self._lines_stripped is not None:
+            return iter(self._lines_stripped)
+        return (
+            line.strip().replace(b'"', b"").replace(b";", b"")
+            for line in _iter_lines(self.content)
+        )
+
     def _parse_boundaryfile(self):
 
         dict_bounfile = {}
         in_section = False
         previous_line = ""
         level = 0
-        for line in self.lines_stripped:
+        for line in self._iter_lines_stripped():
             if line == b"(":
                 in_section = True
                 level += 1
@@ -548,7 +604,7 @@ class OpenFoamFile(object):
         in_section = False
         previous_line = ""
         level = 0
-        for line in self.lines_stripped:
+        for line in self._iter_lines_stripped():
             if line == title:
                 in_section = True
                 continue
@@ -683,18 +739,12 @@ class OpenFoamFile(object):
             elif self.type_data == "tensor":
                 nb_numbers = 9 * nb_pts
             if self.is_SP:
-                self.values = np.array(
-                    struct.unpack(
-                        "{}f".format(nb_numbers),
-                        data[: nb_numbers * struct.calcsize("f")],
-                    )
-                )
+                self.values = np.frombuffer(
+                    data, dtype=np.float32, count=nb_numbers
+                ).astype(np.float64)
             else:
-                self.values = np.array(
-                    struct.unpack(
-                        "{}d".format(nb_numbers),
-                        data[: nb_numbers * struct.calcsize("d")],
-                    )
+                self.values = np.frombuffer(
+                    data, dtype=np.float64, count=nb_numbers
                 )
         else:
             if self.type_data == "scalar":
@@ -844,7 +894,7 @@ class OpenFoamFile(object):
 
     def _parse_face(self):
 
-        for line in self.lines_stripped:
+        for line in self._iter_lines_stripped():
             try:
                 int(line)
                 break
@@ -893,16 +943,17 @@ class OpenFoamFile(object):
                 elif line == b")":
                     break
                 else:
-                    self.faces[i - 1] = {}
-                    self.faces[i - 1]["npts"] = int(line.split(b"(")[0])
-                    self.faces[i - 1]["id_pts"] = [
-                        int(s)
-                        for s in (line.split(b"(")[1].split(b")")[0]).split()
-                    ]
+                    parts = line.split(b"(")
+                    self.faces[i - 1] = {
+                        "npts": int(parts[0]),
+                        "id_pts": [
+                            int(s) for s in parts[1].split(b")")[0].split()
+                        ],
+                    }
 
     def _parse_points(self, precision):
 
-        for line in self.lines_stripped:
+        for line in self._iter_lines_stripped():
             try:
                 int(line)
                 break
@@ -944,7 +995,7 @@ class OpenFoamFile(object):
 
     def _parse_owner(self):
 
-        for line in self.lines_stripped:
+        for line in self._iter_lines_stripped():
             try:
                 int(line)
                 break
@@ -959,7 +1010,7 @@ class OpenFoamFile(object):
             data = self.content[self.content.find(line, start) + len(line) :]
         # for mesh with number of cells <= 10
         except ValueError:
-            for line in self.lines_stripped:
+            for line in self._iter_lines_stripped():
                 try:
                     line.split(b"(")
                     int(line.split(b"(")[0])
@@ -993,7 +1044,7 @@ class OpenFoamFile(object):
 
     def _parse_sets(self):
 
-        for line in self.lines_stripped:
+        for line in self._iter_lines_stripped():
             try:
                 int(line)
                 break
