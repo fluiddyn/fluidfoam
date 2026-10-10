@@ -24,6 +24,7 @@ from fluidfoam import OpenFoamFile
 import os
 import numpy as np
 
+
 class MeshVisu(object):
     """
     Read OpenFoam mesh of 2D planar simulation and
@@ -100,7 +101,7 @@ class MeshVisu(object):
             self.__box = box
         else:
             # if no box is given, the default size is the whole mesh
-            self.set_box_to_mesh_size(verbose=verbose)
+            self._set_box_to_mesh_size(verbose=verbose)
 
         # Step 3: list edges in box
         self.__plane = plane
@@ -154,7 +155,14 @@ class MeshVisu(object):
         return (self.__box[0][2], self.__box[1][2])
 
     def set_box_to_mesh_size(self, verbose=False):
-        """Set the mesh visualization box to mesh size."""
+        """Set the mesh visualization box to mesh size and update the edges
+        in the box."""
+        self._set_box_to_mesh_size(verbose=verbose)
+        self._set_edges_in_box(verbose=verbose)
+
+    def _set_box_to_mesh_size(self, verbose=False):
+        """Set the mesh visualization box to mesh size (the edges in the box
+        are not updated)."""
         minx = np.min(self.__pointfile.values_x)
         miny = np.min(self.__pointfile.values_y)
         minz = np.min(self.__pointfile.values_z)
@@ -202,18 +210,21 @@ class MeshVisu(object):
         z = self.__pointfile.values_z
         box_min, box_max = box
         point_in_box = (
-            (x >= box_min[0]) & (x <= box_max[0]) &
-            (y >= box_min[1]) & (y <= box_max[1]) &
-            (z >= box_min[2]) & (z <= box_max[2])
+            (x >= box_min[0])
+            & (x <= box_max[0])
+            & (y >= box_min[1])
+            & (y <= box_max[1])
+            & (z >= box_min[2])
+            & (z <= box_max[2])
         )
 
         # Optimization 1: Pre-compute point_in_plane mask for all points
         if plane == "xy":
-            point_in_plane = (z == plane_coord)
+            point_in_plane = z == plane_coord
         elif plane == "xz":
-            point_in_plane = (y == plane_coord)
+            point_in_plane = y == plane_coord
         elif plane == "yz":
-            point_in_plane = (x == plane_coord)
+            point_in_plane = x == plane_coord
 
         for i in range(nfaces):
             face = self._get_face(i)
@@ -263,7 +274,9 @@ class MeshVisu(object):
         elif plane == "yz":
             coords = (self.__pointfile.values_y, self.__pointfile.values_z)
         else:
-            raise ValueError(f"Unknown plane: {plane}. Must be 'xy', 'xz', or 'yz'.")
+            raise ValueError(
+                f"Unknown plane: {plane}. Must be 'xy', 'xz', or 'yz'."
+            )
 
         # Build all edges in a single list comprehension
         self.__edgesInBox = [

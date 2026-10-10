@@ -943,12 +943,13 @@ class OpenFoamFile(object):
                 elif line == b")":
                     break
                 else:
-                    self.faces[i - 1] = {}
-                    self.faces[i - 1]["npts"] = int(line.split(b"(")[0])
-                    self.faces[i - 1]["id_pts"] = [
-                        int(s)
-                        for s in (line.split(b"(")[1].split(b")")[0]).split()
-                    ]
+                    parts = line.split(b"(")
+                    self.faces[i - 1] = {
+                        "npts": int(parts[0]),
+                        "id_pts": [
+                            int(s) for s in parts[1].split(b")")[0].split()
+                        ],
+                    }
 
     def _parse_points(self, precision):
 

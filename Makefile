@@ -14,7 +14,7 @@ tests:
 	env -u VIRTUAL_ENV uv run --with pytest pytest
 
 black:
-	uv run --with black black -l 82 fluidfoam
+	env -u VIRTUAL_ENV uv run --with black black -l 82 fluidfoam
 
 tests_coverage:
 	uv run --with coverage coverage run -p -m unittest discover
