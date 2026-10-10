@@ -18,11 +18,22 @@ This module provides functions to read OpenFoam Files:
 
 .. autofunction:: typefield
 
+Decomposed cases (``processor0``, ``processor1``... or collated
+``processors<N>`` directories) are read transparently by the functions
+above when the requested file is not available in the reconstructed case
+(see ``_decomposed_fallback``).
+Not supported for decomposed cases: ``boundary``, ``sets``, ``region``
+and ``getVolumes``.
+
 """
 
 import os
+import re
 import gzip
 import struct
+import inspect
+import tempfile
+import functools
 import numpy as np
 import scipy.spatial as ss
 
@@ -60,6 +71,354 @@ def _find_latesttime(path):
             pass
     time_list.sort(key=float)
     return time_list[-1]
+
+
+# --------------------------------------------------------------------------
+# Decomposed cases: processor0, processor1, ... (uncollated) and
+# processors<N> (collated: one decomposedBlockData file per field with one
+# block per processor; also processors<N>_<first>-<last> with ioRanks)
+# --------------------------------------------------------------------------
+_COLLATED_RE = re.compile(r"processors\d+(_\d+-\d+)?")
+_BLOCK_RE = re.compile(rb"// processor(\d+)\r?\n(\d+)\r?\n\(")
+
+
+def _processor_dirs(path):
+    """Sorted list of the processorN directories of a decomposed case."""
+    try:
+        entries = os.listdir(path)
+    except OSError:
+        return []
+    procs = [
+        d
+        for d in entries
+        if re.fullmatch(r"processor\d+", d)
+        and os.path.isdir(os.path.join(path, d))
+    ]
+    procs.sort(key=lambda d: int(d[len("processor") :]))
+    return [os.path.join(path, d) for d in procs]
+
+
+def _collated_dirs(path):
+    """Sorted list of the processors<N>[_a-b] directories (collated case)."""
+    try:
+        entries = os.listdir(path)
+    except OSError:
+        return []
+    dirs = [
+        d
+        for d in entries
+        if _COLLATED_RE.fullmatch(d) and os.path.isdir(os.path.join(path, d))
+    ]
+    dirs.sort()
+    return [os.path.join(path, d) for d in dirs]
+
+
+def _decomposition(path, time_name=None, name=None):
+    """Return (layout, dirs); layout is "uncollated", "collated" or None."""
+    procs = _processor_dirs(path)
+    coll = _collated_dirs(path)
+    if (
+        procs
+        and coll
+        and time_name not in (None, "latestTime")
+        and name is not None
+    ):
+        # both layouts present: take the one holding the requested file
+        in_procs = any(
+            os.path.exists(_make_path(d, time_name, name)) for d in procs
+        )
+        in_coll = any(
+            os.path.exists(_make_path(d, time_name, name)) for d in coll
+        )
+        if in_coll and not in_procs:
+            return "collated", coll
+    if procs:
+        return "uncollated", procs
+    if coll:
+        return "collated", coll
+    return None, []
+
+
+def _latest_time_or_none(path):
+    try:
+        return _find_latesttime(path)
+    except (OSError, IndexError):
+        return None
+
+
+def _parse_label_list(content, name="labelList"):
+    """Parse the bytes of an OpenFOAM labelList file (ascii or binary).
+
+    Used for ``constant/polyMesh/cellProcAddressing`` of the processor
+    directories: entry i is the global index of the local cell i.
+    """
+    m = re.search(rb"FoamFile\s*\{(.*?)\}", content, re.S)
+    header = m.group(1) if m else b""
+    body = content[m.end() :] if m else content
+
+    fmt = re.search(rb"format\s+(\w+)\s*;", header)
+    is_ascii = fmt is None or fmt.group(1) == b"ascii"
+    label = re.search(rb"label=(\d+)", header)
+    label_bytes = int(label.group(1)) // 8 if label else 4
+
+    m = re.search(rb"^[ \t]*(\d+)\s*\(", body, re.M)
+    if m is None:
+        raise ValueError("Cannot parse labelList in " + name)
+    nb_values = int(m.group(1))
+    if is_ascii:
+        end = body.index(b")", m.end())
+        values = np.array(body[m.end() : end].split(), dtype=np.int64)
+    else:
+        values = np.frombuffer(
+            body,
+            dtype="<i%d" % label_bytes,
+            count=nb_values,
+            offset=m.end(),
+        ).astype(np.int64)
+    if values.size != nb_values:
+        raise ValueError("Corrupted labelList in " + name)
+    return values
+
+
+def _read_file_bytes(filename):
+    if not os.path.exists(filename) and os.path.exists(filename + ".gz"):
+        filename += ".gz"
+    opener = gzip.open if filename.endswith(".gz") else open
+    with opener(filename, "rb") as f:
+        return f.read()
+
+
+def _read_label_list(filename):
+    """Read an OpenFOAM labelList file (ascii or binary, optionally gzipped)."""
+    return _parse_label_list(_read_file_bytes(filename), filename)
+
+
+def _read_collated_blocks(filename):
+    """Blocks of a collated (decomposedBlockData) file.
+
+    Returns {processor rank: bytes of the block}. A block is the content of
+    the file written by an uncollated run in processorN/; only the block of
+    the first rank carries the FoamFile header (see _extract_collated).
+    """
+    content = _read_file_bytes(filename)
+    blocks = {}
+    pos = 0
+    while True:
+        m = _BLOCK_RE.search(content, pos)
+        if m is None:
+            break
+        size = int(m.group(2))
+        start = m.end()
+        block = content[start : start + size]
+        if len(block) != size or content[start + size : start + size + 1] != b")":
+            raise ValueError("Corrupted decomposedBlockData file " + filename)
+        blocks[int(m.group(1))] = block
+        pos = start + size + 1
+    if not blocks:
+        raise ValueError("No processor block found in " + filename)
+    return blocks
+
+
+def _extract_collated(dirs, tmp, required, optional=()):
+    """Write the blocks of collated files as tmp/processorN/<relative path>.
+
+    required / optional: lists of paths relative to the processors<N>
+    directories (e.g. "0.5/alpha", "constant/polyMesh/cellProcAddressing").
+    """
+    for rels, must in ((required, True), (optional, False)):
+        for rel in rels:
+            found = False
+            for d in dirs:
+                filename = _make_path(d, rel)
+                if not os.path.exists(filename):
+                    continue
+                blocks = _read_collated_blocks(filename)
+                # only the first block carries the FoamFile header
+                h = re.match(rb"\s*FoamFile\s*\{.*?\}\n", blocks[min(blocks)], re.S)
+                header = h.group(0) if h else b""
+                for rank, block in blocks.items():
+                    if not block.lstrip().startswith(b"FoamFile"):
+                        block = header + block
+                    out = os.path.join(tmp, "processor%d" % rank, rel)
+                    os.makedirs(os.path.dirname(out), exist_ok=True)
+                    with open(out, "wb") as f:
+                        f.write(block)
+                found = True
+            if must and not found:
+                raise FileNotFoundError(
+                    "%s not found in %s" % (rel, ", ".join(dirs))
+                )
+
+
+def _use_processors(path, time_name, name, kind):
+    """Tell whether the data must be read from a decomposed case.
+
+    Returns (layout, time_name): layout is None (read the case directly),
+    "uncollated" (processorN) or "collated" (processors<N>); time_name is the
+    resolved time when "latestTime" has been requested and found in the
+    decomposed directories.
+    """
+    layout, dirs = _decomposition(path, time_name, name)
+    if layout is None:
+        return None, time_name
+
+    if time_name == "latestTime":
+        t_dec = _latest_time_or_none(dirs[0])
+        t_root = _latest_time_or_none(path)
+        if t_dec is not None and (
+            t_root is None or float(t_dec) > float(t_root)
+        ):
+            return layout, t_dec
+        return None, time_name
+
+    if kind == "mesh":
+        if not os.path.exists(os.path.join(path, "constant", "polyMesh")):
+            return layout, time_name
+        if (
+            time_name is not None
+            and time_name != "0"
+            and not os.path.exists(
+                _make_path(path, time_name, os.path.join("polyMesh", "points"))
+            )
+        ):
+            return layout, time_name  # dynamic mesh: points per processor
+        return None, time_name
+
+    if time_name is None or name is None:
+        return None, time_name
+    if os.path.exists(_make_path(path, time_name, name)):
+        return None, time_name
+    return layout, time_name
+
+
+def _scatter_to_global(parts, ncells):
+    """Put the processor arrays (last axis = cells) in global cell order."""
+    out = np.empty(np.shape(parts[0][1])[:-1] + (ncells,), dtype=float)
+    for addr, arr in parts:
+        arr = np.asarray(arr, dtype=float)
+        if arr.shape[-1] != addr.size:
+            if arr.shape[-1] == 1:  # uniform field on this processor
+                arr = np.broadcast_to(arr, arr.shape[:-1] + (addr.size,))
+            else:
+                raise ValueError(
+                    "Field size (%d) differs from the number of cells (%d) "
+                    "of the processor" % (arr.shape[-1], addr.size)
+                )
+        out[..., addr] = arr
+    return out
+
+
+def _structured_index(xs, ys, zs):
+    nx = np.unique(xs).size
+    ny = np.unique(ys).size
+    nz = np.unique(zs).size
+    if nx * ny * nz != xs.size:
+        raise ValueError(
+            "nx.ny.nz not equal to number of cells."
+            "Are you sure that your mesh is cartesian?"
+        )
+    return np.lexsort((xs, ys, zs)), (nx, ny, nz)
+
+
+def _reconstruct(func, kind, args, time_name, data_path, layout):
+    """Read each processorN of data_path and rebuild the global array(s)."""
+    path = args["path"]
+    procs = _processor_dirs(data_path)
+    structured = args.get("structured", False)
+    order = args.get("order", "F")
+    verbose = args.get("verbose", True)
+    if verbose:
+        print("Reading %s decomposed case (%d processors)" % (layout, len(procs)))
+
+    sub = dict(args)
+    sub.update(structured=False, verbose=False, time_name=time_name)
+    parts = []
+    for procdir in procs:
+        addr = _read_label_list(
+            os.path.join(procdir, "constant", "polyMesh", "cellProcAddressing")
+        )
+        sub["path"] = procdir
+        result = func(**sub)
+        if kind == "mesh":
+            result = np.vstack(result)
+        parts.append((addr, result))
+
+    ncells = sum(addr.size for addr, _ in parts)
+    if max(addr.max() for addr, _ in parts) + 1 != ncells:
+        raise ValueError("Inconsistent cellProcAddressing in " + path)
+    values = _scatter_to_global(parts, ncells)
+
+    if kind == "mesh":
+        if structured:
+            ind, shape = _structured_index(*values)
+            return tuple(v[ind].reshape(shape, order=order) for v in values)
+        return values[0], values[1], values[2]
+
+    if structured:
+        xs, ys, zs = readmesh(
+            path, precision=args.get("precision", 15), verbose=False
+        )
+        ind, shape = _structured_index(xs, ys, zs)
+        values = values[..., ind]
+        values = values.reshape(values.shape[:-1] + shape, order=order)
+    return values
+
+
+def _read_decomposed(func, kind, args, time_name, layout):
+    """Read a field or the mesh of a decomposed case and reconstruct it."""
+    path = args["path"]
+    for key in ("boundary", "sets", "region"):
+        if args.get(key) is not None:
+            raise NotImplementedError(
+                "Option '%s' is not supported for decomposed cases "
+                "(reconstruct the case with reconstructPar)." % key
+            )
+    if layout == "uncollated":
+        return _reconstruct(func, kind, args, time_name, path, layout)
+
+    # collated: extract the blocks in a temporary processorN/ tree
+    mesh = os.path.join("constant", "polyMesh")
+    required = [os.path.join(mesh, "cellProcAddressing")]
+    optional = []
+    if kind == "field":
+        required.append(os.path.join(time_name, args["name"]))
+    else:
+        required += [os.path.join(mesh, f) for f in ("faces", "owner", "neighbour")]
+        points = os.path.join(mesh, "points")
+        if time_name in (None, "0"):
+            required.append(points)
+        else:
+            optional.append(points)
+            required.append(os.path.join(time_name, "polyMesh", "points"))
+    with tempfile.TemporaryDirectory(prefix="fluidfoam_") as tmp:
+        _extract_collated(_collated_dirs(path), tmp, required, optional)
+        return _reconstruct(func, kind, args, time_name, tmp, layout)
+
+
+def _decomposed_fallback(kind):
+    """Decorator: read from processor* / processors<N> if not reconstructed.
+
+    kind is "field" (readfield, readscalar...) or "mesh" (readmesh).
+    """
+
+    def decorator(func):
+        sig = inspect.signature(func)
+
+        @functools.wraps(func)
+        def wrapper(*args, **kwargs):
+            bound = sig.bind(*args, **kwargs)
+            bound.apply_defaults()
+            a = dict(bound.arguments)
+            layout, time_name = _use_processors(
+                a["path"], a.get("time_name"), a.get("name"), kind
+            )
+            if layout is not None:
+                return _read_decomposed(func, kind, a, time_name, layout)
+            return func(*args, **kwargs)
+
+        return wrapper
+
+    return decorator
 
 
 class OpenFoamFile(object):
@@ -592,7 +951,10 @@ class OpenFoamFile(object):
             break
         try:
             self.nb_faces = int(line)
-            data = self.content.split(line, 2)[-1]
+            # data starts after the first count line following the header
+            # (the count may also appear in the header note or in the data)
+            start = self.content.find(b"}") + 1
+            data = self.content[self.content.find(line, start) + len(line) :]
         # for mesh with number of cells <= 10
         except ValueError:
             for line in self.lines_stripped:
@@ -695,6 +1057,20 @@ def typefield(path, time_name=None, name=None, verbose=True):
 
     """
 
+    layout, time_name = _use_processors(path, time_name, name, "field")
+    if layout == "collated":
+        with tempfile.TemporaryDirectory(prefix="fluidfoam_") as tmp:
+            _extract_collated(
+                _collated_dirs(path), tmp, [os.path.join(time_name, name)]
+            )
+            field = OpenFoamFile(
+                _make_path(os.path.join(tmp, "processor0"), time_name, name),
+                verbose=verbose,
+            )
+            return field.type_data
+    if layout == "uncollated":
+        path = _processor_dirs(path)[0]
+
     path = _make_path(path, time_name, name)
 
     field = OpenFoamFile(path, verbose=verbose)
@@ -702,6 +1078,7 @@ def typefield(path, time_name=None, name=None, verbose=True):
     return field.type_data
 
 
+@_decomposed_fallback("field")
 def readfield(
     path,
     time_name=None,
@@ -786,6 +1163,7 @@ def readfield(
     return values
 
 
+@_decomposed_fallback("field")
 def readscalar(
     path,
     time_name=None,
@@ -852,6 +1230,7 @@ def readscalar(
     return values
 
 
+@_decomposed_fallback("field")
 def readvector(
     path,
     time_name=None,
@@ -921,6 +1300,7 @@ def readvector(
     return values
 
 
+@_decomposed_fallback("field")
 def readsymmtensor(
     path,
     time_name=None,
@@ -990,6 +1370,7 @@ def readsymmtensor(
     return values
 
 
+@_decomposed_fallback("field")
 def readtensor(
     path,
     time_name=None,
@@ -1060,6 +1441,7 @@ def readtensor(
     return values
 
 
+@_decomposed_fallback("mesh")
 def readmesh(
     path,
     time_name=None,
