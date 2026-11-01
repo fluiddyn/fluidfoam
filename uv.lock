@@ -375,7 +375,7 @@ dependencies = [
 requires-dist = [
     { name = "matplotlib", specifier = ">=1.5" },
     { name = "netcdf4" },
-    { name = "numpy", specifier = ">=1.11" },
+    { name = "numpy", specifier = ">=1.20" },
     { name = "scipy", specifier = ">=1.7.4" },
 ]
 
