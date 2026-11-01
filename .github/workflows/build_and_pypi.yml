@@ -1,4 +1,4 @@
-name: build
+name: build and pypi
 on: [push]
 jobs:
   build:

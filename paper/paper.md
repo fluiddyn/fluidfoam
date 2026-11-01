@@ -242,6 +242,8 @@ The OpenFOAM simulations whose post-processing motivated and shaped
 fluidfoam were performed using HPC resources provided by GENCI (Grand
 Équipement National de Calcul Intensif) under projects A0160107567,
 A0172A14636, A0180107567, A0192A14636 and A0212A14636.
-We are thankful to the developers involved in OpenFOAM.
+We are thankful to the developers involved in OpenFOAM, and to all the
+students and colleagues at LEGI who used fluidfoam and contributed feedback
+and bug reports.
 
 # References

@@ -1,4 +1,4 @@
-name: paper
+name: paper generate
 
 on:
   push:
