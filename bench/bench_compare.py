@@ -1,119 +1,118 @@
 #!/usr/bin/env python3
-"""Comparative reading benchmark: fluidfoam vs PyFoam vs Ofpp vs foamlib.
+"""Comparative reading benchmark: fluidfoam vs PyFoam vs Ofpp vs foamlib
+(and, optionally, OpenFOAM's reconstructPar for decomposed cases).
+
+This file is only the DRIVER (timing, memory, equality, report). The code that
+each tool needs is in separate modules, so that what a user must write with
+each tool is visible:
+
+    readers_fluidfoam.py   fluidfoam      (one call, also for decomposed cases)
+    readers_foamlib.py     foamlib        (per-processor assembly code)
+    readers_other.py       Ofpp, PyFoam
+    reconstructpar.py      reconstructPar + reading (needs OpenFOAM)
 
 Protocol:
-- 4 datasets (A: ASCII, B: binary, C: gzipped binary, D: decomposed 64 procs)
-- median of N runs, warm cache; cold-cache runs optional
+- 4 synthetic datasets (A: ASCII, B: binary, C: gzipped binary, D: decomposed)
+  and 1 real decomposed case (E, generate_real_decomp_case.py)
+- median of N runs, warm cache; client-cold runs with --cold
 - peak memory via tracemalloc
-- value equality check between tools (guard-rail against comparing
-  different things)
+- value equality between tools, against a ground-truth array when the case
+  provides one (reference_<field>.npy)
+- amount of user code needed to get the array (lines of Python)
 
 Usage:
-    python bench_compare.py --case /path/to/case --nproc 64 --runs 10
+    python bench_compare.py --case bench/data/case_binary --time 0 --runs 10
+    python bench_compare.py --case bench/data/case_decomp_real --time 0 \
+        --decomposed --with-reconstructpar --cold --runs 5
 """
 
 import argparse
+import ast
+import inspect
 import os
-import time
+import shutil
 import statistics
+import tempfile
+import textwrap
+import time
 import tracemalloc
 
 import numpy as np
 
+import readers_fluidfoam
+import readers_foamlib
+import readers_other
+import reconstructpar
+
+MODULES = (readers_fluidfoam, readers_foamlib, readers_other)
 TOOLS = {}
-TOOLS_DECOMPOSED = {"fluidfoam": lambda c, t, n: __import__("fluidfoam").readscalar(c, t, n)}
+TOOLS_DECOMPOSED = {}
+USER_CODE = {}
+USER_CODE_DECOMPOSED = {}
+for _m in MODULES:
+    TOOLS.update(_m.READERS)
+    TOOLS_DECOMPOSED.update(_m.READERS_DECOMPOSED)
+    USER_CODE.update(_m.USER_CODE)
+    USER_CODE_DECOMPOSED.update(_m.USER_CODE_DECOMPOSED)
 
-# ---------------------------------------------------------------- fluidfoam
-try:
-    import fluidfoam
 
-    def read_fluidfoam(case, time, name):
-        return fluidfoam.readscalar(case, time, name)
+# ---------------------------------------------------------------- helpers
+def evict(path):
+    """Drop the client-side cached pages of all files under path.
 
-    def read_fluidfoam_decomposed(case, time, name):
-        return fluidfoam.readscalar(case, time, name)
+    Uses posix_fadvise(DONTNEED): no root needed. Only the client page cache
+    is affected (the NFS server cache cannot be flushed from user space), so
+    'cold' means 'client-cold'.
+    """
+    for root, _, files in os.walk(path):
+        for f in files:
+            try:
+                fd = os.open(os.path.join(root, f), os.O_RDONLY)
+                try:
+                    os.posix_fadvise(fd, 0, 0, os.POSIX_FADV_DONTNEED)
+                finally:
+                    os.close(fd)
+            except OSError:
+                pass
 
-    TOOLS["fluidfoam"] = read_fluidfoam
-except ImportError:
-    pass
 
-# ----------------------------------------------------------------- foamlib
-try:
-    from foamlib import FoamFieldFile
-
-    def read_foamlib(case, time, name):
-        path = os.path.join(case, time, name)
-        # foamlib needs the explicit .gz path when the file is compressed
-        if not os.path.exists(path) and os.path.exists(path + ".gz"):
-            path += ".gz"
-        f = FoamFieldFile(path)
-        arr = np.asarray(f.internal_field)
-        del f
-        return arr
-
-    # decomposed: foamlib has no transparent reconstruction, so read
-    # per-processor and note the extra user code required (counted in time)
-    def read_foamlib_decomposed(case, time, name):
-        procs = sorted(
-            (d for d in os.listdir(case) if d.startswith("processor")),
-            key=lambda d: int(d[len("processor"):] or 0),
-        )
-        parts = []
-        for p in procs:
-            path = os.path.join(case, p, time, name)
-            if not os.path.exists(path) and os.path.exists(path + ".gz"):
-                path += ".gz"
-            f = FoamFieldFile(path)
-            parts.append(np.asarray(f.internal_field))
-            del f
-        return np.concatenate(parts)
-
-    TOOLS["foamlib"] = read_foamlib
-    TOOLS_DECOMPOSED["foamlib"] = read_foamlib_decomposed
-except ImportError:
-    pass
-
-# ------------------------------------------------------------------- Ofpp
-try:
-    import ofpp
-
-    def read_ofpp(case, time, name):
-        return ofpp.parse_field(os.path.join(case, time, name))
-
-    TOOLS["Ofpp"] = read_ofpp
-except ImportError:
-    pass
-
-# ------------------------------------------------------------------ PyFoam
-try:
-    from PyFoam.RunDictionary.ParsedParameterFile import ParsedParameterFile
-
-    def read_pyfoam(case, time, name):
-        f = ParsedParameterFile(os.path.join(case, time, name))
-        # non-uniform List<scalar> payload
-        val = f.content["internalField"] if isinstance(
-            f.content, dict
-        ) else None
-        if val is None:
-            raise RuntimeError("PyFoam: unexpected content structure")
-        return np.asarray(val)
-
-    TOOLS["PyFoam"] = read_pyfoam
-except ImportError:
-    pass
+def count_user_lines(funcs):
+    """Lines of Python in the given functions (body only: no def line, no
+    docstring, no blank or comment-only lines)."""
+    total = 0
+    for fn in funcs:
+        src = textwrap.dedent(inspect.getsource(fn))
+        node = ast.parse(src).body[0]
+        body = node.body
+        if (body and isinstance(body[0], ast.Expr)
+                and isinstance(getattr(body[0], "value", None), ast.Constant)
+                and isinstance(body[0].value.value, str)):
+            body = body[1:]
+        if not body:
+            continue
+        lines = src.splitlines()[body[0].lineno - 1: node.end_lineno]
+        total += sum(1 for ln in lines
+                     if ln.strip() and not ln.strip().startswith("#"))
+    return total
 
 
 # ------------------------------------------------------------------- driver
-def run_benchmark(reader, case, timename, fieldname, nruns):
+def run_benchmark(reader, case, timename, fieldname, nruns,
+                  cold=False, cold_path=None):
     # Timing first, WITHOUT tracemalloc: it slows down allocations by an
     # order of magnitude and would bias the comparison between tools.
+    reconstructpar.SPLIT.clear()
     times = []
     result = None
     for _ in range(nruns):
+        if cold:
+            evict(cold_path or case)  # not timed
         t0 = time.perf_counter()
         result = reader(case, timename, fieldname)
         times.append(time.perf_counter() - t0)
-    # Memory measured ONCE, separately, with tracemalloc.
+    split = {k: list(v) for k, v in reconstructpar.SPLIT.items()}
+    # Memory measured ONCE, separately, with tracemalloc (Python allocations
+    # only: for reconstructPar this is the reading of the reconstructed field).
     tracemalloc.start()
     result = reader(case, timename, fieldname)
     _, peak = tracemalloc.get_traced_memory()
@@ -123,20 +122,30 @@ def run_benchmark(reader, case, timename, fieldname, nruns):
         "min_s": min(times),
         "peak_mb": peak / 1e6,
         "shape": np.asarray(result).shape,
+        "split": split,
     }
 
 
-def check_equality(results, tol=1e-12):
-    """All tools that produced a result must agree bit-for-bit-ish."""
-    names = list(results)
-    for i in range(1, len(names)):
-        a = np.asarray(results[names[0]])
-        b = np.asarray(results[names[i]])
-        if a.shape != b.shape:
-            return f"shape mismatch {names[0]}{a.shape} vs {names[i]}{b.shape}"
-        if not np.allclose(a, b, rtol=tol, atol=tol):
-            return f"value mismatch between {names[0]} and {names[i]}"
-    return "OK"
+def check_equality(values, reference=None, tol=1e-12):
+    """Compare every tool with the reference (ground truth if available,
+    otherwise the first tool). Returns one status line per tool."""
+    names = list(values)
+    if reference is None:
+        ref_name, ref = names[0], np.asarray(values[names[0]])
+        others = names[1:]
+    else:
+        ref_name, ref = "ground truth", np.asarray(reference)
+        others = names
+    lines = []
+    for n in others:
+        b = np.asarray(values[n])
+        if ref.shape != b.shape:
+            lines.append(f"  {n}: FAIL shape {b.shape} vs {ref_name} {ref.shape}")
+        elif not np.allclose(ref, b, rtol=tol, atol=tol):
+            lines.append(f"  {n}: FAIL values differ from {ref_name}")
+        else:
+            lines.append(f"  {n}: OK (vs {ref_name})")
+    return lines
 
 
 def main():
@@ -147,12 +156,26 @@ def main():
     ap.add_argument("--runs", type=int, default=10)
     ap.add_argument("--decomposed", action="store_true")
     ap.add_argument("--nproc", type=int, default=0)
+    ap.add_argument("--cold", action="store_true",
+                    help="evict the client page cache before each timed run")
+    ap.add_argument("--with-reconstructpar", action="store_true",
+                    help="decomposed only: also time reconstructPar + reading "
+                         "(real decomposed case, run on a copy)")
+    ap.add_argument("--workdir", default=None,
+                    help="where to copy the case for reconstructPar")
     args = ap.parse_args()
 
-    print(f"case={args.case} field={args.field} runs={args.runs}")
-    print(f"tools available: {', '.join(TOOLS)}")
-    if not TOOLS:
+    tools = TOOLS_DECOMPOSED if args.decomposed else TOOLS
+    user_code = USER_CODE_DECOMPOSED if args.decomposed else USER_CODE
+    print(f"case={args.case} field={args.field} runs={args.runs} "
+          f"cache={'client-cold' if args.cold else 'warm'}")
+    print(f"tools available: {', '.join(tools)}")
+    if not tools:
         raise SystemExit("no tool installed")
+    if args.decomposed:
+        for name in TOOLS:
+            if not any(k.startswith(name) for k in tools):
+                print(f"{name}: skipped (no decomposed support)")
 
     # resolve 'latestTime'
     timename = args.time
@@ -175,27 +198,63 @@ def main():
         timename = max(dirs, key=float)
         print(f"latest time = {timename}")
 
+    # entries: (display name, reader, case given to reader, path to evict)
+    entries = [(n, r, args.case, args.case) for n, r in tools.items()]
+
+    work = None
+    if args.with_reconstructpar:
+        if not args.decomposed:
+            raise SystemExit("--with-reconstructpar needs --decomposed")
+        reconstructpar.check_case(args.case)
+        work = args.workdir or tempfile.mkdtemp(
+            prefix="bench_reconstruct_",
+            dir=os.path.dirname(os.path.abspath(args.case)))
+        if os.path.exists(work):
+            shutil.rmtree(work)
+        print(f"copying the case to {work} (reconstructPar writes into it) ...")
+        shutil.copytree(args.case, work)
+        entries.append(("reconstructPar+read", reconstructpar.make_reader(work),
+                        args.case, work))
+
+    reference = None
+    ref_path = os.path.join(args.case, f"reference_{args.field}.npy")
+    if os.path.exists(ref_path):
+        reference = np.load(ref_path)
+        print(f"ground truth: {ref_path}")
+
     results = {}
     values = {}
-    for name, reader in TOOLS.items():
-        fn = reader
-        if args.decomposed:
-            fn = TOOLS_DECOMPOSED.get(name)
-            if fn is None:
-                print(f"{name}: skipped (no decomposed support)")
-                continue
-        try:
-            r = run_benchmark(fn, args.case, timename, args.field, args.runs)
-            results[name] = r
-            values[name] = fn(args.case, timename, args.field)
-            print(f"{name:12s} median={r['median_s']:.3f}s  "
-                  f"min={r['min_s']:.3f}s  peak={r['peak_mb']:.1f}MB  "
-                  f"shape={r['shape']}")
-        except Exception as e:
-            print(f"{name:12s} FAILED: {e}")
+    try:
+        for name, fn, case_arg, evict_path in entries:
+            try:
+                r = run_benchmark(fn, case_arg, timename, args.field, args.runs,
+                                  cold=args.cold, cold_path=evict_path)
+                results[name] = r
+                values[name] = fn(case_arg, timename, args.field)
+                print(f"{name:20s} median={r['median_s']:.3f}s  "
+                      f"min={r['min_s']:.3f}s  peak={r['peak_mb']:.1f}MB  "
+                      f"shape={r['shape']}")
+                for k, v in r["split"].items():
+                    print(f"{'':22s}- {k}: median={statistics.median(v):.3f}s")
+            except Exception as e:
+                print(f"{name:20s} FAILED: {e}")
+    finally:
+        if work is not None and os.path.exists(work):
+            shutil.rmtree(work)
 
     if values:
-        print("equality check:", check_equality(values))
+        print("equality check:")
+        for line in check_equality(values, reference):
+            print(line)
+
+    print("\nuser code needed to get the array (lines of Python, "
+          "excluding imports; foamlib(addr+parser) excludes its labelList parser):")
+    for name in results:
+        if name in user_code:
+            print(f"  {name:20s} {count_user_lines(user_code[name]):3d} line(s)")
+        elif name == "reconstructPar+read":
+            print(f"  {name:20s} external OpenFOAM command (needs an OpenFOAM "
+                  "installation) + 1 read call")
 
 
 if __name__ == "__main__":

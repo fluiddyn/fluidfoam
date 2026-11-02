@@ -22,7 +22,6 @@ import argparse
 import gzip
 import os
 import shutil
-import struct
 import numpy as np
 
 HEADER = """FoamFile
@@ -90,88 +89,6 @@ BOUNDARY_FIELD = """boundaryField
 // ************************************************************************* //
 """
 
-
-def write_polymesh(case_dir, ncells, nproc=1):
-    """Minimal polyMesh: points, faces, owner, neighbour, boundary.
-
-    For the benchmark only the field files and (for decomposed cases) the
-    addressing files are read, but a plausible mesh is written for realism.
-    1D slab: ncells cells, hex cells between x=0 and x=1.
-    """
-    mesh_dir = os.path.join(case_dir, "constant", "polyMesh")
-    os.makedirs(mesh_dir, exist_ok=True)
-    npoints = 2 * ncells
-    with open(os.path.join(mesh_dir, "points"), "w") as f:
-        f.write(POINTS_HEADER.format(n=npoints))
-        f.write(f"{npoints}\n(\n")
-        for i in range(ncells):
-            f.write(f"({i / ncells:.15e} 0 0)\n")
-            f.write(f"({(i + 1) / ncells:.15e} 0 0)\n")
-        f.write(")\n;\n")
-    with open(os.path.join(mesh_dir, "faces"), "w") as f:
-        f.write(FACES_HEADER.format(n=ncells + 1))
-        f.write(f"{ncells + 1}\n(\n")
-        for i in range(ncells):
-            f.write(f"3 ({2 * i} {2 * i + 1})\n")
-        f.write(")\n;\n")
-    with open(os.path.join(mesh_dir, "owner"), "w") as f:
-        f.write(OWNER_HEADER.format(n=ncells))
-        f.write(f"{ncells}\n({len(values_placeholder) if False else ''}\n")
-    with open(os.path.join(mesh_dir, "neighbour"), "w") as f:
-        f.write(NEIGHBOUR_HEADER.format(n=ncells - 1))
-
-
-POINTS_HEADER = """FoamFile
-{{
-    version     2.0;
-    format      ascii;
-    class       vectorField;
-    location    "constant/polyMesh";
-    object      points;
-}}
-
-{n}
-
-"""
-
-FACES_HEADER = """FoamFile
-{{
-    version     2.0;
-    format      ascii;
-    class       faceList;
-    location    "constant/polyMesh";
-    object      faces;
-}}
-
-{n}
-
-"""
-
-OWNER_HEADER = """FoamFile
-{{
-    version     2.0;
-    format      ascii;
-    class       labelList;
-    location    "constant/polyMesh";
-    object      owner;
-}}
-
-{n}
-
-"""
-
-NEIGHBOUR_HEADER = """FoamFile
-{{
-    version     2.0;
-    format      ascii;
-    class       labelList;
-    location    "constant/polyMesh";
-    object      neighbour;
-}}
-
-{n}
-
-"""
 
 ADDRESSING_HEADER = """FoamFile
 {{
