@@ -262,11 +262,15 @@ def _parse_label_list(content, name="labelList"):
 
 
 def _read_file_bytes(filename):
-    if not os.path.exists(filename) and os.path.exists(filename + ".gz"):
-        filename += ".gz"
     opener = gzip.open if filename.endswith(".gz") else open
-    with opener(filename, "rb") as f:
-        return f.read()
+    try:
+        with opener(filename, "rb") as f:
+            return f.read()
+    except FileNotFoundError:
+        if filename.endswith(".gz") or not os.path.exists(filename + ".gz"):
+            raise
+        with gzip.open(filename + ".gz", "rb") as f:
+            return f.read()
 
 
 def _read_label_list(filename):
@@ -703,17 +707,23 @@ class OpenFoamFile(object):
         if self.verbose:
             logger.info("Reading file %s", self.path)
 
-        if not os.path.exists(self.path) and os.path.exists(self.path + ".gz"):
-            self.path += ".gz"
-
         self.is_compressed = self.path.endswith(".gz")
         if self.is_compressed:
             self._open = gzip.open
         else:
             self._open = open
 
-        with self._open(self.path, "rb") as f:
-            self.content = f.read()
+        try:
+            with self._open(self.path, "rb") as f:
+                self.content = f.read()
+        except FileNotFoundError:
+            if self.is_compressed or not os.path.exists(self.path + ".gz"):
+                raise
+            self.path += ".gz"
+            self.is_compressed = True
+            self._open = gzip.open
+            with self._open(self.path, "rb") as f:
+                self.content = f.read()
 
         # computed on demand (see the lines_stripped and boundary properties)
         self._lines_stripped = None
@@ -902,7 +912,7 @@ class OpenFoamFile(object):
                 return
         else:
             try:
-                data = self.content.split(b"internalField")[1]
+                data = self.content.split(b"internalField", 2)[1]
             except IndexError:
                 data = self.content
 
@@ -915,7 +925,7 @@ class OpenFoamFile(object):
         self.type_data and self.values; return nothing.
 
         """
-        lines = data.split(b"\n")
+        lines = data.split(b"\n", 2)  # only the first two lines are used
         shortline = lines[0].split(b">")[-1]
         words = lines[0].split()
         if not shortline and len(lines) > 1:
@@ -946,6 +956,7 @@ class OpenFoamFile(object):
             self.short = shortline[-1] == b";"
             self.type_data = datatype
 
+        payload_offset = 0  # start of the values in data (binary: no copy)
         if self.uniform:
             nb_pts = 1
             if not (self.type_data == "scalar"):
@@ -972,7 +983,11 @@ class OpenFoamFile(object):
                 )
         else:
             nb_pts = int(lines[1])
-            data = b"\n(".join(data.split(b"\n(")[1:])
+            pos = data.find(b"\n(")
+            payload_offset = pos + 2 if pos != -1 else len(data)
+            if self.is_ascii:
+                data = data[payload_offset:]
+                payload_offset = 0
 
         if not self.is_ascii and not self.uniform:
             if self.type_data == "scalar":
@@ -988,7 +1003,7 @@ class OpenFoamFile(object):
             else:
                 dtype = np.dtype(">f8" if self.is_MSB else "<f8")
             self.values = np.frombuffer(
-                data, dtype=dtype, count=nb_numbers
+                data, dtype=dtype, count=nb_numbers, offset=payload_offset
             ).astype(np.float64, copy=True)
         else:
             if self.type_data == "scalar":
