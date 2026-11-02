@@ -76,6 +76,25 @@ def evict(path):
                 pass
 
 
+def environment():
+    """Versions of the tools and of OpenFOAM, to be reported with the results."""
+    import platform
+    import socket
+    from importlib import metadata
+
+    def ver(pkg):
+        try:
+            return metadata.version(pkg)
+        except metadata.PackageNotFoundError:
+            return "not installed"
+
+    parts = [f"python {platform.python_version()}", f"numpy {np.__version__}"]
+    for pkg in ("fluidfoam", "foamlib", "PyFoam", "Ofpp"):
+        parts.append(f"{pkg} {ver(pkg)}")
+    parts.append(f"OpenFOAM {os.environ.get('WM_PROJECT_VERSION', 'n/a')}")
+    return f"host={socket.gethostname()}  " + ", ".join(parts)
+
+
 def count_user_lines(funcs):
     """Lines of Python in the given functions (body only: no def line, no
     docstring, no blank or comment-only lines)."""
@@ -169,6 +188,7 @@ def main():
     user_code = USER_CODE_DECOMPOSED if args.decomposed else USER_CODE
     print(f"case={args.case} field={args.field} runs={args.runs} "
           f"cache={'client-cold' if args.cold else 'warm'}")
+    print(f"environment: {environment()}")
     print(f"tools available: {', '.join(tools)}")
     if not tools:
         raise SystemExit("no tool installed")

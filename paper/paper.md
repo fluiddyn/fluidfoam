@@ -35,7 +35,7 @@ affiliations:
     name: Alstom, France
     ror: '00t4db855'
   - index: 4
-    name: Centro Oceanográfico de Canarias, Instituto Español de Oceanografía,Consejo Superior de Investigaciones Científicas (IEO-CSIC), Santa Cruz de Tenerife, Spain 
+    name: Centro Oceanográfico de Canarias, Instituto Español de Oceanografía, Consejo Superior de Investigaciones Científicas (IEO-CSIC), Santa Cruz de Tenerife, Spain
     ror: '0580ctc67'
 date: '1 November 2026'
 bibliography: paper.bib
@@ -154,22 +154,29 @@ Second, decomposed parallel cases (uncollated and collated layouts) are
 reconstructed transparently using the cell, face, and boundary addressing
 files that OpenFOAM writes at decomposition time, so the same call returns
 identical arrays for reconstructed and decomposed data, and this
-reconstruction is shared by all functionalities. Since a silent
+reconstruction is shared by all functionalities. Reading of decomposed
+cases can optionally be multi-threaded, with bit-exact results. Since a silent
 reconstruction error would be invisible in downstream results, the
 transparent reconstruction is validated in the test suite against
 reconstructed references.
 
 Third, a benchmark released with the package compares reading times with
-foamlib and PyFoam on fields of $10^6$ cells (warm file cache, one machine).
-fluidfoam is not the fastest reader: a binary field is read in 32 ms
-(median), against 3 ms for foamlib and 3.9 s for PyFoam, and a decomposed
-case in 0.43–0.61 s (minimum–median), against 0.27 s for foamlib. Its
-contribution lies in the combination of features described above, at a cost
-that remains small for typical analyses. The benchmark also indicates that
-reading time of large binary fields is dominated by file input rather than
-decoding, which motivated optional multi-threaded reading of decomposed
-cases (bit-exact results), and yields practical guidance: write results in
-binary format and load each time series once.
+foamlib and with OpenFOAM's reconstructPar on fields of $10^6$ cells (cold
+client cache, medians of 5 to 10 runs on one machine with an NFS file
+system, using fluidfoam 0.4.0, foamlib 1.10.0 and OpenFOAM v2606; scripts
+and raw outputs are archived with the release). For a single binary file,
+fluidfoam is slower than foamlib (43 ms against 14 ms). For a case
+decomposed into 64 non-contiguous subdomains, fluidfoam returns the global
+array in a single call in 0.20 s. foamlib, which does not reconstruct
+decomposed cases, needs about 30 lines of user code to reorder the cells
+with the addressing files and takes 0.25 to 0.40 s, depending on how these
+files are parsed. Alternatively, reconstructPar can be run once for the
+field (2.2 s), after which the reconstructed field is read in 0.07 s: this
+pays off only if the same field is read more than about 15 times, and
+requires an OpenFOAM installation and a second copy of the data on disk. All
+results match a ground-truth array, which a naive concatenation of the
+processor files (0.16 s) does not. The benchmark also yields practical
+guidance: write results in binary format and load each time series once.
 
 # Research impact statement
 
