@@ -1,0 +1,26 @@
+case=bench/data/case_decomp_real field=alpha runs=10 cache=client-cold
+environment: host=cl8n007  python 3.15.0, numpy 2.5.4, fluidfoam 0.4.0, foamlib 1.10.0, PyFoam 2026.6, Ofpp 0.12, OpenFOAM v2606
+tools available: fluidfoam, foamlib(concat), foamlib(addr), foamlib(addr+parser)
+PyFoam: skipped (no decomposed support)
+copying the case to /.fsnet/data/legi/calcul9/home/bonamy2c/fluidfoam/bench/data/bench_reconstruct_brso5o2d (reconstructPar writes into it) ...
+ground truth: bench/data/case_decomp_real/reference_alpha.npy
+fluidfoam            median=0.211s  min=0.188s  peak=24.0MB  shape=(1000000,)
+foamlib(concat)      median=0.270s  min=0.165s  peak=16.0MB  shape=(1000000,)
+foamlib(addr)        median=0.384s  min=0.285s  peak=20.1MB  shape=(1000000,)
+foamlib(addr+parser) median=0.351s  min=0.329s  peak=24.0MB  shape=(1000000,)
+reconstructPar+read  median=2.503s  min=1.769s  peak=40.0MB  shape=(1000000,)
+                      - reconstructPar: median=2.459s
+                      - read reconstructed field: median=0.040s
+equality check:
+  fluidfoam: OK (vs ground truth)
+  foamlib(concat): FAIL values differ from ground truth
+  foamlib(addr): OK (vs ground truth)
+  foamlib(addr+parser): OK (vs ground truth)
+  reconstructPar+read: OK (vs ground truth)
+
+user code needed to get the array (lines of Python, excluding imports; foamlib(addr+parser) excludes its labelList parser):
+  fluidfoam              1 line(s)
+  foamlib(concat)       16 line(s)
+  foamlib(addr)         29 line(s)
+  foamlib(addr+parser)  25 line(s)
+  reconstructPar+read  external OpenFOAM command (needs an OpenFOAM installation) + 1 read call

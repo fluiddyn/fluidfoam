@@ -1,0 +1,36 @@
+=== FLUIDFOAM_NTHREADS=1
+environment: host=cl8n005  python 3.15.0, numpy 2.5.4, fluidfoam 0.4.0, foamlib 1.10.0, PyFoam 2026.6, Ofpp 0.12, OpenFOAM v2606
+fluidfoam            median=0.735s  min=0.656s  peak=192.0MB  shape=(8000000,)
+foamlib(addr)        median=0.629s  min=0.488s  peak=160.1MB  shape=(8000000,)
+  fluidfoam: OK (vs ground truth)
+  foamlib(addr): OK (vs ground truth)
+=== FLUIDFOAM_NTHREADS=2
+environment: host=cl8n005  python 3.15.0, numpy 2.5.4, fluidfoam 0.4.0, foamlib 1.10.0, PyFoam 2026.6, Ofpp 0.12, OpenFOAM v2606
+fluidfoam            median=0.470s  min=0.441s  peak=192.0MB  shape=(8000000,)
+foamlib(addr)        median=0.537s  min=0.465s  peak=160.1MB  shape=(8000000,)
+  fluidfoam: OK (vs ground truth)
+  foamlib(addr): OK (vs ground truth)
+=== FLUIDFOAM_NTHREADS=4
+environment: host=cl8n005  python 3.15.0, numpy 2.5.4, fluidfoam 0.4.0, foamlib 1.10.0, PyFoam 2026.6, Ofpp 0.12, OpenFOAM v2606
+fluidfoam            median=0.472s  min=0.426s  peak=192.0MB  shape=(8000000,)
+foamlib(addr)        median=0.790s  min=0.736s  peak=160.1MB  shape=(8000000,)
+  fluidfoam: OK (vs ground truth)
+  foamlib(addr): OK (vs ground truth)
+=== FLUIDFOAM_NTHREADS=8
+environment: host=cl8n005  python 3.15.0, numpy 2.5.4, fluidfoam 0.4.0, foamlib 1.10.0, PyFoam 2026.6, Ofpp 0.12, OpenFOAM v2606
+fluidfoam            median=0.382s  min=0.352s  peak=192.1MB  shape=(8000000,)
+foamlib(addr)        median=0.828s  min=0.685s  peak=160.1MB  shape=(8000000,)
+  fluidfoam: OK (vs ground truth)
+  foamlib(addr): OK (vs ground truth)
+=== FLUIDFOAM_NTHREADS=16
+environment: host=cl8n005  python 3.15.0, numpy 2.5.4, fluidfoam 0.4.0, foamlib 1.10.0, PyFoam 2026.6, Ofpp 0.12, OpenFOAM v2606
+fluidfoam            median=0.384s  min=0.340s  peak=192.1MB  shape=(8000000,)
+foamlib(addr)        median=0.595s  min=0.514s  peak=160.1MB  shape=(8000000,)
+  fluidfoam: OK (vs ground truth)
+  foamlib(addr): OK (vs ground truth)
+=== FLUIDFOAM_NTHREADS=20
+environment: host=cl8n005  python 3.15.0, numpy 2.5.4, fluidfoam 0.4.0, foamlib 1.10.0, PyFoam 2026.6, Ofpp 0.12, OpenFOAM v2606
+fluidfoam            median=0.425s  min=0.293s  peak=192.1MB  shape=(8000000,)
+foamlib(addr)        median=0.655s  min=0.569s  peak=160.1MB  shape=(8000000,)
+  fluidfoam: OK (vs ground truth)
+  foamlib(addr): OK (vs ground truth)
