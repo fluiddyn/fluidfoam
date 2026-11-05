@@ -19,7 +19,9 @@ import numpy as np
 from fluidfoam.readof import typefield, readmesh, readfield
 
 
-def create1dprofil_spe(pathw, waxis, var, varname, typevar):
+def create1dprofil_spe(
+    pathw: str, waxis: np.ndarray, var: np.ndarray, varname: str, typevar: str
+) -> str:
     """
     This function provides way to write specific 1D profil (var array)
     in OpenFoam Format in the 1d_profil folder of pathw
@@ -44,49 +46,62 @@ def create1dprofil_spe(pathw, waxis, var, varname, typevar):
     """
 
     size1d = waxis.shape[0]
-    filename = ""
     field = var
-    filename = "" + varname
+    filename = varname
 
     if typevar == "scalar":
         filename1 = pathw + "/1d_profil/" + filename + ".xy"
-        f = open(filename1, "w")
-        f.write("(\n")
-        if field.shape == (1,):
-            for cell in range(size1d):
-                f.write("(" + str(waxis[cell]) + " " + str(field[0]) + ")\n")
-        else:
-            for cell in range(size1d):
-                f.write("(" + str(waxis[cell]) + " " + str(field[cell]) + ")\n")
-        f.write(")\n")
-        f.close()
-    elif typevar == "vector":
-        for i in range(3):
-            filename1 = pathw + "/1d_profil/" + filename + str(i) + ".xy"
-            f = open(filename1, "w")
+        with open(filename1, "w") as f:
             f.write("(\n")
-            if field.shape == (3, 1):
+            if field.shape == (1,):
                 for cell in range(size1d):
                     f.write(
-                        "(" + str(waxis[cell]) + " " + str(field[i, 0]) + ")\n"
+                        "(" + str(waxis[cell]) + " " + str(field[0]) + ")\n"
                     )
             else:
                 for cell in range(size1d):
                     f.write(
-                        "(" + str(waxis[cell]) + " " + str(field[i, cell]) + ")\n"
+                        "(" + str(waxis[cell]) + " " + str(field[cell]) + ")\n"
                     )
             f.write(")\n")
-            f.close()
+    elif typevar == "vector":
+        for i in range(3):
+            filename1 = pathw + "/1d_profil/" + filename + str(i) + ".xy"
+            with open(filename1, "w") as f:
+                f.write("(\n")
+                if field.shape == (3, 1):
+                    for cell in range(size1d):
+                        f.write(
+                            "("
+                            + str(waxis[cell])
+                            + " "
+                            + str(field[i, 0])
+                            + ")\n"
+                        )
+                else:
+                    for cell in range(size1d):
+                        f.write(
+                            "("
+                            + str(waxis[cell])
+                            + " "
+                            + str(field[i, cell])
+                            + ")\n"
+                        )
+                f.write(")\n")
     else:
-        print("PROBLEM with input: Good input is for example :")
-        print(
-            'fluidfoam.create1dprofil_spe("/data/1dcompute/", Y, epsilon, "epsilon", "scalar")\n'
+        raise ValueError(
+            "PROBLEM with input: typevar must be 'scalar' or 'vector'. "
+            "Good input is for example : "
+            'fluidfoam.create1dprofil_spe("pathw", z, epsilon, "epsilon", '
+            '"scalar")'
         )
     status = "create 1D profiles: done"
     return status
 
 
-def create1dprofil(pathr, pathw, timename, axis, varlist):
+def create1dprofil(
+    pathr: str, pathw: str, timename: str, axis: str, varlist: list[str]
+) -> str:
     """
     This function provides way to read 1D profiles at time timename of pathr
     and write them in OpenFoam Format in the 1d_profil folder of pathw
@@ -178,7 +193,7 @@ def create1dprofil(pathr, pathw, timename, axis, varlist):
     return status
 
 
-def read1dprofil(file_name):
+def read1dprofil(file_name: str) -> tuple[np.ndarray, np.ndarray, int]:
     """This function provides way to read and return 1D profil created by the
     create1dprofil function. file_name can be a complete path.
 
@@ -210,7 +225,7 @@ def read1dprofil(file_name):
         return z, field, size1d
 
 
-def plot1dprofil(pathr, varlist):
+def plot1dprofil(pathr: str, varlist: list[str]) -> None:
     """This function provides way to plot 1D profiles created by the
     create1dprofil function.
 
@@ -240,17 +255,17 @@ def plot1dprofil(pathr, varlist):
 
 
 def create1dprofilDFSEM(
-    pathr,
-    pathw,
-    boundaryname,
-    timename,
-    axis,
-    Uname,
-    kname,
-    omeganame,
-    Rname,
-    axisW,
-):
+    pathr: str,
+    pathw: str,
+    boundaryname: str,
+    timename: str,
+    axis: str,
+    Uname: str,
+    kname: str,
+    omeganame: str,
+    Rname: str,
+    axisW: str,
+) -> str:
     """
     This function provides way to read 1D profiles at time timename of pathr
     and write them in OpenFoam Format in the 1d_profil folder of pathw
@@ -406,7 +421,9 @@ def create1dprofilDFSEM(
     return status
 
 
-def read1dprofilDFSEM(file_name, boundary_name, time_name, axis):
+def read1dprofilDFSEM(
+    file_name: str, boundary_name: str, time_name: str, axis: str
+) -> tuple[np.ndarray, np.ndarray, np.ndarray, np.ndarray, int]:
     """This function provides way to read and return 1D profil created by the
     create1dprofilDFSEM function. file_name can be a complete path.
 

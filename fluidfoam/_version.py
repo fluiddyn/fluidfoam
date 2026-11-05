@@ -12,4 +12,4 @@ http://legacy.python.org/dev/peps/pep-0386/
 'b' or 'beta' means beta version (external testing).
 """
 
-__version__ = "0.3.1"
+__version__ = "0.4.0"

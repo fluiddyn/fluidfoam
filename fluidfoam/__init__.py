@@ -12,8 +12,6 @@ from fluidfoam.meshvisu import MeshVisu
 from fluidfoam.openfoamsimu import OpenFoamSimu
 from fluidfoam._version import __version__
 
-warnings.simplefilter("always", category=DeprecationWarning)
-
 
 def readarray(*args, **kargs):
     warnings.warn(

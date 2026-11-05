@@ -66,12 +66,18 @@ def _expected_probes(times, vector):
 
 def _force_line(t, eol="\n"):
     a = [100 * t + k for k in range(18)]
-    groups = ["(%s)" % " ".join(repr(x) for x in a[3 * g : 3 * g + 3]) for g in range(6)]
-    return "%r\t((%s) (%s) (%s)) ((%s) (%s) (%s))%s" % ((t,) + tuple(groups) + (eol,))
+    groups = [
+        "(%s)" % " ".join(repr(x) for x in a[3 * g : 3 * g + 3]) for g in range(6)
+    ]
+    return "%r\t((%s) (%s) (%s)) ((%s) (%s) (%s))%s" % (
+        (t,) + tuple(groups) + (eol,)
+    )
 
 
 def _forces_text(times, eol="\n"):
-    header = "# Forces\n# CofR : (0 0 0)\n# Time forces moment\n".replace("\n", eol)
+    header = "# Forces\n# CofR : (0 0 0)\n# Time forces moment\n".replace(
+        "\n", eol
+    )
     return header + "".join(_force_line(t, eol) for t in times)
 
 
@@ -85,7 +91,9 @@ class ReadProbesTestCase(unittest.TestCase):
         self.addCleanup(shutil.rmtree, self.root, ignore_errors=True)
 
     def write(self, time_name, text, name="U"):
-        path = os.path.join(self.root, "postProcessing", "probes", time_name, name)
+        path = os.path.join(
+            self.root, "postProcessing", "probes", time_name, name
+        )
         _write(path, text)
         return path
 
@@ -171,7 +179,8 @@ class ReadForceTestCase(unittest.TestCase):
 
     def write(self, time_name, text, name="forces.dat"):
         _write(
-            os.path.join(self.root, "postProcessing", "forces", time_name, name), text
+            os.path.join(self.root, "postProcessing", "forces", time_name, name),
+            text,
         )
 
     def read(self, time_name="0", path=None):
@@ -208,7 +217,8 @@ class ReadForceTestCase(unittest.TestCase):
         self.write("0", _forces_text([0.0, 0.25, 0.5, 0.75, 1.0]))
         self.write("0.75", _forces_text([0.75, 1.0, 1.25]))  # one new time
         np.testing.assert_array_equal(
-            self.read("mergeTime"), _expected_forces([0.0, 0.25, 0.5, 0.75, 1.0, 1.25])
+            self.read("mergeTime"),
+            _expected_forces([0.0, 0.25, 0.5, 0.75, 1.0, 1.25]),
         )
 
     def test_merge_time_with_a_directory_without_file(self):
@@ -220,7 +230,11 @@ class ReadForceTestCase(unittest.TestCase):
 
     def test_path_with_or_without_trailing_slash(self):
         self.write("0", _forces_text(TIMES))
-        for path in (self.root, self.root + os.sep, os.path.join(self.root, "postProcessing")):
+        for path in (
+            self.root,
+            self.root + os.sep,
+            os.path.join(self.root, "postProcessing"),
+        ):
             with self.subTest(path=path):
                 np.testing.assert_array_equal(
                     self.read(path=path), _expected_forces(TIMES)

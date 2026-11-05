@@ -19,15 +19,15 @@ fluidfoam
 
 .. start-intro
 
-The fluidfoam package provides Python classes useful to perform some plot with OpenFoam data.
+Efficient Python library to read, analyze, and visualize OpenFOAM simulation data (ASCII/binary, decomposed cases) — fast, flexible, and publication-ready.
 
 What is this repository for?
 ----------------------------
 
 * Openfoam Tools
-* Version : 0.3.1
+* Version : 0.4.0
 * Supported OpenFoam Versions : 2.4.0, 4.1 to 9, v1712plus to latest
-* Supported Python Versions : >= 3.8
+* Supported Python Versions : >= 3.10
 
 Documentation and Examples
 --------------------------
@@ -134,23 +134,24 @@ Example Usage
 Core Developers
 ---------------
 
-* Cyrille.Bonamy@univ-grenoble-alpes.fr
+* Cyrille.Bonamy@cnrs.fr
 
 Other Contributors
 ------------------
 
 * Julien.Chauchat@univ-grenoble-alpes.fr
-* amathieu@udel.edu
+* antoine.mathieu@edf.fr
+* eduard.puig@ieo.csic.es
 * Remi.Chassagne@univ-grenoble-alpes.fr
 * Quentin.Clemencot@univ-grenoble-alpes.fr
 * Matthias.Renaud@univ-grenoble-alpes.fr
-* Alban.Gilletta.De.Saint.Joseph@france-energies-marines.org
+* Alban.Gilletta-de-saint-joseph@univ-grenoble-alpes.fr
 * Gabriel Goncalves
 
 Emeritus Core Developers
 ------------------------
 
-* Pierre.Augier@legi.cnrs.fr
+* Pierre.Augier@cnrs.fr
 
 Emeritus Developers
 -------------------

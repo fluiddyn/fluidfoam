@@ -1,0 +1,6 @@
+foamlib 1.10.0
+bench/data/case_decomp_real/processor0/constant/polyMesh/cellProcAddressing: format=binary, label size=32
+
+64 files: 64 identical, 0 different, 0 errors
+total time: foamlib 0.111s, own parser 0.049s
+=> foamlib reads these files natively: use foamlib(addr).

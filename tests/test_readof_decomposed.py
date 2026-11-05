@@ -162,6 +162,79 @@ def write_binary_scalar(path, values):
     _write(path, "", binary=head.encode() + body)
 
 
+def write_label_list(path, values, binary=False):
+    name = os.path.basename(path)
+    head = HEADER.format(
+        fmt="binary" if binary else "ascii", cls="labelList", obj=name, note=""
+    )
+    if binary:
+        body = (
+            b"%d\n(" % len(values)
+            + struct.pack("<%di" % len(values), *values)
+            + b")\n"
+        )
+        _write(path, "", binary=head.encode() + body)
+    else:
+        _write(
+            path,
+            head
+            + "%d\n(\n" % len(values)
+            + "".join("%d\n" % v for v in values)
+            + ")\n",
+        )
+
+
+def write_boundary(meshdir, patches):
+    """patches: list of (name, type, startFace, nFaces)."""
+    text = HEADER.format(
+        fmt="ascii", cls="polyBoundaryMesh", obj="boundary", note=""
+    )
+    text += "%d\n(\n" % len(patches)
+    for name, ptype, start, n in patches:
+        text += "    %s\n    {\n        type            %s;\n" % (name, ptype)
+        if ptype == "processor":
+            text += "        myProcNo        0;\n        neighbProcNo    1;\n"
+        text += (
+            "        nFaces          %d;\n        startFace       %d;\n    }\n"
+            % (n, start)
+        )
+    _write(os.path.join(meshdir, "boundary"), text + ")\n")
+
+
+def _list_text(values, kind):
+    values = np.asarray(values, dtype=float)
+    if len(values) == 0:
+        return "nonuniform List<%s> 0()" % kind
+    if kind == "scalar":
+        rows = "".join("%r\n" % float(v) for v in values)
+    else:
+        rows = "".join("(%r %r %r)\n" % tuple(map(float, v)) for v in values)
+    return "nonuniform List<%s> \n%d\n(\n%s)\n;" % (kind, len(values), rows)
+
+
+def write_patch_field(path, cls, name, patches):
+    """patches: list of (patch name, type, value); value is a number or a
+    tuple for a uniform value, an array for a list of values."""
+    kind = "scalar" if cls == "volScalarField" else "vector"
+    text = HEADER.format(fmt="ascii", cls=cls, obj=name, note="")
+    text += "dimensions      [0 0 0 0 0 0 0];\n\n"
+    text += "internalField   uniform %s;\n\nboundaryField\n{\n" % (
+        "0" if kind == "scalar" else "(0 0 0)"
+    )
+    for pname, ptype, value in patches:
+        if isinstance(value, np.ndarray):
+            val = _list_text(value, kind)
+        elif isinstance(value, tuple):
+            val = "uniform (%s)" % " ".join(map(str, value))
+        else:
+            val = "uniform %s" % value
+        text += (
+            "    %s\n    {\n        type            %s;\n        value           %s;\n    }\n"
+            % (pname, ptype, val.rstrip(";"))
+        )
+    _write(path, text + "}\n")
+
+
 # global reference data ----------------------------------------------------
 ZC = np.arange(NCELLS) + 0.5
 ALPHA = 10.0 + np.arange(NCELLS)
@@ -170,6 +243,76 @@ U = np.stack(
 )
 BETA = np.concatenate([np.arange(1, NLOC + 1), np.full(NLOC, 7.0)])
 DZ = 0.1  # mesh motion at time 0.5
+
+# patches of the global mesh (faces: internal 23, bottom 23, top 24, walls 25..120)
+N_WALLS = 4 * NCELLS
+G = np.arange(N_WALLS)
+WALLS_D = np.stack(
+    [G, 2.0 * G, G + 0.25], axis=1
+)  # vector on the walls, global order
+WALLS_S = 0.5 * G
+UNIFORM_S_PROC0 = 5.5  # scalar on the walls: uniform on processor 0
+BOTTOM_D, BOTTOM_S = np.array([[100.0, 200.0, 300.0]]), np.array([9.0])
+TOP_D, TOP_S = (7, 7, 7), 7
+
+
+# local meshes: faces 0..10 internal, 11 = local bottom, 12 = local top (the
+# interface between the processors), 13.. the walls (4 per cell)
+PROC_PATCHES = [
+    [
+        ("bottom", "wall", 11, 1),
+        ("top", "wall", 61, 0),
+        ("walls", "wall", 13, 4 * NLOC),
+        ("procBoundary0to1", "processor", 12, 1),
+    ],
+    [
+        ("bottom", "wall", 61, 0),
+        ("top", "wall", 11, 1),
+        ("walls", "wall", 13, 4 * NLOC),
+        ("procBoundary1to0", "processor", 12, 1),
+    ],
+]
+# faceProcAddressing: (global face index + 1), negative if the face is flipped
+FACE_ADDR = [
+    [m + 1 for m in range(NLOC - 1)]
+    + [NCELLS + 1, NLOC]
+    + [26 + k for k in range(4 * NLOC)],
+    [-(NCELLS - 1 - m) for m in range(NLOC - 1)]
+    + [NCELLS + 2, -NLOC]
+    + [26 + 4 * (NCELLS - 1 - l) + j for l in range(NLOC) for j in range(4)],
+]
+# global index (0..95) of the local wall faces of each processor
+LOCAL_WALLS = [
+    np.arange(4 * NLOC),
+    np.array([4 * (NCELLS - 1 - l) + j for l in range(NLOC) for j in range(4)]),
+]
+
+
+def local_patches(p, name):
+    """Patch values written in the field file of the processor p.
+
+    The patches that have no face on the processor are written as empty
+    lists. The scalar is uniform on the walls of the processor 0, and the
+    patch top is uniform (it is only on the processor 1).
+    """
+    if name == "Dw":
+        none = np.zeros((0, 3))
+        bottom = BOTTOM_D if p == 0 else none
+        top = none if p == 0 else TOP_D
+        walls = WALLS_D[LOCAL_WALLS[p]]
+        interface = (0, 0, 0)
+    else:
+        none = np.zeros(0)
+        bottom = BOTTOM_S if p == 0 else none
+        top = none if p == 0 else TOP_S
+        walls = UNIFORM_S_PROC0 if p == 0 else WALLS_S[LOCAL_WALLS[p]]
+        interface = 0
+    return [
+        ("bottom", "calculated", bottom),
+        ("top", "calculated", top),
+        ("walls", "calculated", walls),
+        (PROC_PATCHES[p][3][0], "processor", interface),
+    ]
 
 
 @functools.lru_cache(maxsize=None)
@@ -185,7 +328,15 @@ def _case():
         "alpha",
         values=np.full(NCELLS, 99.0),
     )
-    # a case without any root mesh, same processors
+    nint = NCELLS - 1
+    write_boundary(
+        os.path.join(root, "constant", "polyMesh"),
+        [
+            ("bottom", "wall", nint, 1),
+            ("top", "wall", nint + 1, 1),
+            ("walls", "wall", nint + 2, N_WALLS),
+        ],
+    )
     for p in range(2):
         pdir = os.path.join(root, "processor%d" % p)
         zs = (
@@ -196,6 +347,25 @@ def _case():
         write_mesh(os.path.join(pdir, "constant", "polyMesh"), zs)
         write_addressing(
             os.path.join(pdir, "constant", "polyMesh"), ADDR[p], binary=(p == 1)
+        )
+        meshdir = os.path.join(pdir, "constant", "polyMesh")
+        write_label_list(
+            os.path.join(meshdir, "faceProcAddressing"),
+            FACE_ADDR[p],
+            binary=(p == 0),
+        )
+        write_boundary(meshdir, PROC_PATCHES[p])
+        write_patch_field(
+            os.path.join(pdir, "0.5", "Dw"),
+            "volVectorField",
+            "Dw",
+            local_patches(p, "Dw"),
+        )
+        write_patch_field(
+            os.path.join(pdir, "0.5", "Sw"),
+            "volScalarField",
+            "Sw",
+            local_patches(p, "Sw"),
         )
         # moved points at time 0.5 (dynamic mesh)
         pts_dir = os.path.join(pdir, "0.5", "polyMesh")
@@ -242,6 +412,31 @@ def _case():
                 "Uu",
                 values=np.tile([1.0, 2.0, 3.0], (NLOC, 1)),
             )
+    # the same case, reconstructed: global mesh and global fields
+    ref = root + "_ref"
+    shutil.copytree(root, ref, ignore=shutil.ignore_patterns("processor*"))
+    write_patch_field(
+        os.path.join(ref, "0.5", "Dw"),
+        "volVectorField",
+        "Dw",
+        [
+            ("bottom", "calculated", BOTTOM_D),
+            ("top", "calculated", TOP_D),
+            ("walls", "calculated", WALLS_D),
+        ],
+    )
+    walls_s = WALLS_S.copy()
+    walls_s[: 4 * NLOC] = UNIFORM_S_PROC0
+    write_patch_field(
+        os.path.join(ref, "0.5", "Sw"),
+        "volScalarField",
+        "Sw",
+        [
+            ("bottom", "calculated", BOTTOM_S),
+            ("top", "calculated", TOP_S),
+            ("walls", "calculated", walls_s),
+        ],
+    )
     # copy without root mesh
     nomesh = root + "_nomesh"
     shutil.copytree(root, nomesh)
@@ -257,9 +452,19 @@ def _case():
 _HDR = re.compile(rb"\s*FoamFile\s*\{.*?\}\n", re.S)
 MESH_FILES = [
     "constant/polyMesh/" + f
-    for f in ("cellProcAddressing", "points", "faces", "owner", "neighbour")
+    for f in (
+        "cellProcAddressing",
+        "faceProcAddressing",
+        "boundary",
+        "points",
+        "faces",
+        "owner",
+        "neighbour",
+    )
 ]
-FIELD_FILES = ["0.5/" + f for f in ("alpha", "U", "beta", "Uu", "alphab")]
+FIELD_FILES = [
+    "0.5/" + f for f in ("alpha", "U", "beta", "Uu", "alphab", "Dw", "Sw")
+]
 POINTS_T = ["0.5/polyMesh/points"]
 
 
@@ -281,6 +486,13 @@ def _collate(src_root, dst_root, rels, dirname="processors2"):
         for p in range(2):
             if rel.endswith("cellProcAddressing"):  # same format on all ranks
                 blocks.append(_addr_binary(ADDR[p]))
+                continue
+            if rel.endswith("faceProcAddressing"):
+                blocks.append(
+                    _addr_binary(FACE_ADDR[p]).replace(
+                        b"cellProcAddressing", b"faceProcAddressing"
+                    )
+                )
                 continue
             with open(os.path.join(src_root, "processor%d" % p, rel), "rb") as f:
                 blocks.append(f.read())
@@ -327,7 +539,7 @@ def setUpModule():
 
 
 def tearDownModule():
-    for d in _case() + _collated_case():
+    for d in _case() + _collated_case() + (_case()[0] + "_ref",):
         shutil.rmtree(d, ignore_errors=True)
 
 
@@ -393,12 +605,11 @@ class TestDecomposedCases(unittest.TestCase):
     def test_typefield_and_unsupported_options(self):
         root, _ = _case()
         assert readof.typefield(root, "0.5", "U", verbose=False) == "vector"
-        try:
-            readof.readscalar(root, "0.5", "alpha", boundary="top", verbose=False)
-        except NotImplementedError:
-            pass
-        else:
-            raise AssertionError("NotImplementedError expected")
+        for option in ("sets", "region"):
+            with self.assertRaises(NotImplementedError):
+                readof.readscalar(
+                    root, "0.5", "alpha", verbose=False, **{option: "x"}
+                )
 
     def test_openfoamfile_public_attributes(self):
         # lines_stripped and boundary are computed on demand but stay available
@@ -469,6 +680,109 @@ class TestDecomposedCases(unittest.TestCase):
         root, _ = _collated_case()
         x, y, z = readof.readmesh(root, time_name="0.5", verbose=False)
         np.testing.assert_allclose(z, ZC + DZ)
+
+    # ---- option boundary sur un cas décomposé ----------------------------------
+    def read_patch(self, case, patch, name="Dw", time="0.5"):
+        kind = readof.readscalar if name == "Sw" else readof.readvector
+        return kind(case, time, name, boundary=patch, verbose=False)
+
+    def check_patches(self, case):
+        """The patches of a decomposed case give what the reconstructed case gives."""
+        ref = _case()[0] + "_ref"
+        for name in ("Dw", "Sw"):
+            for patch in (
+                "walls",
+                "bottom",
+                "top",
+            ):  # bottom and top are on one processor only
+                with self.subTest(
+                    case=os.path.basename(case), field=name, patch=patch
+                ):
+                    np.testing.assert_array_equal(
+                        self.read_patch(case, patch, name),
+                        self.read_patch(ref, patch, name),
+                    )
+
+    def test_boundary_values_in_the_global_order(self):
+        root, nomesh = _case()
+        for case in (root, nomesh):
+            np.testing.assert_array_equal(
+                self.read_patch(case, "walls"), WALLS_D.T
+            )
+        expected = WALLS_S.copy()
+        expected[: 4 * NLOC] = UNIFORM_S_PROC0  # uniform on the processor 0
+        np.testing.assert_array_equal(
+            self.read_patch(root, "walls", "Sw"), expected
+        )
+        np.testing.assert_array_equal(self.read_patch(root, "bottom"), BOTTOM_D.T)
+        np.testing.assert_array_equal(
+            self.read_patch(root, "top"), np.array([TOP_D]).T
+        )
+
+    def test_boundary_same_as_the_reconstructed_case(self):
+        for case in _case():
+            self.check_patches(case)
+
+    def test_boundary_mesh(self):
+        root, nomesh = _case()
+        x, y, z = readof.readmesh(
+            nomesh, boundary="walls", verbose=False
+        )  # no root mesh
+        xr, yr, zr = readof.readmesh(
+            root, boundary="walls", verbose=False
+        )  # global mesh
+        for a, b in ((x, xr), (y, yr), (z, zr)):
+            np.testing.assert_allclose(a, b)
+        np.testing.assert_allclose(z, np.repeat(ZC, 4))
+        z_bottom = readof.readmesh(nomesh, boundary="bottom", verbose=False)[2]
+        z_top = readof.readmesh(nomesh, boundary="top", verbose=False)[2]
+        np.testing.assert_allclose([z_bottom[0], z_top[0]], [0.0, float(NCELLS)])
+
+    def test_boundary_dynamic_mesh(self):
+        root, _ = _case()
+        z = readof.readmesh(
+            root, time_name="0.5", boundary="walls", verbose=False
+        )[2]
+        np.testing.assert_allclose(z, np.repeat(ZC, 4) + DZ)
+
+    def test_boundary_structured_and_errors(self):
+        root, nomesh = _case()
+        s = readof.readscalar(
+            root, "0.5", "Sw", boundary="bottom", structured=True, verbose=False
+        )
+        assert s.shape == (1, 1, 1) and s[0, 0, 0] == BOTTOM_S[0]
+        d = readof.readvector(
+            root, "0.5", "Dw", boundary="top", structured=True, verbose=False
+        )
+        assert d.shape == (3, 1, 1, 1)
+        x = readof.readmesh(
+            nomesh, boundary="bottom", structured=True, verbose=False
+        )
+        assert x[0].shape == (1, 1, 1)
+        with self.assertRaises(ValueError):
+            self.read_patch(root, "unknown")
+
+    def test_collated_boundary(self):
+        for case in _collated_case():
+            self.check_patches(case)
+            np.testing.assert_array_equal(
+                self.read_patch(case, "walls"), WALLS_D.T
+            )
+
+    def test_collated_boundary_mesh(self):
+        root, nomesh = _collated_case()
+        ref = _case()[0] + "_ref"
+        x, y, z = readof.readmesh(
+            nomesh, boundary="walls", verbose=False
+        )  # no root mesh
+        for a, b in zip(
+            (x, y, z), readof.readmesh(ref, boundary="walls", verbose=False)
+        ):
+            np.testing.assert_allclose(a, b)
+        z = readof.readmesh(
+            root, time_name="0.5", boundary="walls", verbose=False
+        )[2]
+        np.testing.assert_allclose(z, np.repeat(ZC, 4) + DZ)
 
 
 if __name__ == "__main__":

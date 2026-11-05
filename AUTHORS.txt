@@ -3,6 +3,7 @@ Julien Chauchat
 Pierre Augier
 Antoine Mathieu
 Quentin Clémençot
+Eduard Puig Montella
 Rémi Chassagne
 Guillaume Maurice
 Tim Nagel

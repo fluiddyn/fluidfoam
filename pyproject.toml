@@ -3,23 +3,25 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["fluidfoam"]
+
+[tool.setuptools.dynamic]
+version = {attr = "fluidfoam._version.__version__"}
+
 [project]
 name = "fluidfoam"
-version = "0.3.1"
+dynamic = ["version"]
 license = "GPL-3.0-or-later"
 license-files = [ "LICENSE" ]
 keywords = ["Openfoam", "postprocessing", "python", "CFD"]
 authors = [
   { name="Cyrille Bonamy", email="cyrille.bonamy@univ-grenoble-alpes.fr" },
 ]
-description = "Openfoam PostProcessing Python Tools"
-readme = "README.md"
-requires-python = ">=3.8"
+description = "Efficient Python library to read, analyze, and visualize OpenFOAM simulation data (ASCII/binary, decomposed cases) — fast, flexible, and publication-ready."
+readme = "README.rst"
+requires-python = ">=3.10"
 dependencies = [
-    "numpy>=1.11",
-    "matplotlib>=1.5",
+    "numpy>=1.20",
     "scipy>=1.7.4",
-    "netCDF4",
 ]
 classifiers = [
     "Development Status :: 5 - Production/Stable",
@@ -29,13 +31,20 @@ classifiers = [
     "Operating System :: OS Independent",
 ]
 
+[project.optional-dependencies]
+plot = ["matplotlib>=1.5"]     # processing1d, mesh visu and tutorials
+examples = ["matplotlib>=1.5", "netCDF4"]  # tutorials
+
 [project.urls]
 Homepage = "https://github.com/fluiddyn/fluidfoam"
 Issues = "https://github.com/fluiddyn/fluidfoam/issues"
 Documentation = "https://fluidfoam.readthedocs.io"
 
 [dependency-groups]
-dev = []
+dev = [
+    "matplotlib>=3.5",  # tests: processing1d, mesh visu and tutorials
+    "pytest>=8.0",
+]
 
 [tool.uv]
 link-mode = "copy"  # Force la copie au lieu des hardlinks

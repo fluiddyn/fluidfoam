@@ -9,10 +9,13 @@
 
 """
 
-import os, sys
-import subprocess
+import os
+import logging
 import numpy as np
-from fluidfoam import readmesh, readfield, OpenFoamFile
+from fluidfoam import readmesh, OpenFoamFile
+
+
+logger = logging.getLogger("fluidfoam.openfoamsimu")
 
 
 class Error(Exception):
@@ -40,20 +43,20 @@ class OpenFoamSimu(object):
             and ask you to choose.\n
         timeStep: str, timeStep to load. If None, load the last time step\n
         structured: bool, true if the mesh is structured\n
-        dataToLoad: list of str, list containing the name of the varaibles
+        dataToLoad: list of str, list containing the name of the variables
             to read and load. If None, read and load all saved variables.
     """
 
     def __init__(
         self,
-        path=None,
-        simu=None,
-        timeStep=None,
-        structured=False,
-        dataToLoad=None,
-        precision=10,
-        order="F",
-    ):
+        path: str | None = None,
+        simu: str | None = None,
+        timeStep: str | int | None = None,
+        structured: bool = False,
+        dataToLoad: list[str] | None = None,
+        precision: int = 15,
+        order: str = "F",
+    ) -> None:
 
         if path == None and simu == None:
             # If nothing if given, consider the current directory as the
@@ -90,7 +93,13 @@ class OpenFoamSimu(object):
             order=order,
         )
 
-    def readmesh(self, timeStep=None, structured=False, precision=10, order="F"):
+    def readmesh(
+        self,
+        timeStep: str | int | None = None,
+        structured: bool = False,
+        precision: int = 15,
+        order: str = "F",
+    ) -> None:
 
         if timeStep is None:
             dir_list = os.listdir(self.directory)
@@ -100,7 +109,7 @@ class OpenFoamSimu(object):
                 try:
                     float(directory)
                     time_list.append(directory)
-                except:
+                except ValueError:
                     pass
             time_list.sort(key=float)
             timeStep = time_list[-1]
@@ -112,6 +121,7 @@ class OpenFoamSimu(object):
         self.timeStep = timeStep
 
         # Check if cell center position is written in the output directory
+        field = None
         try:
             field = OpenFoamFile(
                 path=self.directory,
@@ -121,19 +131,17 @@ class OpenFoamSimu(object):
                 precision=precision,
                 order=order,
             )
+            # a uniform C field carries no cell position, fall back to readmesh
+            if field.uniform:
+                field = None
+        except FileNotFoundError:
+            pass
+        if field is not None:
             values = field.values
             shape = (3, values.size // 3)
             values = np.reshape(values, shape, order=order)
-            if structured and not field.uniform:
-                try:
-                    values[0:3, :] = values[0:3, self.ind]
-                    shape = (3,) + tuple(self.shape)
-                    values = np.reshape(values, shape, order=order)
-                except:
-                    print("Variable {} could not be loaded".format(var))
-                    self.variables.remove(var)
             X, Y, Z = values[0], values[1], values[2]
-        except FileNotFoundError:
+        else:
             X, Y, Z = readmesh(
                 self.directory,
                 structured=structured,
@@ -149,15 +157,20 @@ class OpenFoamSimu(object):
             nz = np.unique(Z).size
             self.ind = np.array(range(nx * ny * nz))
             self.shape = (nx, ny, nz)
+            # reshape the coordinates consistently with the fields loaded
+            # by readopenfoam
+            self.x = np.reshape(self.x, self.shape, order=order)
+            self.y = np.reshape(self.y, self.shape, order=order)
+            self.z = np.reshape(self.z, self.shape, order=order)
 
     def readopenfoam(
         self,
-        timeStep=None,
-        structured=False,
-        dataToLoad=None,
-        precision=10,
-        order="F",
-    ):
+        timeStep: str | int | None = None,
+        structured: bool = False,
+        dataToLoad: list[str] | None = None,
+        precision: int = 15,
+        order: str = "F",
+    ) -> None:
         """
         Reading SedFoam results
         Load the last time step saved of the simulation
@@ -175,7 +188,7 @@ class OpenFoamSimu(object):
                 try:
                     float(directory)
                     time_list.append(directory)
-                except:
+                except ValueError:
                     pass
             time_list.sort(key=float)
             timeStep = time_list[-1]
@@ -225,8 +238,10 @@ class OpenFoamSimu(object):
                         values = np.reshape(
                             values[self.ind], self.shape, order=order
                         )
-                    except:
-                        print("Variable {} could not be loaded".format(var))
+                    except (IndexError, ValueError) as error:
+                        logger.warning(
+                            "Variable %s could not be loaded: %s", var, error
+                        )
                         self.variables.remove(var)
                         continue
             elif field.type_data == "vector":
@@ -237,8 +252,10 @@ class OpenFoamSimu(object):
                         values[0:3, :] = values[0:3, self.ind]
                         shape = (3,) + tuple(self.shape)
                         values = np.reshape(values, shape, order=order)
-                    except:
-                        print("Variable {} could not be loaded".format(var))
+                    except (IndexError, ValueError) as error:
+                        logger.warning(
+                            "Variable %s could not be loaded: %s", var, error
+                        )
                         self.variables.remove(var)
                         continue
             elif field.type_data == "symmtensor":
@@ -249,8 +266,10 @@ class OpenFoamSimu(object):
                         values[0:6, :] = values[0:6, self.ind]
                         shape = (6,) + tuple(self.shape)
                         values = np.reshape(values, shape, order=order)
-                    except:
-                        print("Variable {} could not be loaded".format(var))
+                    except (IndexError, ValueError) as error:
+                        logger.warning(
+                            "Variable %s could not be loaded: %s", var, error
+                        )
                         self.variables.remove(var)
                         continue
             elif field.type_data == "tensor":
@@ -261,20 +280,22 @@ class OpenFoamSimu(object):
                         values[0:9, :] = values[0:9, self.ind]
                         shape = (9,) + tuple(self.shape)
                         values = np.reshape(values, shape, order=order)
-                    except:
-                        print("Variable {} could not be loaded".format(var))
+                    except (IndexError, ValueError) as error:
+                        logger.warning(
+                            "Variable %s could not be loaded: %s", var, error
+                        )
                         self.variables.remove(var)
                         continue
             self.__setattr__(var.replace(".", "_"), values)
 
-    def keys(self):
+    def keys(self) -> None:
         """
         Print the name of all variables loaded from simulation results
         """
         print("Loaded available variables are :")
         print(self.variables)
 
-    def _choose_simulation(self, path):
+    def _choose_simulation(self, path: str) -> str:
         """
         Make a list of all directories located in path containing a simulation.
         Ask the user which simulation to load
@@ -311,7 +332,7 @@ class OpenFoamSimu(object):
 
         return directory + "/"
 
-    def _find_directory(self, path, simu):
+    def _find_directory(self, path: str, simu: str) -> str:
         """
         Look for the directory of simu in all the sub directories of path. If several
         directories are found, the program asks which directory is the good one.
@@ -358,16 +379,14 @@ class OpenFoamSimu(object):
 
 if __name__ == "__main__":
 
+    rep = os.path.join(os.path.dirname(__file__), "../output_samples")
     simu = "box"
     timeStep = "4"
 
-    for d in dirs:
-        rep = os.path.join(os.path.dirname(__file__), "../output_samples")
+    mySimu = OpenFoamSimu(
+        path=rep, simu=simu, timeStep=timeStep, structured=True
+    )
 
-        mySimu = OpenFoamSimu(
-            path=rep, simu=simu, timeStep=timeStep, structured=True
-        )
+    mySimu.keys()
 
-        mySimu.keys()
-
-        mySimu.U
+    mySimu.U

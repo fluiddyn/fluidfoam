@@ -1,0 +1,48 @@
+name: paper generate
+
+on:
+  push:
+    paths:
+      - "paper/**"
+      - ".github/workflows/paper.yml"
+  pull_request:
+    paths:
+      - "paper/**"
+      - ".github/workflows/paper.yml"
+  workflow_dispatch:
+
+jobs:
+  render:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Compile paper with the Open Journals pipeline
+        run: |
+          docker run --rm \
+            --volume $PWD:/data \
+            --user $(id -u):$(id -g) \
+            --env JOURNAL=joss \
+            openjournals/inara \
+            -o pdf,jats \
+            paper/paper.md
+
+      - name: Check that the PDF was produced
+        run: |
+          test -f paper/paper.pdf || { echo "paper.pdf not generated"; exit 1; }
+          echo "--- PDF info ---"
+          ls -la paper/paper.pdf
+
+      - name: Check for unresolved citations
+        run: |
+          if grep -q "??\|[@[]" paper/paper.jats; then
+            echo "WARNING: possible unresolved citations in JATS output"
+          fi
+          grep -o 'xref_ref[^>]*' paper/paper.jats | head -5 || true
+
+      - name: Upload PDF artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: paper-pdf
+          path: paper/paper.pdf
+          retention-days: 30

@@ -1,0 +1,12 @@
+case=bench/data/case_binary field=alpha runs=10 cache=client-cold
+environment: host=cl8n007  python 3.15.0, numpy 2.5.4, fluidfoam 0.4.0, foamlib 1.10.0, PyFoam 2026.6, Ofpp 0.12, OpenFOAM v2606
+tools available: fluidfoam, foamlib, PyFoam
+fluidfoam            median=0.026s  min=0.024s  peak=40.0MB  shape=(1000000,)
+foamlib              median=0.014s  min=0.013s  peak=24.0MB  shape=(1000000,)
+PyFoam               FAILED: PyFoam did not return a list of values (binary payload?)
+equality check:
+  foamlib: OK (vs fluidfoam)
+
+user code needed to get the array (lines of Python, excluding imports; foamlib(addr+parser) excludes its labelList parser):
+  fluidfoam              1 line(s)
+  foamlib                7 line(s)

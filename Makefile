@@ -11,7 +11,7 @@ clean:
 	rm -rf dist
 
 tests:
-	env -u VIRTUAL_ENV uv run --with pytest pytest
+	env -u VIRTUAL_ENV uv run pytest
 
 black:
 	env -u VIRTUAL_ENV uv run --with black black -l 82 fluidfoam

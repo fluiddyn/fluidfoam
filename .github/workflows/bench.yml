@@ -1,0 +1,65 @@
+name: bench
+
+on:
+  pull_request:
+    paths:
+      - "bench/**"
+      - ".github/workflows/bench.yml"
+  workflow_dispatch:
+
+jobs:
+  bench-data:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        python-version: ["3.12"]
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-python@v5
+        with:
+          python-version: ${{ matrix.python-version }}
+
+      - name: Install package and dependencies
+        run: |
+          python -m pip install --upgrade pip
+          pip install . numpy
+
+      - name: Generate small benchmark datasets
+        run: |
+          python bench/generate_bench_data.py --outdir bench/data --ncells 10000 --nproc 8
+
+      - name: Check datasets are generated
+        run: |
+          for d in case_ascii case_binary case_binary_gz case_decomp; do
+            test -d "bench/data/$d" || { echo "missing bench/data/$d"; exit 1; }
+          done
+          test -f bench/data/case_binary_gz/0/alpha.gz
+
+      - name: Check all datasets are read back identically
+        run: |
+          python - <<'EOF'
+          import numpy as np
+          import fluidfoam
+
+          ok = {}
+          for case in ("case_ascii", "case_binary", "case_binary_gz",
+                       "case_decomp"):
+              arr = np.asarray(
+                  fluidfoam.readscalar(f"bench/data/{case}", "0", "alpha",
+                                       verbose=False)
+              )
+              ok[case] = arr
+              assert arr.shape == (10000,), (case, arr.shape)
+
+          ref = ok["case_ascii"]
+          # ASCII is written with 15 significant decimals: relative tolerance
+          for case, arr in ok.items():
+              assert np.allclose(ref, arr, rtol=1e-12, atol=1e-15), case
+          print("all datasets OK and consistent")
+          EOF
+
+      - name: Smoke-test the comparative benchmark
+        run: |
+          python bench/bench_compare.py --case bench/data/case_binary --time 0 --runs 3
+          python bench/bench_compare.py --case bench/data/case_decomp --time 0 --decomposed --runs 3

@@ -1,13 +1,11 @@
-name: build
+name: build and test
 on: [push, pull_request]
 jobs:
   build:
     runs-on: ubuntu-latest
     strategy:
-      # You can use PyPy versions in python-version.
-      # For example, pypy-2.7 and pypy-3.8
       matrix:
-        python-version: ["3.8", "3.9", "3.10", "3.11", "3.12", "3.13"]
+        python-version: ["3.10", "3.11", "3.12", "3.13"]
     outputs:
       version_changed: ${{ steps.check_file_changed.outputs.files_changed }}
     steps:
@@ -17,11 +15,38 @@ jobs:
       - name: Install uv
         uses: astral-sh/setup-uv@v7
       - name: Set up Python
-        run: uv python install
+        run: uv python install ${{ matrix.python-version }}
       - name: Build and install fluidfoam
         run: |
-          cd ${{ github.workspace }} && make
+          cd ${{ github.workspace }} && uv sync --extra plot
       - name: Test fluidfoam
         run: make tests
       - name: Test fluidfoam coverage
         run: make tests_coverage
+
+  # Replays the decomposed-case test suite with parallel reading enabled
+  # (FLUIDFOAM_NTHREADS=-1 = automatic thread count). The results must be
+  # identical to the sequential read: the tests compare values, so this
+  # job is the non-regression guarantee for the multithreaded path.
+  test-multithreads:
+    runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        nthreads: ["-1", "4"]
+    steps:
+      - name: Check out repository code
+        uses: actions/checkout@v4
+      - run: set -o pipefail
+      - name: Install uv
+        uses: astral-sh/setup-uv@v7
+      - name: Set up Python
+        run: uv python install 3.12
+      - name: Build and install fluidfoam
+        run: |
+          cd ${{ github.workspace }} && make
+      - name: Test decomposed cases with parallel reading
+        env:
+          FLUIDFOAM_NTHREADS: ${{ matrix.nthreads }}
+        run: |
+          uv run pytest tests/test_readof_decomposed.py -v
+
