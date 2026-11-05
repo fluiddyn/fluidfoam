@@ -393,6 +393,114 @@ def _scatter_to_global(parts, ncells):
     return out
 
 
+def _cell_centroids(owner, neigh, facefile, pointfile, precision=15):
+    """Vectorized cell centroid computation.
+
+    For every cell the centroid is the mean of the coordinates of the
+    unique vertices (points) shared by its faces.
+
+    Parameters
+    ----------
+    owner, neigh : OpenFoamFile
+        Parsed ``owner`` and ``neighbour`` files.
+    facefile : OpenFoamFile
+        Parsed ``faces`` file (must have ``_face_pts`` / ``_face_offsets``).
+    pointfile : OpenFoamFile
+        Parsed ``points`` file (must have ``values_x/y/z``).
+    precision : int
+        Number of decimal places to round the centroids to. Must match the
+        precision used when parsing the points file, so that the structured
+        mesh check (``np.unique``) is not broken by 1-ulp differences in
+        the summation order.
+
+    Returns
+    -------
+    xs, ys, zs : ndarray, shape (n_cells,)
+        Centroid coordinates.
+    up : ndarray, shape (n_unique_pts,)
+        Flat array of unique point indices (grouped by cell order).
+    up_starts : ndarray, shape (n_cells + 1,)
+        CSR offsets: cell *i* unique points are ``up[up_starts[i]:
+        up_starts[i + 1]]``.
+    """
+    n_faces = facefile.nfaces
+    n_interior = neigh.nb_faces  # interior faces are contiguous in OpenFOAM
+    face_offsets = facefile._face_offsets
+    face_pts = facefile._face_pts
+    face_npts = np.diff(face_offsets)
+
+    # Map each point reference to its face index
+    point_face_id = np.repeat(np.arange(n_faces), face_npts)
+
+    # Owner side: every face contributes to its owner cell
+    owner_cells = owner.values[point_face_id]
+
+    # Neighbour side: interior faces only (first n_interior faces)
+    n_interior_pts = int(face_offsets[n_interior])
+    if n_interior_pts > 0:
+        interior_mask = point_face_id < n_interior
+        neigh_cells = neigh.values[point_face_id[interior_mask]]
+        neigh_pts = face_pts[interior_mask]
+        all_cells = np.concatenate([owner_cells, neigh_cells])
+        all_pts = np.concatenate([face_pts, neigh_pts])
+    else:
+        all_cells = owner_cells
+        all_pts = face_pts
+
+    # Sort by (cell, point) and remove duplicate (cell, point) pairs
+    order = np.lexsort((all_pts, all_cells))
+    sc = all_cells[order]
+    sp = all_pts[order]
+
+    if sc.size > 1:
+        dedup = np.empty(sc.size, dtype=bool)
+        dedup[0] = True
+        dedup[1:] = (sc[1:] != sc[:-1]) | (sp[1:] != sp[:-1])
+    else:
+        dedup = np.ones(sc.size, dtype=bool)
+    uc = sc[dedup]
+    up = sp[dedup]
+
+    # Cell boundaries in the unique array (uc is sorted, so cell_ids is
+    # 0, 1, ..., n_cells - 1)
+    if uc.size > 1:
+        change = np.empty(uc.size, dtype=bool)
+        change[0] = True
+        change[1:] = uc[1:] != uc[:-1]
+    else:
+        change = np.ones(uc.size, dtype=bool)
+    cell_starts = np.flatnonzero(change)
+
+    # Mean of coordinates per cell (reduceat over the unique points)
+    pt_x = pointfile.values_x[up]
+    pt_y = pointfile.values_y[up]
+    pt_z = pointfile.values_z[up]
+
+    x_sum = np.add.reduceat(pt_x, cell_starts)
+    y_sum = np.add.reduceat(pt_y, cell_starts)
+    z_sum = np.add.reduceat(pt_z, cell_starts)
+    counts = np.diff(np.append(cell_starts, uc.size))
+
+    n_cells = owner.nb_cell
+    # cell_ids == 0..n_cells-1 (every cell owns at least one face, and uc
+    # is sorted by cell id), so x_sum/counts is already in cell order
+    xs = (x_sum / counts).astype(float)
+    ys = (y_sum / counts).astype(float)
+    zs = (z_sum / counts).astype(float)
+    # Round to the input precision so that the structured-mesh check
+    # (np.unique) is not broken by 1-ulp summation-order differences.
+    np.around(xs, decimals=precision, out=xs)
+    np.around(ys, decimals=precision, out=ys)
+    np.around(zs, decimals=precision, out=zs)
+
+    # CSR offsets for the unique points per cell
+    up_starts = np.empty(n_cells + 1, dtype=np.int64)
+    up_starts[:n_cells] = cell_starts
+    up_starts[n_cells] = up.size
+
+    return xs, ys, zs, up, up_starts
+
+
 def _structured_index(xs, ys, zs):
     nx = np.unique(xs).size
     ny = np.unique(ys).size
@@ -798,6 +906,22 @@ class OpenFoamFile(object):
     def boundary(self, value):
         self._boundary = value
 
+    @property
+    def faces(self):
+        """Dict mapping face index to ``{"npts": int, "id_pts": ndarray}``.
+
+        Built lazily from the flat CSR arrays (``_face_pts``,
+        ``_face_offsets``) on first access, for backward compatibility.
+        """
+        if self._faces_dict is None:
+            d = {}
+            for i in range(self.nfaces):
+                s = int(self._face_offsets[i])
+                e = int(self._face_offsets[i + 1])
+                d[i] = {"npts": e - s, "id_pts": self._face_pts[s:e]}
+            self._faces_dict = d
+        return self._faces_dict
+
     def _iter_lines_stripped(self):
         """Stripped lines, lazily: parsers that stop early do not pay for
         the whole file."""
@@ -1081,34 +1205,25 @@ class OpenFoamFile(object):
 
         lines = data.split(b"\n")
         self.type_data = self.header[b"class"]
-        self.faces = {}
+        self._faces_dict = None  # lazy (see the faces property)
 
         if not self.is_ascii:
             nb_numbers = self.nfaces + 1
             dtype = np.dtype(">i4" if self.is_MSB else "<i4")
             nb_bytes = nb_numbers * dtype.itemsize
-            pointsbyface = np.frombuffer(
+            self._face_offsets = np.frombuffer(
                 data[:nb_bytes], dtype=dtype, count=nb_numbers
             ).astype(np.int64, copy=True)
-            self.pointsbyface = pointsbyface.tolist()
+            self.pointsbyface = self._face_offsets.tolist()
             data = self.content.split(str.encode(str(self.pointsbyface[-1])))[1]
             data = b"\n(".join(data.split(b"\n(")[1:])
-
-            for i in range(self.nfaces):
-                self.faces[i] = {}
-                self.faces[i]["npts"] = (
-                    self.pointsbyface[i + 1] - self.pointsbyface[i]
-                )
-                self.faces[i]["id_pts"] = np.frombuffer(
-                    data[
-                        self.pointsbyface[i]
-                        * dtype.itemsize : self.pointsbyface[i + 1]
-                        * dtype.itemsize
-                    ],
-                    dtype=dtype,
-                    count=self.faces[i]["npts"],
-                ).astype(np.int64, copy=True)
+            npts_total = int(self._face_offsets[-1])
+            self._face_pts = np.frombuffer(
+                data, dtype=dtype, count=npts_total
+            ).astype(np.int64, copy=True)
         else:
+            all_pts = []
+            offsets = [0]
             for i, line in enumerate(lines):
                 if i == 0:
                     continue
@@ -1116,12 +1231,11 @@ class OpenFoamFile(object):
                     break
                 else:
                     parts = line.split(b"(")
-                    self.faces[i - 1] = {
-                        "npts": int(parts[0]),
-                        "id_pts": [
-                            int(s) for s in parts[1].split(b")")[0].split()
-                        ],
-                    }
+                    pts = [int(s) for s in parts[1].split(b")")[0].split()]
+                    all_pts.extend(pts)
+                    offsets.append(len(all_pts))
+            self._face_pts = np.array(all_pts, dtype=np.int64)
+            self._face_offsets = np.array(offsets, dtype=np.int64)
 
     def _parse_points(self, precision):
 
@@ -1794,28 +1908,9 @@ def readmesh(
             neigh = OpenFoamFile(
                 path + meshpath, name="neighbour", verbose=verbose
             )
-            xs = np.empty(owner.nb_cell, dtype=float)
-            ys = np.empty(owner.nb_cell, dtype=float)
-            zs = np.empty(owner.nb_cell, dtype=float)
-            face = {}
-            for i in range(neigh.nb_faces):
-                if not neigh.values[i] in face:
-                    face[neigh.values[i]] = list()
-                face[neigh.values[i]].append(facefile.faces[i]["id_pts"][:])
-            for i in range(owner.nb_faces):
-                if not owner.values[i] in face:
-                    face[owner.values[i]] = list()
-                face[owner.values[i]].append(facefile.faces[i]["id_pts"][:])
-            for i in range(owner.nb_cell):
-                xs[i] = np.mean(
-                    pointfile.values_x[np.unique(np.concatenate(face[i])[:])]
-                )
-                ys[i] = np.mean(
-                    pointfile.values_y[np.unique(np.concatenate(face[i])[:])]
-                )
-                zs[i] = np.mean(
-                    pointfile.values_z[np.unique(np.concatenate(face[i])[:])]
-                )
+            xs, ys, zs, _, _ = _cell_centroids(
+                owner, neigh, facefile, pointfile, precision
+            )
     if structured:
         nx = np.unique(xs).size
         ny = np.unique(ys).size
@@ -1916,59 +2011,49 @@ def getVolumes(
             path + meshpath, name="points", precision=precision, verbose=verbose
         )
     neigh = OpenFoamFile(path + meshpath, name="neighbour", verbose=verbose)
-    xs = np.empty(owner.nb_cell, dtype=float)
-    ys = np.empty(owner.nb_cell, dtype=float)
-    zs = np.empty(owner.nb_cell, dtype=float)
-    face = {}
-    for i in range(neigh.nb_faces):
-        if not neigh.values[i] in face:
-            face[neigh.values[i]] = list()
-        face[neigh.values[i]].append(facefile.faces[i]["id_pts"][:])
-    for i in range(owner.nb_faces):
-        if not owner.values[i] in face:
-            face[owner.values[i]] = list()
-        face[owner.values[i]].append(facefile.faces[i]["id_pts"][:])
+    xs, ys, zs, up, up_starts = _cell_centroids(
+        owner, neigh, facefile, pointfile, precision
+    )
 
-    if box != None:
+    if box is not None:
         # box = ((xmin, ymin, zmin), (xmax, ymax, zmax))
         if len(box[0]) != 3 or len(box[1]) != 3:
             raise ValueError("box mins and maxs must be float tuples of lenght 3")
     else:
-        minx = np.min(pointfile.values_x)
-        miny = np.min(pointfile.values_y)
-        minz = np.min(pointfile.values_z)
-        maxx = np.max(pointfile.values_x)
-        maxy = np.max(pointfile.values_y)
-        maxz = np.max(pointfile.values_z)
-        box = ((minx, miny, minz), (maxx, maxy, maxz))
+        box = (
+            (
+                np.min(pointfile.values_x),
+                np.min(pointfile.values_y),
+                np.min(pointfile.values_z),
+            ),
+            (
+                np.max(pointfile.values_x),
+                np.max(pointfile.values_y),
+                np.max(pointfile.values_z),
+            ),
+        )
 
-    centroidCell = np.empty((0, 3), dtype=float)
-    VolCell_all = np.empty(owner.nb_cell, dtype=float)
+    # Vectorized box check
+    in_box = (
+        (xs > box[0][0]) & (xs < box[1][0])
+        & (ys > box[0][1]) & (ys < box[1][1])
+        & (zs > box[0][2]) & (zs < box[1][2])
+    )
+    in_box_ids = np.flatnonzero(in_box)
 
-    for i in range(owner.nb_cell):
-        xs[i] = np.mean(pointfile.values_x[np.unique(np.concatenate(face[i])[:])])
-        ys[i] = np.mean(pointfile.values_y[np.unique(np.concatenate(face[i])[:])])
-        zs[i] = np.mean(pointfile.values_z[np.unique(np.concatenate(face[i])[:])])
+    # Volumes: ConvexHull per cell in the box (cannot be vectorized)
+    VolCell_all = np.zeros(owner.nb_cell, dtype=float)
+    for i in in_box_ids:
+        s, e = int(up_starts[i]), int(up_starts[i + 1])
+        cell_pts = up[s:e]
+        pointsCell = np.column_stack([
+            pointfile.values_x[cell_pts],
+            pointfile.values_y[cell_pts],
+            pointfile.values_z[cell_pts],
+        ])
+        VolCell_all[i] = ss.ConvexHull(pointsCell).volume
 
-        if (
-            box[0][0] < xs[i] < box[1][0]
-            and box[0][1] < ys[i] < box[1][1]
-            and box[0][2] < zs[i] < box[1][2]
-        ):
-            pointsCell = []
-            for k in zip(np.unique(np.concatenate(face[i])[:])):
-                pointsCell.append(
-                    [
-                        pointfile.values_x[k],
-                        pointfile.values_y[k],
-                        pointfile.values_z[k],
-                    ]
-                )
-
-            # Add 3D elements into the empty array
-            element = np.array([xs[i], ys[i], zs[i]])
-            centroidCell = np.append(centroidCell, [element], axis=0)
-            VolCell_all[i] = ss.ConvexHull(pointsCell).volume
+    centroidCell = np.column_stack([xs[in_box], ys[in_box], zs[in_box]])
     VolCell = VolCell_all[VolCell_all != 0]
     if structured:
         nx = np.unique(xs).size
