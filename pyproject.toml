@@ -19,9 +19,6 @@ dependencies = [
     "numpy>=1.20",
     "scipy>=1.7.4",
 ]
-[project.optional-dependencies]
-plot = ["matplotlib>=1.5"]     # processing1d, mesh visu and tutorials
-examples = ["matplotlib>=1.5", "netCDF4"]  # tutorials
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Education",
@@ -29,6 +26,10 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Operating System :: OS Independent",
 ]
+
+[project.optional-dependencies]
+plot = ["matplotlib>=1.5"]     # processing1d, mesh visu and tutorials
+examples = ["matplotlib>=1.5", "netCDF4"]  # tutorials
 
 [project.urls]
 Homepage = "https://github.com/fluiddyn/fluidfoam"
