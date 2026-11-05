@@ -20,7 +20,7 @@ jobs:
         run: uv python install
       - name: Build and install fluidfoam
         run: |
-          cd ${{ github.workspace }} && make
+          cd ${{ github.workspace }} && uv sync --extra plot
       - name: Test fluidfoam
         run: make tests
       - name: Test fluidfoam coverage
