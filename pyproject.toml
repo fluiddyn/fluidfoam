@@ -17,10 +17,11 @@ readme = "README.md"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.20",
-    "matplotlib>=1.5",
     "scipy>=1.7.4",
-    "netCDF4",
 ]
+[project.optional-dependencies]
+plot = ["matplotlib>=1.5"]     # processing1d, mesh visu and tutorials
+examples = ["matplotlib>=1.5", "netCDF4"]  # tutorials
 classifiers = [
     "Development Status :: 5 - Production/Stable",
     "Intended Audience :: Education",

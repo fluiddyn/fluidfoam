@@ -43,9 +43,10 @@ bibliography: paper.bib
 
 # Summary
 
-Computational fluid dynamics (CFD) researchers, engineers, and students
-often use OpenFOAM [@openfoam; @opencfd], an open-source toolbox used
-across a very wide range of applications - aerodynamics, heat transfer,
+In the computational fluid dynamics (CFD) domain, OpenFOAM
+[@openfoam; @opencfd] has become one of the most popular open-source
+toolboxes for researchers, engineers, and students. It provides solvers for
+a very wide range of applications - aerodynamics, heat transfer,
 combustion, chemical engineering, and environmental flows alike.
 Each simulation produces large output files in OpenFOAM's own
 file format, which must then be analysed to compute statistics, plot
@@ -61,7 +62,8 @@ simulations, which are split across multiple directories, are reassembled
 transparently. Beyond reading, fluidfoam processes the outputs of OpenFOAM
 function objects (forces, probes) and writes and reads 1D profiles for
 boundary-condition imposition via swak4Foam [@swak4foam]. The package is
-pure Python, depends only on NumPy and SciPy [@virtanen2020], and is
+pure Python, its core depends only on NumPy and SciPy [@virtanen2020] (Matplotlib
+is an optional dependency, used only for plotting), and is
 released under GPL-3.0.
 
 # Statement of need
@@ -107,7 +109,7 @@ To our knowledge, fluidfoam offers a specific combination of features that
 is not found together in these tools: (i) reconstruction of decomposed
 parallel cases directly into global, ordered fields; (ii) automatic reshaping of
 structured meshes into multi-dimensional arrays; and (iii) a minimal
-dependency footprint (NumPy and SciPy only), which matters for shared
+dependency footprint (NumPy and SciPy only; Matplotlib is optional and used only for plotting), which matters for shared
 analysis scripts, teaching, and continuous integration.
 These tools are largely complementary: a workflow may use foamlib or
 fluidsimfoam to launch simulations and fluidfoam to analyse their output.
@@ -184,13 +186,17 @@ once.
 
 # Research impact statement
 
-fluidfoam has been developed since 2017, initially as the post-processing
-layer of SedFoam [@chauchat2017], a two-phase sediment-transport model used
-in morphodynamics research. It has since been used to analyse simulations in
-studies of unsteady effects in oscillatory sheet flows [@mathieu2022],
-finite-size effects in two-fluid large-eddy simulation of particle-laden
-boundary layers [@mathieu2021] and a frictional–collisional model for
-bedload transport [@chassagne2023]. It is also the post-processing layer of
+fluidfoam has been developed since 2017 by the SedFoam development team as a
+Python API to interact with OpenFOAM simulations, initially as the
+post-processing layer of SedFoam [@chauchat2017], a two-phase
+sediment-transport model used in morphodynamics research. It has since been
+used to analyse simulations in studies of unsteady effects in oscillatory
+sheet flows [@mathieu2022], finite-size effects in two-fluid large-eddy
+simulation of particle-laden boundary layers [@mathieu2021], a
+frictional–collisional model for bedload transport [@chassagne2023], and
+submerged granular column collapse [@montella2023]. More recently, it has
+also been used for the post-processing of OpenFOAM simulations of swash
+dynamics over rough coastal surfaces [@kaczmarek2026]. It is also the post-processing layer of
 the group's other solvers and methods: sedInterFoam, a three-phase model for
 free-surface sediment transport [@mathieu2025]; sedExnerFoam, an Exner-based
 morphodynamics model [@renaud2026]; and an Exner diagnosis method for
