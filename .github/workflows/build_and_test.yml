@@ -48,5 +48,5 @@ jobs:
         env:
           FLUIDFOAM_NTHREADS: ${{ matrix.nthreads }}
         run: |
-          uv run python -m unittest fluidfoam.test_readof_decomposed -v
+          uv run pytest tests/test_readof_decomposed.py -v
 

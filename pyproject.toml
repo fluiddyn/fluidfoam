@@ -3,9 +3,13 @@ requires = ["setuptools>=61.0"]
 build-backend = "setuptools.build_meta"
 [tool.setuptools]
 packages = ["fluidfoam"]
+
+[tool.setuptools.dynamic]
+version = {attr = "fluidfoam._version.__version__"}
+
 [project]
 name = "fluidfoam"
-version = "0.4.0"
+dynamic = ["version"]
 license = "GPL-3.0-or-later"
 license-files = [ "LICENSE" ]
 keywords = ["Openfoam", "postprocessing", "python", "CFD"]
@@ -13,7 +17,7 @@ authors = [
   { name="Cyrille Bonamy", email="cyrille.bonamy@univ-grenoble-alpes.fr" },
 ]
 description = "Efficient Python library to read, analyze, and visualize OpenFOAM simulation data (ASCII/binary, decomposed cases) — fast, flexible, and publication-ready."
-readme = "README.md"
+readme = "README.rst"
 requires-python = ">=3.10"
 dependencies = [
     "numpy>=1.20",
@@ -37,7 +41,10 @@ Issues = "https://github.com/fluiddyn/fluidfoam/issues"
 Documentation = "https://fluidfoam.readthedocs.io"
 
 [dependency-groups]
-dev = []
+dev = [
+    "matplotlib>=3.5",  # tests: processing1d, mesh visu and tutorials
+    "pytest>=8.0",
+]
 
 [tool.uv]
 link-mode = "copy"  # Force la copie au lieu des hardlinks

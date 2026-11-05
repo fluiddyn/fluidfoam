@@ -103,7 +103,7 @@ from concurrent.futures import ThreadPoolExecutor
 NTHREADS = int(os.environ.get("FLUIDFOAM_NTHREADS", "0"))
 
 
-def set_nthreads(nthreads):
+def set_nthreads(nthreads: int) -> None:
     """Set the number of threads used to read decomposed cases.
 
     0 or 1 disables parallel reading (sequential). A value greater than 1
@@ -684,17 +684,17 @@ class OpenFoamFile(object):
 
     def __init__(
         self,
-        path,
-        time_name=None,
-        name=None,
-        structured=False,
-        boundary=None,
-        sets=None,
-        order="F",
-        precision=15,
-        datatype=None,
-        verbose=True,
-    ):
+        path: str,
+        time_name: str | None = None,
+        name: str | None = None,
+        structured: bool = False,
+        boundary: str | None = None,
+        sets: str | None = None,
+        order: str = "F",
+        precision: int = 15,
+        datatype: str | None = None,
+        verbose: bool = True,
+    ) -> None:
 
         self.pathcase = path
         if time_name == "latestTime":
@@ -1257,7 +1257,12 @@ class OpenFoamFile(object):
         self.shape = (nx, ny, nz)
 
 
-def typefield(path, time_name=None, name=None, verbose=True):
+def typefield(
+    path: str,
+    time_name: str | None = None,
+    name: str | None = None,
+    verbose: bool = True,
+) -> str:
     """Read OpenFoam field and returns type of field.
 
     Args:
@@ -1297,18 +1302,18 @@ def typefield(path, time_name=None, name=None, verbose=True):
 
 @_decomposed_fallback("field")
 def readfield(
-    path,
-    time_name=None,
-    name=None,
-    structured=False,
-    boundary=None,
-    sets=None,
-    region=None,
-    order="F",
-    precision=15,
-    datatype=None,
-    verbose=True,
-):
+    path: str,
+    time_name: str | None = None,
+    name: str | None = None,
+    structured: bool = False,
+    boundary: str | None = None,
+    sets: str | None = None,
+    region: str | None = None,
+    order: str = "F",
+    precision: int = 15,
+    datatype: str | None = None,
+    verbose: bool = True,
+) -> np.ndarray:
     """
     Read OpenFoam field and reshape if necessary (structured mesh) and
     possible (not uniform field).
@@ -1382,18 +1387,17 @@ def readfield(
 
 @_decomposed_fallback("field")
 def readscalar(
-    path,
-    time_name=None,
-    name=None,
-    structured=False,
-    boundary=None,
-    sets=None,
-    region=None,
-    order="F",
-    precision=15,
-    mode=None,
-    verbose=True,
-):
+    path: str,
+    time_name: str | None = None,
+    name: str | None = None,
+    structured: bool = False,
+    boundary: str | None = None,
+    sets: str | None = None,
+    region: str | None = None,
+    order: str = "F",
+    precision: int = 15,
+    verbose: bool = True,
+) -> np.ndarray:
     """
     Read OpenFoam scalar field and reshape if necessary and possible (not
     uniform field).
@@ -1421,45 +1425,42 @@ def readscalar(
 
     if region is not None:
         sets = region
-    if mode == "parallel":
-        raise ValueError("Not Implemented")
-    else:
-        scalar = OpenFoamFile(
-            path,
-            time_name,
-            name,
-            structured=structured,
-            boundary=boundary,
-            sets=sets,
-            order=order,
-            precision=precision,
-            datatype="scalar",
-            verbose=verbose,
-        )
-        values = scalar.values
+    scalar = OpenFoamFile(
+        path,
+        time_name,
+        name,
+        structured=structured,
+        boundary=boundary,
+        sets=sets,
+        order=order,
+        precision=precision,
+        datatype="scalar",
+        verbose=verbose,
+    )
+    values = scalar.values
 
-        if scalar.type_data != "scalar":  # pragma: no cover
-            raise ValueError("This file does not contain a scalar.")
+    if scalar.type_data != "scalar":  # pragma: no cover
+        raise ValueError("This file does not contain a scalar.")
 
-        if structured:
-            values = values[scalar.ind].reshape(scalar.shape, order=order)
+    if structured:
+        values = values[scalar.ind].reshape(scalar.shape, order=order)
 
     return values
 
 
 @_decomposed_fallback("field")
 def readvector(
-    path,
-    time_name=None,
-    name=None,
-    structured=False,
-    boundary=None,
-    sets=None,
-    region=None,
-    order="F",
-    precision=15,
-    verbose=True,
-):
+    path: str,
+    time_name: str | None = None,
+    name: str | None = None,
+    structured: bool = False,
+    boundary: str | None = None,
+    sets: str | None = None,
+    region: str | None = None,
+    order: str = "F",
+    precision: int = 15,
+    verbose: bool = True,
+) -> np.ndarray:
     """
     Read OpenFoam vector field and reshape if necessary and possible (not
     uniform field).
@@ -1519,17 +1520,17 @@ def readvector(
 
 @_decomposed_fallback("field")
 def readsymmtensor(
-    path,
-    time_name=None,
-    name=None,
-    structured=False,
-    boundary=None,
-    sets=None,
-    region=None,
-    order="F",
-    precision=15,
-    verbose=True,
-):
+    path: str,
+    time_name: str | None = None,
+    name: str | None = None,
+    structured: bool = False,
+    boundary: str | None = None,
+    sets: str | None = None,
+    region: str | None = None,
+    order: str = "F",
+    precision: int = 15,
+    verbose: bool = True,
+) -> np.ndarray:
     """
     Read OpenFoam symmetrical tensor field and reshape if necessary and
     possible (not uniform field).
@@ -1557,7 +1558,7 @@ def readsymmtensor(
 
     if region is not None:
         sets = region
-    scalar = OpenFoamFile(
+    symmtensor = OpenFoamFile(
         path,
         time_name,
         name,
@@ -1569,19 +1570,19 @@ def readsymmtensor(
         datatype="symmtensor",
         verbose=verbose,
     )
-    values = scalar.values
+    values = symmtensor.values
 
-    if scalar.type_data != "symmtensor":  # pragma: no cover
+    if symmtensor.type_data != "symmtensor":  # pragma: no cover
         raise ValueError("This file does not contain a symmtensor.")
 
     shape = (6, values.size // 6)
     values = np.reshape(values, shape, order=order)
     if structured:
-        if scalar.uniform and verbose:
+        if symmtensor.uniform and verbose:
             logger.warning("internalfield is uniform; so no reshape possible...")
         else:
-            values[0:6, :] = values[0:6, scalar.ind]
-            shape = (6,) + tuple(scalar.shape)
+            values[0:6, :] = values[0:6, symmtensor.ind]
+            shape = (6,) + tuple(symmtensor.shape)
             values = np.reshape(values, shape, order=order)
 
     return values
@@ -1589,17 +1590,17 @@ def readsymmtensor(
 
 @_decomposed_fallback("field")
 def readtensor(
-    path,
-    time_name=None,
-    name=None,
-    structured=False,
-    boundary=None,
-    sets=None,
-    region=None,
-    order="F",
-    precision=15,
-    verbose=True,
-):
+    path: str,
+    time_name: str | None = None,
+    name: str | None = None,
+    structured: bool = False,
+    boundary: str | None = None,
+    sets: str | None = None,
+    region: str | None = None,
+    order: str = "F",
+    precision: int = 15,
+    verbose: bool = True,
+) -> np.ndarray:
     """
     Read OpenFoam tensor field and reshape if necessary and possible
     (not uniform field).
@@ -1627,7 +1628,7 @@ def readtensor(
 
     if region is not None:
         sets = region
-    scalar = OpenFoamFile(
+    tensor = OpenFoamFile(
         path,
         time_name,
         name,
@@ -1640,19 +1641,19 @@ def readtensor(
         verbose=verbose,
     )
 
-    values = scalar.values
+    values = tensor.values
 
-    if scalar.type_data != "tensor":  # pragma: no cover
-        raise ValueError("This file does not contstartFaceain a tensor.")
+    if tensor.type_data != "tensor":  # pragma: no cover
+        raise ValueError("This file does not contain a tensor.")
 
     shape = (9, values.size // 9)
     values = np.reshape(values, shape, order=order)
     if structured:
-        if scalar.uniform and verbose:
+        if tensor.uniform and verbose:
             logger.warning("internalfield is uniform; so no reshape possible...")
         else:
-            values[0:9, :] = values[0:9, scalar.ind]
-            shape = (9,) + tuple(scalar.shape)
+            values[0:9, :] = values[0:9, tensor.ind]
+            shape = (9,) + tuple(tensor.shape)
             values = np.reshape(values, shape, order=order)
 
     return values
@@ -1660,16 +1661,16 @@ def readtensor(
 
 @_decomposed_fallback("mesh")
 def readmesh(
-    path,
-    time_name=None,
-    structured=False,
-    boundary=None,
-    sets=None,
-    region=None,
-    order="F",
-    precision=15,
-    verbose=True,
-):
+    path: str,
+    time_name: str | None = None,
+    structured: bool = False,
+    boundary: str | None = None,
+    sets: str | None = None,
+    region: str | None = None,
+    order: str = "F",
+    precision: int = 15,
+    verbose: bool = True,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """
     Read OpenFoam mesh and reshape if necessary (in cartesian structured mesh).
 
@@ -1848,16 +1849,16 @@ def readmesh(
 
 @_decomposed_fallback("volumes")
 def getVolumes(
-    path,
-    time_name=None,
-    structured=False,
-    sets=None,
-    region=None,
-    order="F",
-    precision=15,
-    verbose=True,
-    box=None,
-):
+    path: str,
+    time_name: str | None = None,
+    structured: bool = False,
+    sets: str | None = None,
+    region: str | None = None,
+    order: str = "F",
+    precision: int = 15,
+    verbose: bool = True,
+    box: tuple | None = None,
+) -> tuple[np.ndarray, np.ndarray]:
     """
     Reads OpenFoam mesh and returns the cell centroids and cell volumes
     of a given box.

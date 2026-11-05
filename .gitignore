@@ -8,3 +8,4 @@ fluidfoam.egg-info
 _build
 generated
 bench/data
+.venv

@@ -31,3 +31,13 @@ class SimpleTestCase(unittest.TestCase):
                 sol, z, 0.2 * vecfield, "zerodeuxU", "vector"
             )
             fluidfoam.plot1dprofil(sol + "1d_profil/", ["alpha", "U1"])
+
+    def test_create1dprofil_spe_bad_type(self):
+        with self.assertRaises(ValueError):
+            fluidfoam.create1dprofil_spe(
+                "output_samples/ascii/",
+                np.arange(3),
+                np.arange(3),
+                "epsilon",
+                "tensor",
+            )

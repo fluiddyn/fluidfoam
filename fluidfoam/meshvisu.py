@@ -60,12 +60,12 @@ class MeshVisu(object):
 
     def __init__(
         self,
-        path,
-        box=None,
-        plane="xy",
-        time_name=None,
-        verbose=True,
-    ):
+        path: str,
+        box: tuple | None = None,
+        plane: str = "xy",
+        time_name: str | None = None,
+        verbose: bool = True,
+    ) -> None:
         """by_default we expect the 2D mesh to be in xy-plane:"""
         # Step 1: read point and face files:
         # read faces in path/constant/polyMesh/
@@ -107,7 +107,7 @@ class MeshVisu(object):
         self.__plane = plane
         self._set_edges_in_box(verbose=verbose)
 
-    def update_box(self, box, verbose=True):
+    def update_box(self, box: tuple, verbose: bool = True) -> None:
         """updates the mesh visualization box
 
         Args:
@@ -123,14 +123,14 @@ class MeshVisu(object):
         # update egdes in box
         self._set_edges_in_box(verbose=verbose)
 
-    def get_box(self):
+    def get_box(self) -> tuple:
         """return the mesh visualization box
 
         Returns:
             tuple: ((xmin, ymin, zmin), (xmax, ymax, zmax))"""
         return self.__box
 
-    def get_xlim(self):
+    def get_xlim(self) -> tuple[float, float]:
         """returns the x limits of the mesh visualization box.
 
         Returns:
@@ -138,7 +138,7 @@ class MeshVisu(object):
         """
         return (self.__box[0][0], self.__box[1][0])
 
-    def get_ylim(self):
+    def get_ylim(self) -> tuple[float, float]:
         """returns the y limits of the mesh visualization box.
 
         Returns:
@@ -146,7 +146,7 @@ class MeshVisu(object):
         """
         return (self.__box[0][1], self.__box[1][1])
 
-    def get_zlim(self):
+    def get_zlim(self) -> tuple[float, float]:
         """returns the z limits of the mesh visualization box.
 
         Returns:
@@ -154,7 +154,7 @@ class MeshVisu(object):
         """
         return (self.__box[0][2], self.__box[1][2])
 
-    def set_box_to_mesh_size(self, verbose=False):
+    def set_box_to_mesh_size(self, verbose: bool = False) -> None:
         """Set the mesh visualization box to mesh size and update the edges
         in the box."""
         self._set_box_to_mesh_size(verbose=verbose)
@@ -284,7 +284,7 @@ class MeshVisu(object):
             for i, j in id_edges
         ]
 
-    def get_all_edgesInBox(self):
+    def get_all_edgesInBox(self) -> list:
         """
          return the list of all edges in box. \n
          Eatch edge is describe by a tuple of tuples of float: ((x0, y0), (x1, y1)). \n
@@ -313,7 +313,9 @@ class MeshVisu(object):
         elif plane == "yz":
             self.__plane_coord = self.__pointfile.values_x[0]
         else:
-            print(f"plane={plane} but must be str egals to 'xy', 'xz' or 'yz'")
+            raise ValueError(
+                f"Unknown plane: {plane}. Must be 'xy', 'xz', or 'yz'."
+            )
 
     def _get_plane_coord(self):
         """we assume mesh is 2D planar,
@@ -366,5 +368,9 @@ class MeshVisu(object):
             for j in face["id_pts"]:
                 if x[j] != plane_coord:
                     return False
+        else:
+            raise ValueError(
+                f"Unknown plane: {plane}. Must be 'xy', 'xz', or 'yz'."
+            )
 
         return True

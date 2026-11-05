@@ -31,3 +31,7 @@ class SimpleTestCase(unittest.TestCase):
 
     def test_latestTime(self):
         myMesh = MeshVisu(path="output_samples/box", time_name="latestTime")
+
+    def test_bad_plane_raises(self):
+        with self.assertRaises(ValueError):
+            MeshVisu(path="output_samples/box", plane="zw")

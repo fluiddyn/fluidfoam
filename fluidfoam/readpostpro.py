@@ -7,12 +7,15 @@ This module provides functions to list and read OpenFoam PostProcessing Files:
 """
 
 import os
+import logging
 import numpy as np
 
 # from glob import glob
 
+logger = logging.getLogger("fluidfoam.readpostpro")
 
-def _list_times(path):
+
+def _list_times(path: str) -> list[str]:
     """Names of the time directories of path, sorted by value."""
     time_list = []
     for directory in os.listdir(path):
@@ -25,11 +28,11 @@ def _list_times(path):
     return time_list
 
 
-def _find_latesttime(path):
+def _find_latesttime(path: str) -> str:
     return _list_times(path)[-1]
 
 
-def _postprocessing_path(path, dirname):
+def _postprocessing_path(path: str, dirname: str) -> str:
     """Directory of a postProcessing function object: path/dirname if it
     exists, else path/postProcessing/dirname."""
     if os.path.exists(os.path.join(path, dirname)):
@@ -37,7 +40,7 @@ def _postprocessing_path(path, dirname):
     return os.path.join(path, "postProcessing", dirname)
 
 
-def _first_new_row(time_merge, time_new):
+def _first_new_row(time_merge: np.ndarray, time_new: np.ndarray) -> int | None:
     """Index of the first row of time_new that is later than the last time
     already merged; None if there is no such row."""
     if time_merge.size == 0:
@@ -46,16 +49,21 @@ def _first_new_row(time_merge, time_new):
     return int(new_rows[0]) if new_rows.size > 0 else None
 
 
-def _data_rows(lines):
+def _data_rows(lines: list[bytes]) -> list[bytes]:
     """Data lines: the comment lines (#) and the empty lines are skipped."""
     return [line for line in lines if b"#" not in line and line.strip()]
 
 
-def _strip_parentheses(line):
+def _strip_parentheses(line: bytes) -> bytes:
     return line.replace(b"(", b" ").replace(b")", b" ")
 
 
-def readforce(path, namepatch="forces", time_name="0", name="forces"):
+def readforce(
+    path: str,
+    namepatch: str = "forces",
+    time_name: str = "0",
+    name: str = "forces",
+) -> np.ndarray:
     """read the data contained in the force file .
     create the forces variables in the Forcesfile object
 
@@ -84,11 +92,11 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
         for timename in _list_times(path_namepatch):
             try:
                 tab = readforce(path, namepatch, timename, name + "_" + timename)
-            except Exception:
+            except FileNotFoundError:
                 try:
                     tab = readforce(path, namepatch, timename, name)
-                except Exception as error:
-                    print("An exception occurred:", error)
+                except FileNotFoundError as error:
+                    logger.info("Skipping time %s: %s", timename, error)
                     continue
             if tab.ndim < 2:  # no data in this time directory
                 continue
@@ -116,7 +124,13 @@ def readforce(path, namepatch="forces", time_name="0", name="forces"):
     return values.reshape(len(rows), ncols)
 
 
-def readprobes(path, probes_name="probes", time_name="0", name="U", verbose=True):
+def readprobes(
+    path: str,
+    probes_name: str = "probes",
+    time_name: str = "0",
+    name: str = "U",
+    verbose: bool = True,
+) -> tuple[np.ndarray, np.ndarray, np.ndarray]:
     """read the data contained in the probes file.
 
     Args:

@@ -20,7 +20,9 @@ to the first cell size (the grading factor).
 import numpy as np
 
 
-def getgz(h, dz1, N, verbose=False):
+def getgz(
+    h: float, dz1: float, N: int, verbose: bool = False
+) -> tuple[np.ndarray, np.ndarray, float]:
     """Compute the grading of a geometrically stretched mesh.
 
     Given a domain size ``h``, a first cell size ``dz1`` and a number of
@@ -90,7 +92,7 @@ def getgz(h, dz1, N, verbose=False):
     return z, dz, gz
 
 
-def getdzs(h, gz, N):
+def getdzs(h: float, gz: float, N: int) -> tuple[float, float]:
     """Compute the first and last cell sizes of a graded mesh.
 
     Given a domain size ``h``, a grading factor ``gz`` and a number of
