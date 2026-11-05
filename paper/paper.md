@@ -62,9 +62,9 @@ simulations, which are split across multiple directories, are reassembled
 transparently. Beyond reading, fluidfoam processes the outputs of OpenFOAM
 function objects (forces, probes) and writes and reads 1D profiles for
 boundary-condition imposition via swak4Foam [@swak4foam]. The package is
-pure Python, its core depends only on NumPy and SciPy [@virtanen2020] (Matplotlib
-is an optional dependency, used only for plotting), and is
-released under GPL-3.0.
+pure Python and released under GPL-3.0. Its core depends only on NumPy and
+SciPy [@virtanen2020]; Matplotlib [@hunter2007] is an optional dependency,
+used only for plotting.
 
 # Statement of need
 
@@ -109,8 +109,9 @@ To our knowledge, fluidfoam offers a specific combination of features that
 is not found together in these tools: (i) reconstruction of decomposed
 parallel cases directly into global, ordered fields; (ii) automatic reshaping of
 structured meshes into multi-dimensional arrays; and (iii) a minimal
-dependency footprint (NumPy and SciPy only; Matplotlib is optional and used only for plotting), which matters for shared
-analysis scripts, teaching, and continuous integration.
+dependency footprint (the core needs only NumPy and SciPy; Matplotlib is
+optional and used only for plotting), which matters for shared analysis
+scripts, teaching, and continuous integration.
 These tools are largely complementary: a workflow may use foamlib or
 fluidsimfoam to launch simulations and fluidfoam to analyse their output.
 
@@ -123,8 +124,8 @@ loads, in one step, all fields saved at a given time step of a simulation
 point for exploratory analysis; and specialised modules handle
 postProcessing function-object output, mesh design and visualisation for
 simple configurations - including the generation of vector figures (SVG,
-PDF) of 2D meshes via Matplotlib [@hunter2007] line collections, for
-publication-quality mesh illustrations. A dedicated module also closes the
+PDF) of 2D meshes via Matplotlib [@hunter2007] line collections (the optional
+dependency), for publication-quality mesh illustrations. A dedicated module also closes the
 loop between one-dimensional and multi-dimensional simulations: it extracts
 vertical profiles of the flow fields from a 1D preliminary run and writes
 them in a format that swak4Foam [@swak4foam] can interpolate to impose
