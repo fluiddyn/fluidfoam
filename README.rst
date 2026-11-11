@@ -159,6 +159,29 @@ Emeritus Developers
 * Guillaume.Maurice@univ-grenoble-alpes.fr
 * Tim.Nagel@legi.cnrs.fr
 
+Maintenance and support
+-----------------------
+
+fluidfoam is mature, stable software that is maintained but not under
+continuous feature development.
+
+Development is driven by two things: (i) the needs of our own research — the
+package is the post-processing layer of SedFoam, sedInterFoam and sedExnerFoam
+and of the SedFoam tutorials, so it is updated whenever those solvers and
+tutorials need it; and (ii) bug reports and feature requests from users.
+
+The core (reading of the OpenFOAM file format) has been stable since 2018.
+There can be long periods without commits when no change is required and no
+request is pending; this is not a sign that the project is abandoned. For
+example, there were no commits between March 2025 and October 2026, after
+which activity resumed (transparent reading of decomposed cases, optional
+multi-threaded reading, faster parsing of binary files and lighter
+dependencies, with Matplotlib now optional).
+
+Issues and pull requests are typically answered within a few weeks, and
+contributions are welcome. See also the changelog
+(``CHANGELOG.md``) for the roadmap towards version 1.0.
+
 License
 -------
 
